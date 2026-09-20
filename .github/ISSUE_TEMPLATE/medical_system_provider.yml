@@ -1,0 +1,56 @@
+name: Medical system connector / Integracja z systemem medycznym
+description: Connect PRM Core to a practice management, booking or EHR system (provider). / Podłącz system gabinetowy, rejestrację albo EDM.
+labels: ["integration", "medical-system"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        PRM Core reads the clinic's system through a **provider** — a few files in `src/lib/booking-system/providers/`. Linking patients, visit history, no-shows, cancellations and automations are already done by PRM Core; a provider only translates the system's API. Start from the tested template in `providers/_template/`.
+        PRM Core czyta system placówki przez **dostawcę** — kilka plików w `providers/`. Resztę mechaniki robi PRM Core. Zacznij od szablonu w `providers/_template/`.
+
+        **Never paste real patient data, API keys or passwords here.** Use the vendor's sandbox and documentation. / **Żadnych prawdziwych danych pacjentów ani kluczy.**
+  - type: input
+    id: system
+    attributes:
+      label: System
+      description: Name and website. / Nazwa i strona.
+      placeholder: e.g. a practice management system, an EHR, an online booking service
+    validations:
+      required: true
+  - type: dropdown
+    id: api
+    attributes:
+      label: API access / Dostęp do API
+      options:
+        - Public API with documentation / Publiczne API z dokumentacją
+        - API available to partners (agreement needed) / API dla partnerów (umowa)
+        - FHIR / HL7 interface / Interfejs FHIR / HL7
+        - Not sure / Nie wiem
+    validations:
+      required: true
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: What the API offers / Co daje API
+      options:
+        - label: Patient details by ID (email, phone, city, national ID) / Dane pacjenta po ID
+        - label: A patient's visits with statuses / Wizyty pacjenta ze statusami
+        - label: A doctor's bookings for a day / Rezerwacje lekarza na dzień
+        - label: Schedules / free slots / Grafiki, wolne terminy
+        - label: Webhooks or change notifications / Webhooki albo powiadomienia o zmianach
+        - label: Sandbox / test environment / Środowisko testowe
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation and notes / Dokumentacja i uwagi
+      description: Links to the API docs, authentication method, rate limits, anything unusual. / Linki, uwierzytelnienie, limity.
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who builds it? / Kto to zrobi?
+      options:
+        - I want to build it / Chcę to zrobić
+        - I can test it with a sandbox or my clinic / Mogę testować
+        - Request only / Tylko zgłaszam
+    validations:
+      required: true

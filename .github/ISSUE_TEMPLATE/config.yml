@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability / Podatność bezpieczeństwa
+    url: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability
+    about: Do not open a public issue — use "Report a vulnerability" in this repository's Security tab (SECURITY.md). / Nie zakładaj publicznego zgłoszenia — zakładka Security.

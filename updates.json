@@ -1,0 +1,12 @@
+{
+  "latest": {
+    "version": "1.66.0",
+    "date": "2026-09-19",
+    "url": "https://github.com/PRM-Core/PRM-Core-/releases/tag/v1.66.0",
+    "notes": {
+      "en": "First public release.",
+      "pl": "Pierwsze wydanie publiczne."
+    }
+  },
+  "messages": []
+}

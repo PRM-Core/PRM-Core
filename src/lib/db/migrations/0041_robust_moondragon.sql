@@ -1,0 +1,1 @@
+ALTER TABLE `login_challenges` ADD `channel` text DEFAULT 'sms' NOT NULL;

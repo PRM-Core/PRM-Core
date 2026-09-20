@@ -1,0 +1,1 @@
+ALTER TABLE `popup_settings` ADD `config` text NOT NULL;

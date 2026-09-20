@@ -1,0 +1,1 @@
+ALTER TABLE `contact_visits` ADD `ic_event_sent` text DEFAULT '' NOT NULL;

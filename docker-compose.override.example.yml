@@ -1,0 +1,25 @@
+# Wzór nadpisań dla jednej instalacji. Skopiuj i pracuj na kopii:
+#
+#     cp docker-compose.override.example.yml docker-compose.override.yml
+#
+# Compose wczytuje `docker-compose.override.yml` automatycznie. Trzymaj tu
+# wszystko, co dotyczy Twojego serwera, a nie produktu — dzięki temu
+# `docker-compose.yml` da się aktualizować razem z nowymi wersjami PRM Core
+# bez rozwiązywania konfliktów.
+#
+# Poniżej przykłady. Odkomentuj to, czego potrzebujesz.
+#
+# services:
+#   app:
+#     # Inny port na hoście, gdy 3000 jest zajęty.
+#     ports:
+#       - "8080:3000"
+#
+#   caddy:
+#     volumes:
+#       # Konfiguracja innego projektu, który dzieli ten serwer.
+#       - /opt/inny-projekt:/srv/inny:ro
+#     # Potrzebne, gdy Caddy ma sięgać do usług nasłuchujących na HOŚCIE
+#     # (`host.docker.internal`) — na Linuksie bez tego wpisu nie działa.
+#     extra_hosts:
+#       - "host.docker.internal:host-gateway"

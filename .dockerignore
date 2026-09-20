@@ -1,0 +1,17 @@
+node_modules
+.output
+.nitro
+.vite
+dist
+build
+.git
+.github
+.vscode
+.idea
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+.lovable
+mem

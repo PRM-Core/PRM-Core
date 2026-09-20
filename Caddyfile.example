@@ -1,0 +1,81 @@
+# WZÓR konfiguracji Caddy dla PRM Core.
+#
+# Skopiuj go i dopiero na kopii pracuj:
+#
+#     cp Caddyfile.example Caddyfile
+#
+# `Caddyfile` jest w `.gitignore`, bo zawiera domeny i ustawienia jednej
+# instalacji. Ten wzór jest wspólny dla wszystkich i trafia do repozytorium.
+#
+# HTTPS bierze się tu sam — Caddy pobiera i odnawia certyfikat Let's Encrypt,
+# o ile domena wskazuje na ten serwer i porty 80/443 są otwarte.
+#
+# DWA WARIANTY UŻYCIA:
+#
+# 1. Caddy w kontenerze (profil `bundled-caddy`). Ten plik jest montowany do
+#    kontenera, więc `app:3000` zostaje bez zmian, a po wdrożeniu wystarczy:
+#    `docker compose --profile bundled-caddy exec -T caddy caddy reload --config /etc/caddy/Caddyfile`
+#
+# 2. Caddy zainstalowany na hoście — wtedy wklej ten blok do
+#    /etc/caddy/Caddyfile, ZMIEŃ `app:3000` na `127.0.0.1:3000` i przeładuj:
+#    `sudo systemctl reload caddy`.
+#
+# Zmień adres na swój przed pierwszym uruchomieniem.
+
+crm.przyklad.pl {
+	encode zstd gzip
+	reverse_proxy app:3000
+
+	# Adres, z którego przyszło żądanie, jest potrzebny webhookom Twilio:
+	# podpis liczą po URL-u, który wywołali, a nie po tym, co widzi aplikacja
+	# za proxy.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+
+		# ── nagłówki ochronne ───────────────────────────────────────────────
+		#
+		# Blokada osadzania w ramce. PRM Core nigdy nie jest osadzany w cudzej
+		# stronie (pop-up działa przez skrypt, nie przez ramkę), więc `DENY`
+		# nic nie psuje, a zamyka clickjacking na ekranie logowania: podłożenie
+		# przezroczystej ramki nad cudzą stroną i przechwycenie kliknięcia.
+		X-Frame-Options "DENY"
+
+		# Odcięcie sprzętu, którego aplikacja nie używa. Gdyby kiedyś wstrzyknięto
+		# tu cudzy skrypt, nie sięgnie po kamerę, mikrofon ani lokalizację.
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+		# Nazwa serwera nie jest nikomu potrzebna, a podpowiada, czego szukać.
+		-Server
+	}
+
+	# ── polityka treści, na razie w trybie zgłaszania ─────────────────────────
+	#
+	# **Report-Only celowo.** Ostra polityka potrafi wyciąć własne skrypty
+	# aplikacji i wywalić interfejs; wprowadzanie jej bez obserwacji byłoby
+	# wymianą jednego ryzyka na większe. W tym trybie przeglądarka
+	# **niczego nie blokuje**, tylko zgłasza, co by zablokowała — po kilku dniach
+	# pracy widać, co realnie trzeba dopuścić, i wtedy zamienia się nagłówek na
+	# `Content-Security-Policy` bez niespodzianek.
+	#
+	# `frame-ancestors 'none'` powiela X-Frame-Options dla nowszych przeglądarek,
+	# które tamtego już nie czytają.
+	header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+	# ── log dostępowy ─────────────────────────────────────────────────────────
+	#
+	# **Katalog na hoście** (`./logs`), nie wolumen kontenera. Aplikacja montuje
+	# go tylko do odczytu i analizuje raz na dobę (raport bezpieczeństwa).
+	#
+	# **Retencja 30 dni** (`roll_keep_for`).
+	# Log zawiera adresy IP, czyli dane osobowe — trzymanie ich bez terminu nie
+	# ma podstawy. Trzydzieści dni wystarcza, żeby zauważyć i opisać incydent.
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 10MiB
+			roll_keep 30
+			roll_keep_for 720h
+		}
+	}
+}

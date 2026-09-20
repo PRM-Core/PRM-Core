@@ -1,0 +1,245 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+/* Czcionki z plików aplikacji (latin + latin-ext), nie z Google Fonts: przeglądarka
+   personelu nie łączy się z serwerami Google (RODO). */
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-ext-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-ext-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-ext-600.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/inter/latin-ext-700.css";
+@import "@fontsource/plus-jakarta-sans/latin-400.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-400.css";
+@import "@fontsource/plus-jakarta-sans/latin-500.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-500.css";
+@import "@fontsource/plus-jakarta-sans/latin-600.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-600.css";
+@import "@fontsource/plus-jakarta-sans/latin-700.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-700.css";
+@import "@fontsource/plus-jakarta-sans/latin-800.css";
+@import "@fontsource/plus-jakarta-sans/latin-ext-800.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* ──────────────────────────────────────────────────────────────────────
+   * Typografia wg brand booka.
+   *
+   *   Plus Jakarta Sans — nagłówki. Geometryczny grotesk o skandynawskim
+   *   charakterze; w interfejsie niesie ton marki tam, gdzie tekst jest krótki.
+   *
+   *   Inter — treść. Zaprojektowany do ekranów, z wysoką wysokością x
+   *   i rozróżnialnymi „I", „l" oraz „1" — przy tabelach kontaktów i numerach
+   *   PESEL to nie jest ozdoba, tylko warunek czytania bez pomyłek.
+   *
+   * Obie mają pełne `latin-ext`, więc polskie znaki nie spadają na zamiennik.
+   * ────────────────────────────────────────────────────────────────────── */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display:
+    "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Inter", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --gradient-primary: linear-gradient(
+    135deg,
+    oklch(0.2895 0.0622 263.95),
+    oklch(0.2012 0.0368 262.33)
+  );
+  --gradient-soft: linear-gradient(135deg, oklch(0.9725 0.0045 258.32), oklch(1 0 0));
+  /* Cień w barwie granatu, nie w szarości — inaczej karta odcina się od tła
+     brudnym szarym halo zamiast pogłębiać się w kolorze marki. */
+  --shadow-card:
+    0 1px 2px oklch(0.2895 0.0622 263.95 / 0.05), 0 4px 16px oklch(0.2895 0.0622 263.95 / 0.07);
+  --shadow-elevated: 0 8px 30px oklch(0.2895 0.0622 263.95 / 0.12);
+}
+
+:root {
+  /* ──────────────────────────────────────────────────────────────────────
+   * Paleta PRM Core wg brand booka (Scandinavian Tech).
+   *
+   *   Nordic Navy  #1B2A4A — marka, powierzchnie pierwszoplanowe, typografia
+   *   Arctic Slate #0D1627 — ciemne tła, linie konstrukcyjne
+   *   Nordic Sand  #D9C3B0 — akcent, ciepłe wyróżnienia
+   *   Steel Blue   #5C7080 — etykiety drugoplanowe, obramowania
+   *   Arctic Grey  #F4F6F9 — tło drugoplanowe, komponenty w trybie jasnym
+   *
+   * Wartości w oklch, bo w nim jaśniejsze i ciemniejsze odcienie tej samej
+   * barwy liczy się zmianą jednej liczby — a nie zgadywaniem szesnastkowym.
+   * Odcienie pochodne (nawigacja, obramowania, stany) są wyprowadzone z tych
+   * pięciu, żeby paleta została paletą, a nie zbiorem podobnych niebieskich.
+   * ────────────────────────────────────────────────────────────────────── */
+  --radius: 0.875rem;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.2895 0.0622 263.95);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2895 0.0622 263.95);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2895 0.0622 263.95);
+
+  /* Nordic Navy jako kolor działania. Tekst na nim musi być biały —
+     granat o jasności 0.29 nie zniesie ciemnego napisu. */
+  --primary: oklch(0.2895 0.0622 263.95);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.9725 0.0045 258.32);
+
+  --secondary: oklch(0.9725 0.0045 258.32);
+  --secondary-foreground: oklch(0.2895 0.0622 263.95);
+
+  --muted: oklch(0.9725 0.0045 258.32);
+  --muted-foreground: oklch(0.5348 0.0347 242.48);
+
+  /* Nordic Sand — jedyny ciepły ton w palecie, więc wyłącznie do wyróżnień. */
+  --accent: oklch(0.942 0.018 63.14);
+  --accent-foreground: oklch(0.38 0.045 50);
+
+  --destructive: oklch(0.55 0.19 27);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --success: oklch(0.56 0.12 160);
+  --success-foreground: oklch(0.99 0 0);
+
+  --warning: oklch(0.76 0.13 70);
+  --warning-foreground: oklch(0.28 0.06 60);
+
+  --border: oklch(0.91 0.008 258.32);
+  --input: oklch(0.91 0.008 258.32);
+  --ring: oklch(0.2895 0.0622 263.95);
+
+  /* Wykresy: granat, stal, piasek i dwa odcienie pochodne — tak, żeby serie
+     dało się odróżnić także w druku i przy daltonizmie. */
+  --chart-1: oklch(0.2895 0.0622 263.95);
+  --chart-2: oklch(0.5348 0.0347 242.48);
+  --chart-3: oklch(0.8305 0.036 63.14);
+  --chart-4: oklch(0.66 0.07 220);
+  --chart-5: oklch(0.74 0.05 140);
+
+  --sidebar: oklch(0.9725 0.0045 258.32);
+  --sidebar-foreground: oklch(0.2895 0.0622 263.95);
+  --sidebar-primary: oklch(0.2895 0.0622 263.95);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(1 0 0);
+  --sidebar-accent-foreground: oklch(0.2895 0.0622 263.95);
+  --sidebar-border: oklch(0.91 0.008 258.32);
+  --sidebar-ring: oklch(0.2895 0.0622 263.95);
+}
+
+.dark {
+  /* Arctic Slate jako płótno. Granat jest tu za ciemny na kolor działania,
+     więc rolę przejmuje Nordic Sand — jedyny ton z palety czytelny na czerni. */
+  --background: oklch(0.2012 0.0368 262.33);
+  --foreground: oklch(0.9725 0.0045 258.32);
+  --card: oklch(0.245 0.04 262.33);
+  --card-foreground: oklch(0.9725 0.0045 258.32);
+  --popover: oklch(0.245 0.04 262.33);
+  --popover-foreground: oklch(0.9725 0.0045 258.32);
+  --primary: oklch(0.8305 0.036 63.14);
+  --primary-foreground: oklch(0.2012 0.0368 262.33);
+  --primary-soft: oklch(0.3 0.04 262.33);
+  --secondary: oklch(0.28 0.04 262.33);
+  --secondary-foreground: oklch(0.9725 0.0045 258.32);
+  --muted: oklch(0.28 0.04 262.33);
+  --muted-foreground: oklch(0.7 0.025 250);
+  --accent: oklch(0.32 0.035 262.33);
+  --accent-foreground: oklch(0.9725 0.0045 258.32);
+  --destructive: oklch(0.63 0.19 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --success: oklch(0.7 0.14 160);
+  --success-foreground: oklch(0.2012 0.0368 262.33);
+  --warning: oklch(0.8 0.14 75);
+  --warning-foreground: oklch(0.2012 0.0368 262.33);
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 16%);
+  --ring: oklch(0.8305 0.036 63.14);
+  --chart-1: oklch(0.8305 0.036 63.14);
+  --chart-2: oklch(0.68 0.04 242.48);
+  --chart-3: oklch(0.76 0.03 258.32);
+  --chart-4: oklch(0.66 0.07 220);
+  --chart-5: oklch(0.74 0.05 140);
+  --sidebar: oklch(0.17 0.035 262.33);
+  --sidebar-foreground: oklch(0.9725 0.0045 258.32);
+  --sidebar-primary: oklch(0.8305 0.036 63.14);
+  --sidebar-primary-foreground: oklch(0.2012 0.0368 262.33);
+  --sidebar-accent: oklch(0.245 0.04 262.33);
+  --sidebar-accent-foreground: oklch(0.9725 0.0045 258.32);
+  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-ring: oklch(0.8305 0.036 63.14);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    /* Inter: cyfry o równej szerokości w tabelach i „a" bez ogonka —
+       ustawienia zalecane przez autora kroju do interfejsów. */
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    line-height: 1.6;
+  }
+
+  /* Nagłówki w kroju firmowym, ze światłem literowym z brand booka:
+     -0.02 em przy H1, -0.01 em przy pozostałych. Bez tego Plus Jakarta Sans
+     w dużych rozmiarach wygląda na rozstrzelony. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  h1 {
+    letter-spacing: -0.02em;
+  }
+}

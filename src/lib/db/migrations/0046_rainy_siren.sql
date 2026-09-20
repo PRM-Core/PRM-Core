@@ -1,0 +1,1 @@
+ALTER TABLE `content_snapshots` ADD `attachments` text;

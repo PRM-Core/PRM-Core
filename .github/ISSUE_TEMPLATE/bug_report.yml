@@ -1,0 +1,36 @@
+name: Bug report / Błąd
+description: Something does not work as described. / Coś nie działa tak, jak powinno.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security issue? Do not report it here** — see SECURITY.md. / **Podatność? Nie tutaj** — patrz SECURITY.md.
+        **No real patient data, keys or passwords in screenshots or logs.** / **Bez prawdziwych danych pacjentów, kluczy i haseł na zrzutach i w logach.**
+  - type: input
+    id: version
+    attributes:
+      label: Version / Wersja
+      description: Bottom of Ustawienia, or `/health`.
+      placeholder: e.g. 1.64.3
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Kroki
+      placeholder: |
+        1. Go to …
+        2. Click …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual / Oczekiwane i faktyczne zachowanie
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots (demo data only) / Logi i zrzuty (tylko dane fikcyjne)

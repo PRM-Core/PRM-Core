@@ -1,0 +1,1 @@
+ALTER TABLE `contacts` ADD `ic_synced_at` integer;

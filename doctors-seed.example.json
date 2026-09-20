@@ -1,0 +1,21 @@
+[
+  {
+    "systemId": 101,
+    "name": "lek. Anna Przykładowa",
+    "specialization": "Kardiolog",
+    "specKey": "kardiolog",
+    "services": [
+      { "id": 5001, "name": "Konsultacja kardiologiczna" },
+      { "id": 5002, "name": "Echo serca" }
+    ],
+    "bookingUrl": "https://przyklad.pl/rezerwacja/kardiologia"
+  },
+  {
+    "systemId": 102,
+    "name": "dr n. med. Jan Przykładowy",
+    "specialization": "Ortopeda",
+    "specKey": "ortopeda",
+    "services": [{ "id": 5010, "name": "Konsultacja ortopedyczna" }],
+    "bookingUrl": ""
+  }
+]

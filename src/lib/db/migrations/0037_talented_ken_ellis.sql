@@ -1,0 +1,1 @@
+ALTER TABLE `contact_visits` ADD `ic_termin_id` integer;

@@ -1,0 +1,20 @@
+[
+  {
+    "nazwa": "nazwa placówki",
+    "wzorzec": "klinika abc",
+    "wielkoscLiter": false,
+    "dozwoloneW": []
+  },
+  {
+    "nazwa": "domena instalacji",
+    "wzorzec": "klinika-abc\\.pl",
+    "wielkoscLiter": false,
+    "dozwoloneW": []
+  },
+  {
+    "nazwa": "adres IP serwera",
+    "wzorzec": "203\\.0\\.113\\.[0-9]+",
+    "wielkoscLiter": true,
+    "dozwoloneW": []
+  }
+]

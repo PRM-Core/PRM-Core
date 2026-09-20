@@ -1,0 +1,17 @@
+name: Feature request / Propozycja funkcji
+description: An idea that is not an integration. / Pomysł, który nie jest integracją.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Problem
+      description: What is hard or impossible today? / Co dziś jest trudne albo niemożliwe?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / Propozycja
+    validations:
+      required: true

@@ -1,0 +1,53 @@
+name: Integration request / Nowa integracja
+description: Propose or claim an integration with another system. / Zaproponuj albo weź na siebie integrację.
+labels: ["integration"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Please read [docs/INTEGRATIONS.md](../blob/main/docs/INTEGRATIONS.md) first — many systems can be connected without code through the lead webhook.
+        Dziękujemy! Zajrzyj najpierw do docs/INTEGRATIONS.md — wiele systemów podłączysz bez kodu przez webhook leadów.
+
+        **Never paste real patient data, API keys or passwords here.** / **Nie wklejaj tu prawdziwych danych pacjentów, kluczy ani haseł.**
+  - type: input
+    id: system
+    attributes:
+      label: System / service
+      description: Name and website of the system. / Nazwa i strona systemu.
+      placeholder: e.g. SMSAPI (https://www.smsapi.pl)
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What should the integration do? / Co ma robić?
+      multiple: true
+      options:
+        - Send data from the other system into PRM (contacts, visits, events) / Dane do PRM
+        - Let PRM send something through the other system (SMS, email, calendar) / PRM wysyła przez system
+        - Automation step in PRM that calls the other system / Krok automatyzacji
+        - Other / Inne
+    validations:
+      required: true
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case / Po co
+      description: What problem does it solve for a clinic? / Jaki problem rozwiązuje placówce?
+    validations:
+      required: true
+  - type: textarea
+    id: api
+    attributes:
+      label: API / webhook documentation
+      description: Links to the API docs, auth method, sample payload with demo data only. / Dokumentacja API, sposób uwierzytelniania, przykładowy payload z fikcyjnymi danymi.
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Will you build it? / Zbudujesz to?
+      options:
+        - Yes, I want to build it / Tak, chcę to zbudować
+        - I can help test it / Mogę pomóc testować
+        - No, just proposing / Tylko proponuję
+    validations:
+      required: true

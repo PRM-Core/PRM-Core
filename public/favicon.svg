@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PRM Core">
+  <!--
+    Znak PRM Core: kwadrat o zaokrąglonych rogach w kolorze Nordic Navy
+    (#1B2A4A) z ukośną kreską o zaokrąglonych końcach.
+
+    Rysowany jako SVG, nie PNG: favicon musi być czytelny i przy 16 px na karcie
+    przeglądarki, i przy 180 px jako ikona na pulpicie telefonu. Jeden wektor
+    obsługuje oba przypadki, a przy okazji waży poniżej kilobajta.
+  -->
+  <rect width="64" height="64" rx="14" fill="#1B2A4A" />
+  <path
+    d="M22 16 L42 46"
+    stroke="#FFFFFF"
+    stroke-width="7.5"
+    stroke-linecap="round"
+  />
+</svg>

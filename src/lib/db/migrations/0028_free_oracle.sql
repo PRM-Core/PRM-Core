@@ -1,0 +1,1 @@
+ALTER TABLE `contact_visits` ADD `specialization` text DEFAULT '' NOT NULL;

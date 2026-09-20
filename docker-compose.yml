@@ -1,0 +1,71 @@
+# PRM Core — produkcja.
+#
+# Dwa kontenery: aplikacja i Caddy, który kończy HTTPS (certyfikat z Let's
+# Encrypt bierze i odnawia sam). Baza jest katalogiem na hoście, nie wolumenem
+# nazwanym — plik ma być widoczny gołym okiem, bo to jego kopiuje backup i to
+# jego przywraca rollback.
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-dev}
+        APP_COMMIT: ${APP_COMMIT:-}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: file:/data/prm-core.db
+      PORT: "3000"
+      HOST: 0.0.0.0
+    volumes:
+      # Sufiks :Z jest konieczny na AlmaLinux/RHEL, gdzie SELinux działa w trybie
+      # enforcing — bez niego kontener dostaje "permission denied" przy próbie
+      # zapisu do podmontowanego katalogu, mimo poprawnych uprawnień plików.
+      # Na Ubuntu/Debianie jest nieszkodliwy.
+      - ./data:/data:Z
+      # Logi dostępowe Caddy — **tylko do odczytu**. Aplikacja ma je analizować
+      # (dobowy raport bezpieczeństwa), a nie zmieniać: log, który program może
+      # nadpisać, przestaje być dowodem czegokolwiek.
+      - ./logs:/logs:ro,Z
+    healthcheck:
+      # /health sprawdza bazę i wersję migracji, nie samo „coś nasłuchuje”.
+      test: ["CMD", "bun", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    ports:
+      # WYŁĄCZNIE na pętli zwrotnej. Caddy z hosta dosięgnie aplikacji, a świat
+      # zewnętrzny nie — inaczej dałoby się ominąć HTTPS, wchodząc na
+      # http://IP:3000 i logując się po nieszyfrowanym połączeniu.
+      - "127.0.0.1:3000:3000"
+
+  # Caddy w kontenerze — uruchamiany TYLKO na żądanie:
+  #   docker compose --profile bundled-caddy up -d
+  # Domyślnie pominięty, bo na tym serwerze Caddy działa już na hoście i dwie
+  # instancje nie mogą dzielić portów 80/443.
+  caddy:
+    image: caddy:2-alpine
+    profiles: ["bundled-caddy"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      # Log na hoście, nie w wolumenie kontenera. Dopóki siedział w `caddy_data`,
+      # aplikacja nie miała jak go przeczytać — a to Caddy, nie aplikacja, widzi
+      # próby dobijania się pod zamknięte adresy.
+      - ./logs:/var/log/caddy:Z
+      # Rzeczy właściwe dla jednej instalacji (montowania obcych projektów,
+      # dodatkowe porty) dokłada się w `docker-compose.override.yml`.
+      # Compose scala go automatycznie i nie trzeba go nigdzie wskazywać.
+
+volumes:
+  caddy_data:
+  caddy_config:

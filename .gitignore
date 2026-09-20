@@ -1,0 +1,106 @@
+# Logs
+/logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+.output
+.vinxi
+.tanstack/**
+.nitro
+*.local
+
+# Wrangler / Cloudflare
+.wrangler/
+.dev.vars
+
+# Local env + database
+.env
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Notatki robocze — zawierają dane osobowe, adresy i szczegóły placówki,
+# których nie wolno opublikować razem z kodem. Plik zostaje lokalnie.
+NOTES.md
+
+# Kopie bazy robione przez deploy.sh.
+#
+# UKOŚNIK NA POCZĄTKU JEST ISTOTNY we wszystkich wpisach poniżej: bez niego
+# wzorzec dopasowuje katalog o tej nazwie na każdym poziomie drzewa. `media/`
+# wycinało w ten sposób `src/lib/media/` — trzy pliki źródłowe nie trafiały
+# do repozytorium i świeży klon nie budował się wcale.
+/data/
+
+# Dokumenty pacjentów wgrane lokalnie. Na produkcji leżą w /data/documents
+# (wolumen hosta) — tutaj powstają tylko przy pracy na local.db i nie mają
+# prawa trafić ani do repozytorium, ani do paczki wydaniowej.
+/documents/
+
+# Grafiki wgrane do biblioteki Media — dane instancji, nie kod.
+# Leżą obok bazy (patrz `mediaDir()`), więc przy DATABASE_URL=file:./local.db
+# lądują w katalogu projektu i bez tego wpisu trafiały do paczki wydania.
+/media/
+
+# Lista lekarzy dostarczona przez placówkę: imiona, nazwiska i tytuły realnych
+# osób plus identyfikatory z systemu rezerwacji. Dane instancji, nie kod.
+# Leży obok bazy (patrz `doctorSeedPath()`), więc przy DATABASE_URL=file:./local.db
+# ląduje w katalogu projektu. Wzór do skopiowania: doctors-seed.example.json
+doctors-seed.json
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GRANICA: produkt (GitHub) ↔ instalacja (konkretna placówka)
+#
+# Wszystko poniżej opisuje JEDNĄ instalację: jej domeny, jej serwer, jej
+# ustalenia i jej historię wdrożeń. Kod jest wspólny, to nie. Każda pozycja
+# ma w repozytorium swój wzór z sufiksem `.example` — jeśli dodajesz tu plik,
+# dodaj też wzór, inaczej świeży klon nie wystartuje.
+#
+# Sprawdzenie przed publikacją: `bun run sprawdz:rozdzial`
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Konfiguracja serwera WWW: domeny, przekierowania, import obcych projektów.
+# Wzór: Caddyfile.example
+Caddyfile
+
+# Nadpisania Compose dla tego serwera (montowania, porty).
+# Wzór: docker-compose.override.example.yml
+docker-compose.override.yml
+
+# Instrukcje wdrożeniowe konkretnych wydań i plan prac — zawierają adresy
+# serwera, nazwy kontenerów i ustalenia z placówką. To dziennik operacyjny,
+# nie dokumentacja produktu.
+WDROZENIE-*.md
+PLAN-WDROZEN.md
+PUBLIKACJA-GITHUB.md
+PUBLIKACJA-GITHUB.sh
+
+# Wzorce danych tej instalacji dla `sprawdz:rozdzial` — sama ich lista zdradza
+# nazwę placówki, domeny i adres serwera. Wzór: granica.local.example.json
+granica.local.json
+
+# Ustawienia narzędzi i środowiska pracy, nie produktu.
+.lovable/
+.claude/
+.DS_Store
+.output/
+.wrangler/
+.tanstack/

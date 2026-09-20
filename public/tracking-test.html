@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Strona testowa — kod trackingowy PRM Core</title>
+</head>
+<body>
+  <h1>Strona testowa</h1>
+  <p>Ta strona ma wgrany prawdziwy kod instalacyjny v2 z zakładki Ustawienia → Tracking.</p>
+  <p>Dopisz <code>?prm_debug=1</code> do adresu, żeby zobaczyć plakietkę stanu.</p>
+  <button id="spa">Symuluj nawigację SPA (pushState)</button>
+  <script>
+    document.getElementById("spa").addEventListener("click", function () {
+      history.pushState({}, "", "/tracking-test.html?strona=druga");
+      document.title = "Druga strona (SPA)";
+    });
+  </script>
+
+  <!-- PRM Core — kod śledzący v2. Wklej przed </head> albo jako JEDEN tag „Niestandardowy HTML" w menedżerze tagów (reguła: All Pages). -->
+  <script>
+  (function (d) {
+    var u = "http://localhost:8080/prm-tracker.js";
+    if (d.querySelector('script[src="' + u + '"]')) return;
+    var s = d.createElement("script");
+    s.async = true;
+    s.src = u;
+    s.setAttribute("data-prm-ws", "prm_ws_8f21ac49");
+    (d.head || d.body || d.documentElement).appendChild(s);
+  })(document);
+  </script>
+</body>
+</html>
