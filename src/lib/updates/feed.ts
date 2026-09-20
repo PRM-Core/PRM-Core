@@ -15,7 +15,7 @@ import { z } from "zod";
 
 /** Official feed. A fork points `PRM_UPDATE_FEED_URL` at its own. */
 export const DEFAULT_UPDATE_FEED_URL =
-  "https://raw.githubusercontent.com/PRM-Core/PRM-Core-/main/updates.json";
+  "https://raw.githubusercontent.com/PRM-Core/PRM-Core/main/updates.json";
 
 const VERSION = /^\d+\.\d+\.\d+$/;
 const httpsUrl = z
