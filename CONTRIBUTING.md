@@ -17,7 +17,9 @@ below matter more than in a typical project — especially around patient data.
   the _Medical system connector_ form first.
 - **Integrations** — [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) explains every
   path, from a no-code webhook recipe to a new automation action.
-- Issues labelled `good first issue` and `integration`.
+- Issues labelled `good first issue`, `automation` and `integration`.
+- [docs/ROADMAP.md](docs/ROADMAP.md) — what is planned for the engine and for
+  PRM_Agent, with the open items marked.
 - A recipe in `docs/recipes/` for a system you already connected — no code
   needed and very useful to other clinics.
 
