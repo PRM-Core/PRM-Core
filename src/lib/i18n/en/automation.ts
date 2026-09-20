@@ -173,6 +173,7 @@ export const automation: Record<string, string> = {
   "Wybierz, jak chcesz zbudować scenariusz komunikacji z pacjentem.":
     "Choose how you want to build the patient communication workflow.",
   "Wizualny builder": "Visual builder",
+  Statystyki: "Statistics",
   "Zbuduj scenariusz krok po kroku — wyzwalacz, warunki i akcje na płótnie.":
     "Build the workflow step by step — trigger, conditions and actions on a canvas.",
   "Opisz cel słowami, a agent przygotuje gotowy scenariusz za Ciebie.":

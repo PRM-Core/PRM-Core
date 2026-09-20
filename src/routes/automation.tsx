@@ -443,18 +443,18 @@ function AutomationPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="h-auto p-0 bg-transparent border-b border-border rounded-none w-full justify-start gap-1">
           {[
-            { v: "list", l: "Lista", i: List },
-            { v: "builder", l: "Wizualny builder", i: Workflow },
-            { v: "ai", l: "Agent AI", i: Bot },
+            { v: "list", l: tr("Lista"), i: List },
+            { v: "builder", l: tr("Wizualny builder"), i: Workflow },
+            { v: "ai", l: tr("Agent AI"), i: Bot },
             { v: "engine", l: "PRM Engine", i: Gauge },
-            { v: "stats", l: "Statystyki", i: BarChart3 },
-          ].map((t) => (
+            { v: "stats", l: tr("Statystyki"), i: BarChart3 },
+          ].map((zakladka) => (
             <TabsTrigger
-              key={t.v}
-              value={t.v}
+              key={zakladka.v}
+              value={zakladka.v}
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none px-4 py-2.5 gap-2"
             >
-              <t.i className="h-4 w-4" /> {t.l}
+              <zakladka.i className="h-4 w-4" /> {zakladka.l}
             </TabsTrigger>
           ))}
         </TabsList>
