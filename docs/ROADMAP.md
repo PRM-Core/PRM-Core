@@ -97,6 +97,26 @@ instruction must still be unable to message someone who opted out.
 8. **Local model support** (Ollama or a compatible endpoint) for clinics that
    will not send anything to a hosted provider.
 
+## Security
+
+Security work is not a phase; these are the open items.
+
+1. **Authentication by construction** — a check in CI that every server
+   function either uses the `requireUser` / `allowReporter` middleware or is
+   on an explicit public allowlist. Today the guarantee is convention plus a
+   runtime probe against a deployed instance
+   (`scripts/sprawdz-bezpieczenstwo.sh`). _(help wanted)_
+2. **Enforce the Content-Security-Policy.** `Caddyfile.example` ships it in
+   Report-Only with `'unsafe-inline'`; the goal is nonces for our own scripts
+   and an enforcing header. _(help wanted)_
+3. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
+   credentials) and the webhook secret, without an outage.
+4. **Audit trail for administrator actions** — who changed a role, reset a
+   password, exported contacts, read a document. Parts are in the engine log
+   today; it should be one view with retention.
+5. **Automated dependency review** in CI, and a documented response time for
+   reports that arrive through private vulnerability reporting.
+
 ## What we will not build
 
 - Medical advice to patients, diagnosis or triage of symptoms. PRM Core talks
