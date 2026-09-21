@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.66.0",
-    "date": "2026-09-19",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.66.0",
+    "version": "1.66.1",
+    "date": "2026-09-21",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.66.1",
     "notes": {
-      "en": "First public release.",
-      "pl": "Pierwsze wydanie publiczne."
+      "en": "Spreadsheet reading: security patch (SheetJS 0.20.3) and UTF-8 CSV fix.",
+      "pl": "Odczyt arkuszy: łatka bezpieczeństwa (SheetJS 0.20.3) i poprawka polskich znaków w CSV."
     }
   },
   "messages": []

@@ -44,8 +44,40 @@ export interface ParsedSheet {
  * raz tekstem, a w wiadomości i tak wszystko jest tekstem. Zachowanie typów
  * dawałoby „2021" w jednym wierszu i 2021 w drugim.
  */
+/**
+ * Tekst z pliku CSV — **z rozpoznaniem kodowania**.
+ *
+ * Biblioteka, dostając same bajty, zgaduje stronę kodową i przy CSV w UTF-8
+ * robiła z „Imię" „ImiÄ™" — w nagłówku kolumny, czyli w miejscu, którym
+ * wskazuje się pole w wiadomości. Najpierw więc UTF-8 (z BOM-em albo bez),
+ * a dopiero gdy bajty nie są poprawnym UTF-8 — Windows-1250, bo w tym
+ * kodowaniu zapisuje CSV polski Excel.
+ */
+const CP1250_HIGH =
+  "€�‚�„…†‡�‰Š‹ŚŤŽŹ�‘’“”•–—�™š›śťžź ˇ˘Ł¤Ą¦§¨©Ş«¬­®Ż°±˛ł´µ¶·¸ąş»Ľ˝ľżŔÁÂĂÄĹĆÇČÉĘËĚÍÎĎĐŃŇÓÔŐÖ×ŘŮÚŰÜÝŢßŕáâăäĺćçčéęëěíîďđńňóôőö÷řůúűüýţ˙";
+
+/** Bajty Windows-1250 na znaki. Własna tablica, bo `TextDecoder` w Bunie zna tylko UTF. */
+function decodeCp1250(bytes: Buffer): string {
+  let out = "";
+  for (const b of bytes) out += b < 0x80 ? String.fromCharCode(b) : CP1250_HIGH[b - 0x80];
+  return out;
+}
+
+function csvText(bytes: Buffer): string {
+  try {
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    return text.replace(/^\uFEFF/, "");
+  } catch {
+    return decodeCp1250(bytes);
+  }
+}
+
 export function parseWorkbook(bytes: Buffer, fileName: string): ParsedSheet[] {
-  const wb = XLSX.read(bytes, { type: "buffer", raw: false });
+  // XLSX to spakowany plik binarny; CSV to tekst, więc kodowanie ustalamy sami.
+  const isCsv = /\.(csv|txt|tsv)$/i.test(fileName);
+  const wb = isCsv
+    ? XLSX.read(csvText(bytes), { type: "string", raw: false })
+    : XLSX.read(bytes, { type: "buffer", raw: false });
   const out: ParsedSheet[] = [];
 
   for (const sheetName of wb.SheetNames) {

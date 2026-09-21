@@ -8,6 +8,21 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.66.1] — odczyt arkuszy: łatka bezpieczeństwa i polskie znaki w CSV
+
+- **`xlsx` (SheetJS) z dystrybucji producenta, wersja 0.20.3.** Wydania w npm
+  (0.18.5) są porzucone i mają dwie podatności na **czytaniu** plików
+  (prototype pollution, ReDoS) — a arkusz wgrany do feedów jest właśnie
+  czytany. Instalacja pobiera paczkę z `cdn.sheetjs.com`, zgodnie z zaleceniem
+  autorów.
+- **CSV w UTF-8 nie rozjeżdża już polskich znaków.** Plik szedł do biblioteki
+  jako surowe bajty, a ta zgadywała stronę kodową: nagłówek „Imię" stawał się
+  „ImiÄ™", czyli nazwa kolumny, którą wskazuje się w wiadomości. Teraz CSV jest
+  odczytywany jako UTF-8 (z BOM-em albo bez), a gdy bajty nie są poprawnym
+  UTF-8 — jako Windows-1250, czyli tak, jak zapisuje polski Excel.
+- Odczyt arkuszy ma wreszcie testy (nagłówki, wiele arkuszy, puste kolumny,
+  oba kodowania CSV).
+
 ## [1.66.0] — pierwsze wydanie publiczne
 
 PRM Core Community Edition: CRM pacjentów i automatyzacja komunikacji dla
