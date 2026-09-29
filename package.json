@@ -13,7 +13,7 @@
     "tanstack-start",
     "sqlite"
   ],
-  "version": "1.66.1",
+  "version": "1.66.2",
   "author": "PRM CORE prosta spółka akcyjna",
   "license": "MIT",
   "private": true,

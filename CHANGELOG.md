@@ -8,6 +8,21 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.66.2] — raport bezpieczeństwa nie dobija się do zepsutej bramki
+
+- **Nieudana wysyłka dobowego raportu wstrzymuje kolejną próbę na godzinę.**
+  Znacznik „wysłano” powstaje dopiero po udanej wysyłce, więc przy bramce, która
+  odrzuca wszystko (u jednej placówki: wyczerpany limit planu SendGrid), pętla
+  silnika ponawiała raport co 4 sekundy — z wywołaniem modelu za każdym razem,
+  aż do dobowego budżetu 5 USD. Teraz nieudana próba zostawia wpis w dzienniku,
+  a ponowienie idzie bez modelu: liczby są te same, interpretacja już była.
+- **Odmowa bramki pocztowej to ostrzeżenie krytyczne w panelu** (nadzorca
+  silnika). Cisza w poczcie — kampanie, przypomnienia, ankiety, kody logowania,
+  raport bezpieczeństwa — wychodziła na jaw dopiero po kilku dniach, po tym,
+  że nie przyszedł poranny raport.
+
+Bez migracji i bez zmian w `.env`.
+
 ## [1.66.1] — odczyt arkuszy: łatka bezpieczeństwa i polskie znaki w CSV
 
 - **`xlsx` (SheetJS) z dystrybucji producenta, wersja 0.20.3.** Wydania w npm

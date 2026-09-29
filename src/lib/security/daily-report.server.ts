@@ -51,6 +51,18 @@ const GODZINA = Number(process.env.PRM_SECURITY_REPORT_HOUR ?? 7);
  */
 const LIMIT_USD = Number(process.env.PRM_SECURITY_REPORT_LIMIT_USD ?? 5);
 const ZNACZNIK = "raport-bezpieczenstwa";
+
+/**
+ * Odstęp między próbami, gdy wysyłka się nie udała.
+ *
+ * Znacznik „wysłano" powstaje dopiero po udanej wysyłce — i słusznie, bo
+ * inaczej awaria bramki zjadałaby raport po cichu. Ale bez śladu po nieudanej
+ * próbie pętla silnika ponawiała ją **co tick**, czyli co 4 sekundy: przy
+ * wyczerpanym limicie SendGrida to kilkanaście tysięcy prób na dobę, za każdym
+ * razem z wywołaniem modelu, aż do wyczerpania dobowego budżetu. Nieudana
+ * próba zostawia więc własny wpis, a kolejna rusza dopiero po godzinie.
+ */
+const PROBA_ODSTEP_MS = 60 * 60 * 1000;
 const MAX_TOKENS = 1500;
 
 const systemPrompt = () =>
@@ -331,13 +343,20 @@ export function renderReport(input: {
 /** Złożenie raportu bez wysyłania — używane przy testach i podglądzie. */
 export async function buildSecurityReport(
   now = Date.now(),
+  opcje: { bezModelu?: boolean } = {},
 ): Promise<{ subject: string; html: string; werdykt: string }> {
   const [{ entries, available, note }, snapshot] = await Promise.all([
     readAccessLog(24, now),
     collectSecuritySnapshot(now),
   ]);
   const ruch = summarise(entries, available, note);
-  const { ocena, modelUzyty, uwaga } = await ocenModelem(snapshot, ruch);
+  const { ocena, modelUzyty, uwaga } = opcje.bezModelu
+    ? {
+        ocena: werdyktZLiczb(snapshot, ruch),
+        modelUzyty: false,
+        uwaga: t("Ponowienie po nieudanej wysyłce — bez udziału modelu."),
+      }
+    : await ocenModelem(snapshot, ruch);
   const dzien = new Date(now).toLocaleDateString(intlLocale(), {
     timeZone: "Europe/Warsaw",
     day: "numeric",
@@ -362,6 +381,29 @@ export async function buildSecurityReport(
  * Znacznik „już wysłano" siedzi w dzienniku silnika, nie w pamięci procesu —
  * restart kontenera w środku dnia nie ma prawa spowodować drugiej wiadomości.
  */
+/**
+ * Nieudane próby z ostatniej doby: świeższa niż godzinę wstrzymuje kolejną,
+ * a sam fakt, że któraś dziś nie wyszła, zdejmuje z ponowienia model.
+ */
+export async function stanPoNieudanychProbach(
+  now = Date.now(),
+): Promise<{ wstrzymaj: boolean; byloNieudane: boolean }> {
+  const nieudane = await getDb()
+    .select({ createdAt: engineLog.createdAt })
+    .from(engineLog)
+    .where(
+      and(
+        like(engineLog.detail, `%"source":"${ZNACZNIK}"%`),
+        like(engineLog.detail, '%"proba":"blad"%'),
+        gte(engineLog.createdAt, now - 24 * 60 * 60 * 1000),
+      ),
+    );
+  return {
+    wstrzymaj: nieudane.some((r) => r.createdAt > now - PROBA_ODSTEP_MS),
+    byloNieudane: nieudane.length > 0,
+  };
+}
+
 export async function maybeSendSecurityReport(now = Date.now()): Promise<void> {
   if (warsawMinuteOfDay(now) < GODZINA * 60) return;
 
@@ -387,6 +429,9 @@ export async function maybeSendSecurityReport(now = Date.now()): Promise<void> {
     )
     .get();
   if (juz) return;
+
+  const { wstrzymaj, byloNieudane: nieudanePrzedtem } = await stanPoNieudanychProbach(now);
+  if (wstrzymaj) return;
 
   // Przed modelem, nie po nim: raport bez odbiorcy i tak nie wyjdzie, a wywołanie
   // PRM_Agenta kosztuje. Milczące pominięcie byłoby gorsze od braku raportu —
@@ -418,15 +463,37 @@ export async function maybeSendSecurityReport(now = Date.now()): Promise<void> {
     return;
   }
 
-  const { subject, html, werdykt } = await buildSecurityReport(now);
-
-  await sendEmail({
-    to: adresat,
-    fromEmail: from,
-    fromName: settings?.fromName || "PRM Core",
-    subject,
-    html,
+  // Ponowienie po nieudanej próbie idzie bez modelu. Liczby są te same,
+  // a interpretacja już raz kosztowała — płacenie za nią co godzinę dlatego,
+  // że bramka pocztowa nie działa, byłoby wyrzucaniem pieniędzy.
+  const { subject, html, werdykt } = await buildSecurityReport(now, {
+    bezModelu: nieudanePrzedtem,
   });
+
+  try {
+    await sendEmail({
+      to: adresat,
+      fromEmail: from,
+      fromName: settings?.fromName || "PRM Core",
+      subject,
+      html,
+    });
+  } catch (err) {
+    // Wpis w dzienniku, nie tylko wyjątek do konsoli: to on wstrzymuje kolejne
+    // próby na godzinę i to z niego nadzorca silnika robi ostrzeżenie w panelu.
+    await logStep({
+      kind: "error",
+      message: t("{ZNACZNIK}: wysyłka raportu za {dzis} nie powiodła się — {blad}", {
+        ZNACZNIK: ZNACZNIK,
+        dzis: dzis,
+        blad: err instanceof Error ? err.message : String(err),
+      }),
+      // Bez pola `dzien` — po nim rozpoznaje się raport WYSŁANY (zapytanie
+      // wyżej), a nieudana próba nie może udawać wysyłki.
+      detail: { source: ZNACZNIK, proba: "blad", dzienProby: dzis },
+    });
+    return;
+  }
 
   // Dopiero po wysłaniu. Znacznik postawiony wcześniej zjadłby raport, gdyby
   // SendGrid akurat nie odpowiedział — i nikt by się o tym nie dowiedział.

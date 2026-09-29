@@ -496,6 +496,47 @@ async function detectWebhookRejections(since: number): Promise<InsightDraft[]> {
   ];
 }
 
+/**
+ * The e-mail gateway refusing to send — the failure nobody notices.
+ *
+ * A rejected campaign is one error row among many, and the daily security
+ * report stops arriving exactly when it would be the thing to tell you. Both
+ * mean the same: patients are getting nothing. "Maximum credits exceeded" is
+ * the plan running out, not a bug, so the insight says where to look.
+ */
+async function detectEmailGatewayFailures(since: number): Promise<InsightDraft[]> {
+  const db = getDb();
+  const rows = await db
+    .select({ message: engineLog.message })
+    .from(engineLog)
+    .where(and(eq(engineLog.kind, "error"), gte(engineLog.createdAt, since)));
+  const odrzucone = rows.filter((r) => r.message.includes("SendGrid"));
+  if (odrzucone.length === 0) return [];
+
+  const limit = odrzucone.some(
+    (r) => r.message.includes("credits") || r.message.includes("Maximum credits exceeded"),
+  );
+  return [
+    {
+      signature: `email-gateway-failures:${Math.floor(since / WINDOW_MS)}`,
+      kind: "performance",
+      severity: "critical",
+      title: t("Bramka pocztowa odrzuca wysyłkę ({n})", { n: String(odrzucone.length) }),
+      detail: limit
+        ? t(
+            "SendGrid odrzuca wiadomości z powodu wyczerpanego limitu planu. Nie wychodzi nic: kampanie, przypomnienia, ankiety, kody logowania ani dobowy raport bezpieczeństwa.",
+          )
+        : t(
+            "SendGrid odrzuca wiadomości. Nie wychodzi nic: kampanie, przypomnienia, ankiety, kody logowania ani dobowy raport bezpieczeństwa.",
+          ),
+      proposedAction: limit
+        ? t("Sprawdź zużycie i plan na koncie SendGrid — po odnowieniu limitu wysyłka ruszy sama.")
+        : t("Sprawdź klucz w Integracje → Klucze i dane dostępowe („Sprawdź połączenie”)."),
+      evidence: { odrzucone: String(odrzucone.length), okno: `${WINDOW_DAYS} dni` },
+    },
+  ];
+}
+
 /** A sudden flood of new contacts usually means a form is being spammed. */
 async function detectContactVolumeAnomaly(): Promise<InsightDraft[]> {
   const db = getDb();
@@ -642,6 +683,7 @@ export async function collectSignals(): Promise<InsightDraft[]> {
     detectMonotonousAiNodes(since),
     detectAiSpend(),
     detectWebhookRejections(since),
+    detectEmailGatewayFailures(since),
     detectContactVolumeAnomaly(),
   ]);
   return groups.flat();

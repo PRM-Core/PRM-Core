@@ -228,4 +228,17 @@ export const engine: Record<string, string> = {
     "PRM_Agent routed the patient to path “{label}”. Reasoning: {v1}",
   "PRM_Agent wybrał ścieżkę „{label}”{note}. {reasoning}":
     "PRM_Agent chose path “{label}”{note}. {reasoning}",
+  "Bramka pocztowa odrzuca wysyłkę ({n})": "The e-mail gateway is refusing to send ({n})",
+  "SendGrid odrzuca wiadomości z powodu wyczerpanego limitu planu. Nie wychodzi nic: kampanie, przypomnienia, ankiety, kody logowania ani dobowy raport bezpieczeństwa.":
+    "SendGrid is refusing messages because the plan's send limit is used up. Nothing is going out: campaigns, reminders, surveys, login codes or the daily security report.",
+  "SendGrid odrzuca wiadomości. Nie wychodzi nic: kampanie, przypomnienia, ankiety, kody logowania ani dobowy raport bezpieczeństwa.":
+    "SendGrid is refusing messages. Nothing is going out: campaigns, reminders, surveys, login codes or the daily security report.",
+  "Sprawdź zużycie i plan na koncie SendGrid — po odnowieniu limitu wysyłka ruszy sama.":
+    "Check the usage and plan on the SendGrid account — sending resumes on its own once the limit renews.",
+  "Sprawdź klucz w Integracje → Klucze i dane dostępowe („Sprawdź połączenie”).":
+    "Check the key in Integrations → Keys and credentials (“Test connection”).",
+  "Ponowienie po nieudanej wysyłce — bez udziału modelu.":
+    "Retry after a failed send — without the model.",
+  "{ZNACZNIK}: wysyłka raportu za {dzis} nie powiodła się — {blad}":
+    "{ZNACZNIK}: sending the report for {dzis} failed — {blad}",
 };
