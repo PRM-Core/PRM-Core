@@ -18,6 +18,7 @@ import { effectiveState } from "../booking-system/status";
 import { warsawDay, warsawMinuteOfDay } from "../visits/warsaw-time";
 import { logStep } from "../engine/log.server";
 import { scoreNoShow, trainNoShow, type NoShowModel, type VisitFeatures } from "./predict/no-show";
+import { recommendFromSignals } from "./drafts.server";
 import { t } from "@/lib/i18n";
 
 /**
@@ -414,9 +415,11 @@ export async function trainAndScoreNoShow(now = Date.now()): Promise<NoShowModel
 /** The whole nightly run: signals, then the model and the scores. */
 export async function runAgentNightly(
   now = Date.now(),
-): Promise<{ signals: number; model: NoShowModel }> {
+): Promise<{ signals: number; model: NoShowModel; recommendations: number }> {
   const rows = await computeSignals(now);
   const model = await trainAndScoreNoShow(now);
+  // Recommendations read the scores, so they come after the model.
+  const recs = await recommendFromSignals(rows, now);
   await logStep({
     kind: "agent",
     message: t(
@@ -430,7 +433,7 @@ export async function runAgentNightly(
     ),
     detail: { source: "agent-nightly", dzien: warsawDay(now), mode: model.mode },
   });
-  return { signals: rows.length, model };
+  return { signals: rows.length, model, recommendations: recs.length };
 }
 
 /** On the engine clock: once a day, after 02:00 Warsaw time. Never throws. */

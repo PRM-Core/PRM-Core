@@ -1870,6 +1870,48 @@ export const agentScores = sqliteTable(
   (t) => [index("idx_agent_scores_kind").on(t.kind, t.score)],
 );
 
+/**
+ * What the agent proposes and a person decides on. A draft is a campaign
+ * ready to approve: an audience (the contacts behind a signal), a channel and
+ * a message written with placeholders. Approval turns the audience into a
+ * label segment the Campaigns module already understands and, when a
+ * published template is chosen, creates the campaign through the same runner
+ * every other send goes through — throttle, quiet hours and the consent gate
+ * included. The agent never sends anything itself.
+ */
+export type AgentDraftStatus = "proposed" | "approved" | "rejected" | "handed_off";
+
+export const agentDrafts = sqliteTable(
+  "agent_drafts",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull().default("campaign"),
+    status: text("status").notNull().default("proposed").$type<AgentDraftStatus>(),
+    /** The signal the audience comes from — one open draft per signal. */
+    audienceSignal: text("audience_signal").notNull(),
+    title: text("title").notNull(),
+    channel: text("channel").notNull().$type<"sms" | "email">(),
+    /** The proposed text, with placeholders the engine personalises at send time. */
+    message: text("message").notNull(),
+    audienceCount: integer("audience_count").notNull().default(0),
+    audienceIds: text("audience_ids", { mode: "json" }).notNull().$type<string[]>().default([]),
+    evidence: text("evidence", { mode: "json" }).$type<Record<string, string>>(),
+    /** Set on approval: the label segment holding the audience. */
+    segmentName: text("segment_name").notNull().default(""),
+    segmentId: text("segment_id"),
+    templateName: text("template_name").notNull().default(""),
+    campaignId: text("campaign_id"),
+    decidedBy: text("decided_by").notNull().default(""),
+    decidedAt: integer("decided_at"),
+    note: text("note").notNull().default(""),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (t) => [index("idx_agent_drafts_status").on(t.status, t.updatedAt)],
+);
+
+export type AgentDraftRow = typeof agentDrafts.$inferSelect;
+
 export type AgentSignalRow = typeof agentSignals.$inferSelect;
 export type AgentScoreRow = typeof agentScores.$inferSelect;
 

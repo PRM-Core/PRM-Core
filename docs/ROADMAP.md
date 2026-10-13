@@ -86,14 +86,21 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   recall due, first visit without a follow-up, post-visit without a reply,
   drifting patients; a no-show risk per upcoming visit with its factors,
   from a model trained on the installation's own history.
+- **Recommendations, drafts, lists and the brief** — rules over the signals
+  become findings with evidence and one proposed action; audiences become
+  campaign drafts a person approves (the campaign is created by the sending
+  code, with its limits and consent gate) or rejects; call lists for the
+  front desk with CSV export; a leadership brief from a template. No model
+  involved.
 
 ### Next
 
-1. **Recommendations and the weekly brief** — rules over the signals
-   ("no-shows up at X → second reminder"), the lists as call lists for the
-   front desk, a weekly brief from a template. _(help wanted)_
-2. **Drafts with approval** — the agent proposes a message, a person approves
-   it; the first N messages of every new automation go through this queue.
+1. **The language layer on the drafts and the brief** — a local model
+   polishes the draft text and the brief's wording from the facts the rules
+   produced; the facts stay in the template so the screen is correct with AI
+   off. _(help wanted)_
+2. **Drafts for automations** — the first N messages of every new automation
+   go through the same approval queue.
 3. **Decision log a human can read** — why the agent routed this patient this
    way, kept next to the run in the engine log, not only as tokens spent.
 4. **Knowledge base as the single source of facts** — services, prices,

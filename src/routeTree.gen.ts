@@ -37,6 +37,7 @@ import { Route as CollectRouteImport } from './routes/collect'
 import { Route as CareRouteImport } from './routes/care'
 import { Route as CampaignsRouteImport } from './routes/campaigns'
 import { Route as AutomationRouteImport } from './routes/automation'
+import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
 import { Route as UnsubscribeTokenRouteImport } from './routes/unsubscribe.$token'
@@ -203,6 +204,11 @@ const AutomationRoute = AutomationRouteImport.update({
   path: '/automation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentRoute = AgentRouteImport.update({
+  id: '/agent',
+  path: '/agent',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -336,6 +342,7 @@ const ApiWebhooksInboundEmailSecretRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/automation': typeof AutomationRoute
   '/campaigns': typeof CampaignsRoute
   '/care': typeof CareRoute
@@ -391,6 +398,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/automation': typeof AutomationRoute
   '/campaigns': typeof CampaignsRoute
   '/care': typeof CareRoute
@@ -447,6 +455,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agent': typeof AgentRoute
   '/automation': typeof AutomationRoute
   '/campaigns': typeof CampaignsRoute
   '/care': typeof CareRoute
@@ -504,6 +513,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agent'
     | '/automation'
     | '/campaigns'
     | '/care'
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agent'
     | '/automation'
     | '/campaigns'
     | '/care'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agent'
     | '/automation'
     | '/campaigns'
     | '/care'
@@ -670,6 +682,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgentRoute: typeof AgentRoute
   AutomationRoute: typeof AutomationRoute
   CampaignsRoute: typeof CampaignsRoute
   CareRoute: typeof CareRoute
@@ -922,6 +935,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agent': {
+      id: '/agent'
+      path: '/agent'
+      fullPath: '/agent'
+      preLoaderRoute: typeof AgentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -1102,6 +1122,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgentRoute: AgentRoute,
   AutomationRoute: AutomationRoute,
   CampaignsRoute: CampaignsRoute,
   CareRoute: CareRoute,

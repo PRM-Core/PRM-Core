@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.68.0",
+    "version": "1.69.0",
     "date": "2026-10-13",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.68.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.69.0",
     "notes": {
-      "en": "PRM_Agent signals: no-show rate and trend, recall due, drifting patients, no-show risk per visit — no model needed.",
-      "pl": "Sygnały PRM_Agenta: wskaźnik nieobecności z trendem, recall, pacjenci dryfujący, ryzyko nieobecności per wizyta — bez modelu."
+      "en": "PRM_Agent recommends and prepares: recommendations with evidence, campaign drafts a person approves, call lists for the front desk, a leadership brief — still no model needed.",
+      "pl": "PRM_Agent rekomenduje i przygotowuje: rekomendacje z dowodem, drafty kampanii do zatwierdzenia, listy dla rejestracji, brief dla zarządu — nadal bez modelu."
     }
   },
   "messages": []

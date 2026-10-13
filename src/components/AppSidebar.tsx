@@ -26,6 +26,7 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   Sparkles,
+  Bot,
   Stethoscope,
   Table2,
   Users,
@@ -79,6 +80,7 @@ const care: typeof workspace = localized(() => [
 
 const engage = localized(() => [
   { title: t("Omnichannel Inbox"), url: "/inbox", icon: Inbox },
+  { title: "PRM_Agent", url: "/agent", icon: Bot },
   { title: t("AI Copilot"), url: "/copilot", icon: Sparkles },
   { title: t("Consent & RODO"), url: "/consent", icon: ShieldCheck },
 ]);

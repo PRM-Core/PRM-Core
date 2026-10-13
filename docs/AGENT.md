@@ -18,7 +18,12 @@ layer in front of every prompt builder (section 3), the boundary check in the
 daily security report, and the tests of section 8. Since 1.68.0 the signals
 layer runs nightly (`src/lib/agent/`): the measures of section 5, a no-show
 risk per upcoming visit with its factors, and a dashboard card that shows
-them. Recommendations, the drafts queue and the brief are next.
+them. Since 1.69.0 the agent also recommends and prepares (section 4):
+rules over the signals become findings on the supervisor's panel, audiences
+become campaign drafts that a person approves or rejects, the "who needs
+attention" counts are call lists for the front desk, and a leadership brief
+is built from a template — all without a language model. The language layer
+(drafts and the brief polished by a local model, triage) is next.
 
 ## 1. Where intelligence runs
 

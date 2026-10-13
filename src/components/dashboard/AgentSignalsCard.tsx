@@ -5,6 +5,8 @@ import { ArrowDownRight, ArrowUpRight, Bot, Loader2, Minus, RefreshCw } from "lu
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getAgentOverview, runAgentNow, type AgentOverview } from "@/lib/api/agent.functions";
+import type { ListKey } from "@/lib/agent/drafts.server";
+import { factorLabel } from "@/lib/agent/factor-labels";
 import { intlLocale, t } from "@/lib/i18n";
 
 /**
@@ -41,27 +43,6 @@ function Trend({
       aria-label={up ? t("wzrost") : t("spadek")}
     />
   );
-}
-
-/** The factor names of the model, as a receptionist reads them. */
-function factorLabel(feature: string, raises: boolean): string {
-  const labels: Record<string, [string, string]> = {
-    leadDaysLog: [t("umówiona z dużym wyprzedzeniem"), t("umówiona niedawno")],
-    earlyMorning: [t("wczesna pora"), t("nie wczesna pora")],
-    lateAfternoon: [t("późne popołudnie"), t("nie późne popołudnie")],
-    monday: [t("poniedziałek"), t("nie poniedziałek")],
-    friday: [t("piątek"), t("nie piątek")],
-    firstVisit: [t("pierwsza wizyta"), t("pacjent już był")],
-    priorNoShowRate: [t("wcześniejsze nieobecności"), t("dotąd zawsze przychodził")],
-    priorNoShows: [t("wcześniejsze nieobecności"), t("bez wcześniejszych nieobecności")],
-    bookedOnline: [t("rezerwacja online"), t("umówiona przez rejestrację")],
-    noPhone: [t("brak telefonu"), t("jest telefon")],
-    noSmsConsent: [t("bez zgody na SMS"), t("zgoda na SMS")],
-    newInBase: [t("nowy kontakt"), t("kontakt od dawna w bazie")],
-  };
-  const pair = labels[feature];
-  if (!pair) return feature;
-  return raises ? pair[0] : pair[1];
 }
 
 export function AgentSignalsCard() {
@@ -103,7 +84,7 @@ export function AgentSignalsCard() {
   const noShow = signal("no_show_rate");
   const open = signal("email.open_rate");
   const click = signal("email.click_rate");
-  const attention: { key: string; label: string }[] = [
+  const attention: { key: ListKey; label: string }[] = [
     { key: "recall_due", label: t("Recall do zrobienia") },
     { key: "first_visit_no_followup", label: t("Pierwsza wizyta bez kolejnej") },
     { key: "post_visit_no_reply", label: t("Po wizycie, bez odpowiedzi") },
@@ -199,13 +180,18 @@ export function AgentSignalsCard() {
                 {attention.map(({ key, label }) => {
                   const s = signal(key);
                   return (
-                    <div key={key} className="rounded-lg border border-border p-3">
+                    <Link
+                      key={key}
+                      to="/agent"
+                      search={{ tab: "lists", list: key }}
+                      className="rounded-lg border border-border p-3 hover:bg-muted/40 transition-colors"
+                    >
                       <div className="text-xl font-semibold flex items-center gap-1.5">
                         {s ? Math.round(s.value) : "—"}
                         {s && <Trend value={s.value} previous={s.previous} lowerIsBetter />}
                       </div>
                       <div className="text-xs text-muted-foreground">{label}</div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

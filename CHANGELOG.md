@@ -8,6 +8,39 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.69.0] — PRM_Agent: rekomendacje, drafty do zatwierdzenia, listy i brief
+
+Druga warstwa agenta — nadal bez modelu językowego. Agent analizuje, wyciąga
+wnioski i przygotowuje; decyzja należy do człowieka, a żadna wiadomość nie
+wychodzi bez zatwierdzenia.
+
+- **Rekomendacje** z reguł nad nocnymi sygnałami: nieobecności w górę o 5 pp
+  (ogółem, u lekarza lub w specjalizacji, przy co najmniej 10 wizytach;
+  od 10 pp — pilne), spadek otwarć e-maili o 10 pp, recall dla 10 i więcej
+  pacjentów, pierwsza wizyta bez kolejnej (od 5), pacjenci dryfujący
+  (od 20), ktoś po wizycie bez odpowiedzi, wizyty z ryzykiem nieobecności
+  ≥ 30%. Każda z dowodem (liczby, które obejrzała) i jedną proponowaną
+  akcją. To wpisy w tej samej tabeli i na tym samym panelu co ustalenia
+  Supervisora (sygnatura `agent:`), więc dzwonek i dedupe są wspólne.
+- **Drafty kampanii do zatwierdzenia** — dla recallu, zaproszenia po
+  pierwszej wizycie i reaktywacji agent proponuje kanał, treść z polami
+  (`{{firstName}}`) i audytorium z sygnału. Jeden otwarty draft na
+  audytorium, uzupełniany co noc; odrzucony nie wraca przez 14 dni.
+  Zatwierdzenie tworzy segment-etykietę „PRM_Agent · … · data” z odbiorcami,
+  a z wybranym opublikowanym szablonem **przekazuje kampanię do Wysyłek** —
+  kodem Wysyłek, z ich limitami, godzinami i bramką zgód. Bez szablonu
+  powstaje tylko segment. Każda decyzja jest w dzienniku silnika (kto, kiedy).
+- **Listy dla rejestracji** — kto wymaga uwagi jako gotowe listy do
+  obdzwonienia (recall, pierwsza wizyta bez kolejnej, po wizycie bez
+  odpowiedzi, dryfujący, wizyty zagrożone nieobecnością z czynnikami), z
+  telefonem, e-mailem, ostatnią i następną wizytą, eksportem CSV i linkiem do
+  karty. Liczniki na karcie pulpitu prowadzą do tych list.
+- **Brief dla zarządu** z szablonu: co się zmieniło, kto wymaga uwagi, co
+  proponuje agent, co przed nami, nota o modelu — do skopiowania.
+- Nowy ekran **PRM_Agent** w menu (Rekomendacje · Drafty · Listy · Brief).
+  Odczyt dla roli podglądu, decyzje dla ról z prawem do zmian.
+- Migracja 0069: tabela `agent_drafts`.
+
 ## [1.68.0] — PRM_Agent: sygnały i ryzyko nieobecności, bez modelu
 
 Pierwsza warstwa agenta, która nie potrzebuje żadnego modelu językowego —
