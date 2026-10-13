@@ -64,6 +64,10 @@ sends anything the consent rules would not allow: the check is in the code
 that sends, not in the prompt, because a model talked into ignoring an
 instruction must still be unable to message someone who opted out.
 
+The full design — three layers, the `PRM_AI_MODE` data boundary, the
+pseudonymisation layer, and what the agent does with no model at all — is in
+[AGENT.md](AGENT.md). The list below is the order of work.
+
 ### Today
 
 - **Agent node in automations** — reads the contact and routes them down the
@@ -78,23 +82,31 @@ instruction must still be unable to message someone who opted out.
 
 ### Next
 
-1. **Drafts with approval** — the agent proposes a message, a person approves
+0. **Foundation: data stays inside** — `PRM_AI_MODE` (off / local / hosted),
+   a local OpenAI-compatible adapter with an egress guard, and a
+   pseudonymisation layer in front of every prompt builder. Today prompts
+   carry the patient's name, e-mail and phone to a hosted provider; this
+   comes first. _(help wanted)_
+1. **Signals and predictions without a model** — reply and no-show rates by
+   location, doctor and service; no-show risk per visit with its factors;
+   recall and call lists; a weekly brief from a template. _(help wanted)_
+2. **Drafts with approval** — the agent proposes a message, a person approves
    it; the first N messages of every new automation go through this queue.
-2. **Decision log a human can read** — why the agent routed this patient this
+3. **Decision log a human can read** — why the agent routed this patient this
    way, kept next to the run in the engine log, not only as tokens spent.
-3. **Knowledge base as the single source of facts** — services, prices,
+4. **Knowledge base as the single source of facts** — services, prices,
    preparation instructions and opening hours, with the answer refusing to
    invent what the base does not contain.
-4. **Evaluation harness for prompts** — a set of cases (consent traps,
+5. **Evaluation harness for prompts** — a set of cases (consent traps,
    medical-advice traps, Polish and English) run against a prompt change
    before it ships. Today a prompt edit is unverified.
-5. **Triage of inbound messages** — urgency, topic and suggested owner, so
+6. **Triage of inbound messages** — urgency, topic and suggested owner, so
    reception sees what needs a human first.
-6. **Patient history summary for reception** — three sentences before the
+7. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-7. **Per-automation budgets and a hard stop** — one flow must not consume the
+8. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
-8. **Local model support** (Ollama or a compatible endpoint) for clinics that
+9. **Local model support** (Ollama or a compatible endpoint) for clinics that
    will not send anything to a hosted provider.
 
 ## Security

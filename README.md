@@ -53,7 +53,9 @@ self-hosted, in English and Polish.
   contacts, visits, emails, SMS, campaigns and the inbox (aggregates only).
 - **AI.** An agent node in automations, reply suggestions in the inbox and a
   read-only Copilot. Pluggable providers (Anthropic, OpenAI, Google) with a
-  shared daily cost limit.
+  shared daily cost limit. Where this is going — an agent whose analysis and
+  predictions need no model and whose model, when used, runs inside your
+  perimeter and never sees identities — is in [docs/AGENT.md](docs/AGENT.md).
 - **Security.** Two-factor login (SMS or authenticator app), a read-only
   reviewer role, login throttling, 30-minute sessions, encrypted integration
   keys (AES-256-GCM) and a daily security report.
