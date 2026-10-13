@@ -96,26 +96,28 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   and writes draft texts from the facts; accepted only when every number of
   the template survives and the draft rules hold, so the screen is correct
   with AI off.
+- **Triage of inbound messages** — urgency, topic and suggested owner for
+  every patient message within a minute, from rules always and from a model
+  inside the perimeter when there is one; urgent conversations first in
+  the inbox.
 
 ### Next
 
-1. **Triage of inbound messages** — urgency, topic and suggested owner, so
-   reception sees what needs a human first. _(help wanted)_
-2. **Drafts for automations** — the first N messages of every new automation
+1. **Drafts for automations** — the first N messages of every new automation
    go through the same approval queue.
-3. **Decision log a human can read** — why the agent routed this patient this
+2. **Decision log a human can read** — why the agent routed this patient this
    way, kept next to the run in the engine log, not only as tokens spent.
-4. **Knowledge base as the single source of facts** — services, prices,
+3. **Knowledge base as the single source of facts** — services, prices,
    preparation instructions and opening hours, with the answer refusing to
    invent what the base does not contain.
-5. **Evaluation harness for prompts** — a set of cases (consent traps,
+4. **Evaluation harness for prompts** — a set of cases (consent traps,
    medical-advice traps, Polish and English) run against a prompt change
    before it ships. Today a prompt edit is unverified.
-6. **Patient history summary for reception** — three sentences before the
+5. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-7. **Per-automation budgets and a hard stop** — one flow must not consume the
+6. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
-8. **Local model support** (Ollama or a compatible endpoint) for clinics that
+7. **Local model support** (Ollama or a compatible endpoint) for clinics that
    will not send anything to a hosted provider.
 
 ## Security

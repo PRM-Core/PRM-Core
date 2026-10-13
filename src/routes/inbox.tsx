@@ -26,6 +26,8 @@ import {
   CheckCheck,
   ShieldOff,
   RotateCcw,
+  AlertTriangle,
+  Bot,
 } from "lucide-react";
 import {
   listInboxThreads,
@@ -36,9 +38,11 @@ import {
   assignInboxThread,
   setInboxThreadStatus,
   listInboxAssignees,
+  triageInboxThread,
   type InboxThreadSummary,
   type InboxThreadDetail,
 } from "@/lib/api/inbox.functions";
+import { OWNER_LABELS, TOPIC_LABELS, URGENCY_LABELS } from "@/lib/agent/triage";
 import type { InboxChannel } from "@/lib/db/schema";
 import { t as tr, localized } from "@/lib/i18n";
 
@@ -70,6 +74,44 @@ function replyChannelFor(channel: InboxChannel): "email" | "sms" {
 
 const REFRESH_MS = 8000;
 
+const URGENCY_TONE: Record<string, string> = {
+  high: "bg-destructive/15 text-destructive",
+  normal: "bg-muted text-muted-foreground",
+  low: "bg-muted text-muted-foreground",
+};
+
+/** PRM_Agent's triage as chips: urgency when it is not the ordinary one, then topic and owner. */
+function TriageBadges({
+  triage,
+  compact,
+}: {
+  triage: InboxThreadSummary["triage"];
+  compact?: boolean;
+}) {
+  if (!triage.urgency) return null;
+  const size = compact ? "text-[10px] px-1.5 py-0 font-normal" : "font-normal";
+  return (
+    <>
+      {(triage.urgency !== "normal" || !compact) && (
+        <Badge variant="secondary" className={`${size} ${URGENCY_TONE[triage.urgency]}`}>
+          {triage.urgency === "high" && <AlertTriangle className="h-3 w-3 mr-1" />}
+          {URGENCY_LABELS[triage.urgency]}
+        </Badge>
+      )}
+      {triage.topic && (
+        <Badge variant="secondary" className={size}>
+          {TOPIC_LABELS[triage.topic]}
+        </Badge>
+      )}
+      {triage.owner && !compact && (
+        <Badge variant="secondary" className={size}>
+          → {OWNER_LABELS[triage.owner]}
+        </Badge>
+      )}
+    </>
+  );
+}
+
 function InboxPage() {
   const [threads, setThreads] = useState<InboxThreadSummary[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -78,6 +120,8 @@ function InboxPage() {
   const [search, setSearch] = useState("");
   const [channelFilter, setChannelFilter] = useState("all");
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const [onlyUrgent, setOnlyUrgent] = useState(false);
+  const [triaging, setTriaging] = useState(false);
   const [includeClosed, setIncludeClosed] = useState(false);
   const [reply, setReply] = useState("");
   const [replyChannel, setReplyChannel] = useState<"email" | "sms">("email");
@@ -87,11 +131,11 @@ function InboxPage() {
 
   const refreshThreads = useCallback(async () => {
     const rows = await listInboxThreads({
-      data: { search, channel: channelFilter, onlyUnread, includeClosed },
+      data: { search, channel: channelFilter, onlyUnread, onlyUrgent, includeClosed },
     });
     setThreads(rows);
     return rows;
-  }, [search, channelFilter, onlyUnread, includeClosed]);
+  }, [search, channelFilter, onlyUnread, onlyUrgent, includeClosed]);
 
   useEffect(() => {
     void refreshThreads();
@@ -185,6 +229,19 @@ function InboxPage() {
     await refreshThreads();
   };
 
+  const handleTriage = async () => {
+    if (!detail) return;
+    setTriaging(true);
+    try {
+      const r = await triageInboxThread({ data: { threadId: detail.thread.id } });
+      if (!r.ok) toast.error(tr("Nie udało się ocenić rozmowy."));
+      await openThread(detail.thread.id);
+      await refreshThreads();
+    } finally {
+      setTriaging(false);
+    }
+  };
+
   const handleToggleStatus = async () => {
     if (!detail) return;
     const next = detail.thread.status === "open" ? "closed" : "open";
@@ -218,6 +275,14 @@ function InboxPage() {
             onClick={() => setOnlyUnread((v) => !v)}
           >
             {tr("Nieprzeczytane")}
+          </Button>
+          <Button
+            variant={onlyUrgent ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyUrgent((v) => !v)}
+          >
+            <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+            {tr("Pilne")}
           </Button>
           <Button
             variant={includeClosed ? "default" : "outline"}
@@ -302,6 +367,7 @@ function InboxPage() {
                           {tr("zamknięta")}
                         </Badge>
                       )}
+                      <TriageBadges triage={t.triage} compact />
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground truncate">
                       {t.lastDirection === "out" && (
@@ -353,6 +419,17 @@ function InboxPage() {
                     {detail.contact?.email ? ` · ${detail.contact.email}` : ""}
                     {detail.contact?.phone ? ` · ${detail.contact.phone}` : ""}
                   </div>
+                  {detail.thread.triage.urgency && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                      <TriageBadges triage={detail.thread.triage} />
+                      <span className="text-muted-foreground">
+                        {detail.thread.triage.reason}
+                        {detail.thread.triage.source === "model"
+                          ? ` · ${tr("ocena modelu w sieci placówki")}`
+                          : ""}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Select
@@ -371,6 +448,19 @@ function InboxPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void handleTriage()}
+                    disabled={triaging}
+                    title={tr("PRM_Agent: oceń pilność, temat i właściciela jeszcze raz")}
+                  >
+                    {triaging ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Bot className="h-4 w-4" />
+                    )}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => void handleToggleStatus()}>
                     {detail.thread.status === "open" ? (
                       <>

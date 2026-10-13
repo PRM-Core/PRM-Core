@@ -1572,6 +1572,16 @@ export const knowledgeEntries = sqliteTable("knowledge_entries", {
  * remove.
  */
 export type InboxChannel = "email" | "sms" | "form" | "survey";
+export type TriageUrgency = "high" | "normal" | "low";
+export type TriageTopic =
+  | "appointment"
+  | "cancellation"
+  | "results"
+  | "prescription"
+  | "complaint"
+  | "billing"
+  | "other";
+export type TriageOwner = "reception" | "doctor" | "billing" | "manager";
 export type InboxDirection = "in" | "out";
 export type InboxThreadStatus = "open" | "closed";
 
@@ -1597,6 +1607,18 @@ export const inboxThreads = sqliteTable(
     status: text("status").notNull().default("open").$type<InboxThreadStatus>(),
     /** Which user picked this conversation up. Null = nobody yet. */
     assignedUserId: text("assigned_user_id"),
+    /**
+     * PRM_Agent's triage of the latest inbound message: how urgent, what it
+     * is about, who should pick it up, and one sentence why. Empty until the
+     * engine has looked at the thread; `triageAt` older than `lastMessageAt`
+     * means a newer message is waiting for a look.
+     */
+    triageUrgency: text("triage_urgency").notNull().default("").$type<TriageUrgency | "">(),
+    triageTopic: text("triage_topic").notNull().default("").$type<TriageTopic | "">(),
+    triageOwner: text("triage_owner").notNull().default("").$type<TriageOwner | "">(),
+    triageReason: text("triage_reason").notNull().default(""),
+    triageSource: text("triage_source").notNull().default("").$type<"rules" | "model" | "">(),
+    triageAt: integer("triage_at"),
     createdAt: integer("created_at").notNull(),
   },
   (t) => [

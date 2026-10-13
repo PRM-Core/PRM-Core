@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.71.0] — PRM_Agent: triaż wiadomości od pacjentów
+
+Rejestracja widzi od razu, która rozmowa wymaga człowieka najpierw, czego
+dotyczy i kto powinien ją przejąć.
+
+- **Triaż każdej przychodzącej wiadomości** w ciągu minuty od jej przyjścia
+  (na zegarze silnika, bez dotykania webhooków): **pilność** (pilne /
+  zwykłe / bez pośpiechu), **temat** (umówienie, odwołanie, wyniki, recepta,
+  skarga, płatności, inne) i **właściciel** (rejestracja, lekarz,
+  rozliczenia, kierownik) z jednym zdaniem uzasadnienia. Ponowna ocena,
+  gdy pacjent napisze znowu.
+- **Reguły zawsze odpowiadają** — po rdzeniach słów, bez względu na
+  odmianę, wielkość liter i polskie znaki (po polsku i angielsku): krwawienie
+  czy omdlenie to pilne od razu, dwa słabsze sygnały („pilne”, „dziś”,
+  „boli”) razem też; krótkie podziękowanie to „bez pośpiechu”; skarga
+  wygrywa z wizytą, o której wspomina.
+- **Model w sieci placówki, gdy jest** — dostaje treść przez warstwę
+  pseudonimizacji (imię, nazwisko, e-mail, telefon pacjenta to symbole),
+  odpowiada jednym JSON-em; odpowiedź liczy się tylko w trzech słownikach
+  powyżej, inaczej zostają reguły. Bez porad medycznych, bez odpowiedzi do
+  pacjenta. Koszt w dzienniku jak każde wywołanie AI.
+- **Skrzynka**: pilne rozmowy na górze listy, filtr „Pilne”, chipy pilność /
+  temat przy rozmowie, pełna ocena z uzasadnieniem i właścicielem
+  w nagłówku, przycisk ponownej oceny (ikona agenta).
+- Migracja 0071: kolumny `triage_*` w `inbox_threads`.
+
 ## [1.70.0] — PRM_Agent: warstwa językowa, model w sieci placówki
 
 Pierwszy krok fazy „język na wierzchu”: model (lokalny albo, za jawną

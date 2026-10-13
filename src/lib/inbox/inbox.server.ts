@@ -126,6 +126,12 @@ async function ensureThread(input: {
     unreadCount: 0,
     status: "open" as const,
     assignedUserId: null,
+    triageUrgency: "" as const,
+    triageTopic: "" as const,
+    triageOwner: "" as const,
+    triageReason: "",
+    triageSource: "" as const,
+    triageAt: null,
     createdAt: input.at,
   };
   await db.insert(inboxThreads).values(row);

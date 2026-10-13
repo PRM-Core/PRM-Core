@@ -4,7 +4,14 @@ import { z } from "zod";
 import { asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import { contacts, emailSettings, inboxMessages, inboxThreads, users } from "../db/schema";
-import type { InboxChannel, InboxDirection, InboxThreadStatus } from "../db/schema";
+import type {
+  InboxChannel,
+  InboxDirection,
+  InboxThreadStatus,
+  TriageOwner,
+  TriageTopic,
+  TriageUrgency,
+} from "../db/schema";
 import { getSessionUser } from "../auth/session.server";
 import { getEventWebhookSecret } from "../email/event-webhook.server";
 import {
@@ -49,6 +56,30 @@ export interface InboxThreadSummary {
   status: InboxThreadStatus;
   assignedUserId: string | null;
   assignedName: string;
+  /** PRM_Agent's triage of the latest inbound message; empty strings until it has looked. */
+  triage: {
+    urgency: TriageUrgency | "";
+    topic: TriageTopic | "";
+    owner: TriageOwner | "";
+    reason: string;
+    source: "rules" | "model" | "";
+  };
+}
+
+function triageOf(r: {
+  triageUrgency: TriageUrgency | "";
+  triageTopic: TriageTopic | "";
+  triageOwner: TriageOwner | "";
+  triageReason: string;
+  triageSource: "rules" | "model" | "";
+}): InboxThreadSummary["triage"] {
+  return {
+    urgency: r.triageUrgency,
+    topic: r.triageTopic,
+    owner: r.triageOwner,
+    reason: r.triageReason,
+    source: r.triageSource,
+  };
 }
 
 export interface InboxMessageView {
@@ -100,6 +131,7 @@ export const listInboxThreads = createServerFn({ method: "GET" })
       search: z.string().optional(),
       channel: z.string().optional(),
       onlyUnread: z.boolean().optional(),
+      onlyUrgent: z.boolean().optional(),
       includeClosed: z.boolean().optional(),
     }),
   )
@@ -128,37 +160,43 @@ export const listInboxThreads = createServerFn({ method: "GET" })
     const names = await userNames(rows.map((r) => r.assignedUserId ?? ""));
 
     const search = (data.search ?? "").trim().toLowerCase();
-    return rows
-      .map((r) => {
-        const c = byContact.get(r.contactId);
-        const contactName = c
-          ? `${c.firstName} ${c.lastName}`.trim() || c.email
-          : tr("Kontakt usunięty");
-        return {
-          id: r.id,
-          contactId: r.contactId,
-          contactName,
-          channel: r.channel,
-          subject: r.subject,
-          lastPreview: r.lastPreview,
-          lastDirection: r.lastDirection,
-          lastMessageAt: formatDate(r.lastMessageAt),
-          unreadCount: r.unreadCount,
-          status: r.status,
-          assignedUserId: r.assignedUserId,
-          assignedName: r.assignedUserId ? (names.get(r.assignedUserId) ?? "—") : "",
-        };
-      })
-      .filter((t) => {
-        if (data.onlyUnread && t.unreadCount === 0) return false;
-        if (data.channel && data.channel !== "all" && t.channel !== data.channel) return false;
-        if (!search) return true;
-        return (
-          t.contactName.toLowerCase().includes(search) ||
-          t.lastPreview.toLowerCase().includes(search) ||
-          t.subject.toLowerCase().includes(search)
-        );
-      });
+    return (
+      rows
+        .map((r) => {
+          const c = byContact.get(r.contactId);
+          const contactName = c
+            ? `${c.firstName} ${c.lastName}`.trim() || c.email
+            : tr("Kontakt usunięty");
+          return {
+            id: r.id,
+            contactId: r.contactId,
+            contactName,
+            channel: r.channel,
+            subject: r.subject,
+            lastPreview: r.lastPreview,
+            lastDirection: r.lastDirection,
+            lastMessageAt: formatDate(r.lastMessageAt),
+            unreadCount: r.unreadCount,
+            status: r.status,
+            assignedUserId: r.assignedUserId,
+            assignedName: r.assignedUserId ? (names.get(r.assignedUserId) ?? "—") : "",
+            triage: triageOf(r),
+          };
+        })
+        // Urgent conversations first, then by time — the point of the triage.
+        .sort((a, b) => Number(b.triage.urgency === "high") - Number(a.triage.urgency === "high"))
+        .filter((t) => {
+          if (data.onlyUnread && t.unreadCount === 0) return false;
+          if (data.onlyUrgent && t.triage.urgency !== "high") return false;
+          if (data.channel && data.channel !== "all" && t.channel !== data.channel) return false;
+          if (!search) return true;
+          return (
+            t.contactName.toLowerCase().includes(search) ||
+            t.lastPreview.toLowerCase().includes(search) ||
+            t.subject.toLowerCase().includes(search)
+          );
+        })
+    );
   });
 
 export const getInboxThread = createServerFn({ method: "GET" })
@@ -201,6 +239,7 @@ export const getInboxThread = createServerFn({ method: "GET" })
         status: thread.status,
         assignedUserId: thread.assignedUserId,
         assignedName: thread.assignedUserId ? (names.get(thread.assignedUserId) ?? "—") : "",
+        triage: triageOf(thread),
       },
       messages: messages.map((m) => ({
         id: m.id,
@@ -490,6 +529,16 @@ export const rotateInboundEmailWebhookSecret = createServerFn({ method: "POST" }
   });
 
 /** Users offered in the "assign to" picker. */
+/** Look at a conversation again — after a model was switched on, or when the rules got it wrong. */
+export const triageInboxThread = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(z.object({ threadId: z.string().max(80) }))
+  .handler(async ({ data }) => {
+    const { triageThread } = await import("../agent/triage.server");
+    const r = await triageThread(data.threadId);
+    return { ok: !!r, triage: r };
+  });
+
 export const listInboxAssignees = createServerFn({ method: "GET" })
   .middleware([allowReporter])
   .handler(async (): Promise<{ id: string; name: string }[]> => {

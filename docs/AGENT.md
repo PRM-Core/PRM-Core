@@ -26,8 +26,11 @@ is built from a template — all without a language model. Since 1.70.0 the
 language layer sits on top (`language.ts`, `language.server.ts`): a model
 inside the perimeter polishes the brief and writes draft texts from the
 facts, and its output is accepted only when it keeps every number of the
-template and follows the draft rules — otherwise the template stands.
-Triage of inbound messages and recommendation explanations are next.
+template and follows the draft rules — otherwise the template stands. Since
+1.71.0 inbound messages are triaged (`triage.ts`, `triage.server.ts`):
+urgency, topic and owner from rules for every message, and from a model
+inside the perimeter when one is in reach, accepted only within the three
+vocabularies. Recommendation explanations are next.
 
 ## 1. Where intelligence runs
 
@@ -135,6 +138,8 @@ src/lib/agent/
   brief.ts / brief.server.ts  the brief: template first, stored nightly, model polish optional
   language.ts            the checks a model's text must pass (numbers kept, draft rules)
   language.server.ts     brief polish and draft text through the provider, budget and log
+  triage.ts              urgency / topic / owner by rules; the model's answer parsed and checked
+  triage.server.ts       triage of inbound threads on the engine clock, model optional
 ```
 
 Existing modules move onto the same foundation without changing what they
@@ -185,7 +190,7 @@ ship a model; it documents what works:
 2. **Language on top.** Local model drafts for campaigns (done in 1.70.0)
    and replies; the brief polished by the model (done in 1.70.0);
    recommendation explanations; triage of inbound messages (urgency,
-   topic, owner).
+   topic, owner — done in 1.71.0).
 3. **Roles and measurement.** CFO and Marketing views, A/B split with
    results in the brief, goals and conversion per campaign, the evaluation
    harness in CI.

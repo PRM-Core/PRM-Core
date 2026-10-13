@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.70.0",
+    "version": "1.71.0",
     "date": "2026-10-13",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.70.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.71.0",
     "notes": {
-      "en": "PRM_Agent language layer: a model inside the perimeter polishes the brief and writes draft texts — accepted only when every number survives; template kept.",
-      "pl": "Warstwa językowa PRM_Agenta: model w sieci placówki wygładza brief i pisze treść draftów — przyjmowane tylko, gdy zachowa każdą liczbę; szablon zostaje."
+      "en": "PRM_Agent triages patient messages: urgency, topic and owner within a minute — rules always, a model inside the perimeter when there is one; urgent conversations first in the inbox.",
+      "pl": "PRM_Agent triażuje wiadomości pacjentów: pilność, temat i właściciel w ciągu minuty — reguły zawsze, model w sieci placówki gdy jest; pilne rozmowy na górze skrzynki."
     }
   },
   "messages": []

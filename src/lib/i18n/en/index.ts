@@ -31,6 +31,7 @@ import { agentBoundary } from "./agent-boundary";
 import { agentLanguage } from "./agent-language";
 import { agentPage } from "./agent-page";
 import { agentSignals } from "./agent-signals";
+import { agentTriage } from "./agent-triage";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -60,6 +61,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   agentLanguage,
   agentPage,
   agentSignals,
+  agentTriage,
 };
 
 /**

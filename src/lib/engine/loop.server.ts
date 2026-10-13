@@ -8,6 +8,7 @@ import { purgeExpiredAccounts } from "../auth/expiry.server";
 import { purgeExpiredSegments } from "../segments/segments.server";
 import { maybeCheckForUpdates } from "../updates/check.server";
 import { maybeRunAgentNightly } from "../agent/signals.server";
+import { maybeTriageInbox } from "../agent/triage.server";
 import { t } from "@/lib/i18n";
 
 // The engine's clock. Booted from src/server.ts (the SSR entry), so it lives
@@ -113,6 +114,8 @@ export async function runTickOnce(): Promise<TickResult | null> {
     // Sygnały PRM_Agenta — raz na dobę po 2:00, na tym samym zegarze. Sama
     // funkcja pilnuje jednokrotności i loguje własne błędy.
     await maybeRunAgentNightly();
+    // New patient messages get a look within a minute: urgency, topic, owner.
+    await maybeTriageInbox();
     return result;
   } catch (err) {
     state.lastError = String(err);
