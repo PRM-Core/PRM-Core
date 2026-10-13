@@ -79,17 +79,19 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   automations that never fire, consent risks).
 - **Cost control** — shared daily limit, provider chosen per installation
   (Anthropic, OpenAI, Google), spend visible in settings.
+- **Data boundary** — `PRM_AI_MODE` (off / local / hosted), a local model
+  adapter with an egress guard, pseudonymised prompts in every mode.
+- **Signals and predictions without a model** — nightly: no-show rate and
+  trend (overall, by doctor, by specialisation), e-mail open and click rates,
+  recall due, first visit without a follow-up, post-visit without a reply,
+  drifting patients; a no-show risk per upcoming visit with its factors,
+  from a model trained on the installation's own history.
 
 ### Next
 
-0. **Foundation: data stays inside** — `PRM_AI_MODE` (off / local / hosted),
-   a local OpenAI-compatible adapter with an egress guard, and a
-   pseudonymisation layer in front of every prompt builder. Today prompts
-   carry the patient's name, e-mail and phone to a hosted provider; this
-   comes first. _(help wanted)_
-1. **Signals and predictions without a model** — reply and no-show rates by
-   location, doctor and service; no-show risk per visit with its factors;
-   recall and call lists; a weekly brief from a template. _(help wanted)_
+1. **Recommendations and the weekly brief** — rules over the signals
+   ("no-shows up at X → second reminder"), the lists as call lists for the
+   front desk, a weekly brief from a template. _(help wanted)_
 2. **Drafts with approval** — the agent proposes a message, a person approves
    it; the first N messages of every new automation go through this queue.
 3. **Decision log a human can read** — why the agent routed this patient this

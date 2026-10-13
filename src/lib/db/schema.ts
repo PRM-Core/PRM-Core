@@ -1,4 +1,12 @@
-import { sqliteTable, text, integer, real, index, primaryKey } from "drizzle-orm/sqlite-core";
+import {
+  sqliteTable,
+  text,
+  integer,
+  real,
+  index,
+  uniqueIndex,
+  primaryKey,
+} from "drizzle-orm/sqlite-core";
 import type { UserRole } from "../auth/roles";
 import type { AutomationGraph, AutomationStatus } from "../automation-flow";
 import type { PopupConfig } from "../content-builder";
@@ -1798,6 +1806,72 @@ export const integrationCredentials = sqliteTable("integration_credentials", {
   updatedBy: text("updated_by").notNull().default(""),
   updatedAt: integer("updated_at").notNull(),
 });
+
+/**
+ * PRM_Agent — the layer that needs no model.
+ *
+ * `agent_signals` holds what the nightly job measured: a rate or a count for
+ * a period, with the previous period beside it so a screen can say "up" or
+ * "down" without recomputing. `dimension` splits a signal by doctor or
+ * specialisation (`""` = the whole installation). Lists of contacts
+ * (recall due, drifting) travel in `detail`, capped, so the number on the
+ * dashboard and the list behind it are the same thing.
+ */
+export const agentSignals = sqliteTable(
+  "agent_signals",
+  {
+    id: text("id").primaryKey(),
+    /** Warsaw calendar day the figures were computed for. */
+    day: text("day").notNull(),
+    key: text("key").notNull(),
+    dimension: text("dimension").notNull().default(""),
+    value: real("value").notNull(),
+    /** The same measure for the previous period; `null` when there was none. */
+    previous: real("previous"),
+    /** Sample size behind `value` — a rate from three visits is not a trend. */
+    count: integer("count").notNull().default(0),
+    detail: text("detail", { mode: "json" }).$type<Record<string, unknown>>(),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [uniqueIndex("idx_agent_signals_day_key").on(t.day, t.key, t.dimension)],
+);
+
+/**
+ * A trained model — small, explainable, retrained nightly on the
+ * installation's own history. Parameters are plain JSON: weights, the
+ * standardisation of each feature, the base rate and the training metrics,
+ * so a reader can see what the model learned.
+ */
+export const agentModels = sqliteTable("agent_models", {
+  id: text("id").primaryKey(),
+  trainedAt: integer("trained_at").notNull(),
+  samples: integer("samples").notNull(),
+  params: text("params", { mode: "json" }).notNull().$type<Record<string, unknown>>(),
+});
+
+/**
+ * A score per upcoming visit, with the factors that moved it — the "why"
+ * the dashboard shows next to the number.
+ */
+export const agentScores = sqliteTable(
+  "agent_scores",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull(),
+    contactId: text("contact_id").notNull(),
+    visitId: text("visit_id"),
+    score: real("score").notNull(),
+    factors: text("factors", { mode: "json" })
+      .notNull()
+      .$type<{ feature: string; contribution: number }[]>()
+      .default([]),
+    computedAt: integer("computed_at").notNull(),
+  },
+  (t) => [index("idx_agent_scores_kind").on(t.kind, t.score)],
+);
+
+export type AgentSignalRow = typeof agentSignals.$inferSelect;
+export type AgentScoreRow = typeof agentScores.$inferSelect;
 
 export type CustomReportRow = typeof customReports.$inferSelect;
 export type ContactConsentRow = typeof contactConsents.$inferSelect;

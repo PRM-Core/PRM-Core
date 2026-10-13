@@ -28,6 +28,7 @@ import { booking } from "./booking";
 import { docplanner } from "./docplanner";
 import { accounts } from "./accounts";
 import { agentBoundary } from "./agent-boundary";
+import { agentSignals } from "./agent-signals";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -54,6 +55,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   docplanner,
   accounts,
   agentBoundary,
+  agentSignals,
 };
 
 /**

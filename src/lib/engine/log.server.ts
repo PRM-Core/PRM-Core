@@ -26,7 +26,9 @@ export type EngineLogKind =
    * jej w tym typie — pisano ją surowym `insert`, omijając `logStep`. Dopisana,
    * żeby jedna droga zapisu obsługiwała wszystkie rodzaje wpisów.
    */
-  | "security";
+  | "security"
+  /** PRM_Agent's own work: the nightly signals run, a recommendation, a draft. */
+  | "agent";
 
 export async function logStep(input: {
   runId?: string | null;

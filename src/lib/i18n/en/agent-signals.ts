@@ -1,0 +1,66 @@
+/** PRM_Agent signals — the dashboard card and the nightly run. */
+export const agentSignals: Record<string, string> = {
+  "Brak nadchodzących wizyt w ciągu 30 dni.": "No upcoming visits in the next 30 days.",
+  "Jeszcze nie policzono — liczy się co noc po 2:00.":
+    "Not computed yet — it runs every night after 2:00.",
+  "Kto wymaga uwagi": "Who needs attention",
+  "Nadchodzące wizyty najbardziej zagrożone nieobecnością":
+    "Upcoming visits most at risk of a no-show",
+  "Nie udało się policzyć sygnałów": "Could not compute the signals",
+  Nieobecności: "No-shows",
+  "Otwarcia e-maili": "E-mail opens",
+  "PRM_Agent policzył sygnały: {n} wskaźników, model nieobecności z {m} wizyt ({mode}).":
+    "PRM_Agent computed the signals: {n} measures, no-show model from {m} visits ({mode}).",
+  "PRM_Agent — sygnały": "PRM_Agent — signals",
+  "PRM_Agent: nocne liczenie sygnałów nie powiodło się: {err}":
+    "PRM_Agent: the nightly signals run failed: {err}",
+  "Pacjenci dryfujący": "Drifting patients",
+  "Pierwsza wizyta bez kolejnej": "First visit, no follow-up",
+  "Po wizycie, bez odpowiedzi": "After a visit, no reply",
+  "Policzono {n} wskaźników; model nieobecności: {mode}.":
+    "Computed {n} measures; no-show model: {mode}.",
+  "Policzono {when}. Ostatnie 30 dni wobec poprzednich 30.":
+    "Computed {when}. The last 30 days against the 30 before.",
+  "Przelicz teraz": "Recompute now",
+  "Recall do zrobienia": "Recall due",
+  "Sygnały pokażą, jak pacjenci reagują i kto wymaga uwagi — bez żadnego modelu AI, z danych tej instalacji.":
+    "The signals show how patients respond and who needs attention — with no AI model, from this installation's own data.",
+  "Tylko administrator może uruchomić liczenie sygnałów.":
+    "Only an administrator can run the signals computation.",
+  "bez wcześniejszych nieobecności": "no earlier no-shows",
+  "bez zgody na SMS": "no SMS consent",
+  "bez zmian": "unchanged",
+  "brak telefonu": "no phone number",
+  "dotąd zawsze przychodził": "always came so far",
+  "jest telefon": "has a phone number",
+  "kontakt od dawna w bazie": "long in the base",
+  "model nauczony na {n} wizytach": "model trained on {n} visits",
+  nauczony: "trained",
+  "nauczony na {m} wizytach": "trained on {m} visits",
+  "nie piątek": "not a Friday",
+  "nie poniedziałek": "not a Monday",
+  "nie późne popołudnie": "not late afternoon",
+  "nie wczesna pora": "not early morning",
+  "nowy kontakt": "new contact",
+  "pacjent już był": "has been before",
+  "pierwsza wizyta": "first visit",
+  piątek: "Friday",
+  poniedziałek: "Monday",
+  "późne popołudnie": "late afternoon",
+  "rezerwacja online": "booked online",
+  "sama częstość bazowa — za mało historii": "base rate only — too little history",
+  spadek: "down",
+  "umówiona niedawno": "booked recently",
+  "umówiona przez rejestrację": "booked at the desk",
+  "umówiona z dużym wyprzedzeniem": "booked far ahead",
+  "wczesna pora": "early morning",
+  "wcześniej {v} · ": "before {v} · ",
+  "wcześniejsze nieobecności": "earlier no-shows",
+  wzrost: "up",
+  "z {n} rozstrzygniętych wizyt": "from {n} decided visits",
+  "z {n} wysyłek": "from {n} sends",
+  "za mało historii ({n} wizyt) — pokazana częstość bazowa":
+    "too little history ({n} visits) — base rate shown",
+  "za mało historii, częstość bazowa": "too little history, base rate",
+  "zgoda na SMS": "SMS consent",
+};

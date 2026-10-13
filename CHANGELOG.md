@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.68.0] — PRM_Agent: sygnały i ryzyko nieobecności, bez modelu
+
+Pierwsza warstwa agenta, która nie potrzebuje żadnego modelu językowego —
+działa także przy `PRM_AI_MODE=off`.
+
+- **Nocne liczenie sygnałów** (po 2:00, na zegarze silnika; także
+  „Przelicz teraz” na pulpicie): wizyty odbyte, nieobecności i odwołania
+  z ostatnich 30 dni wobec poprzednich 30; **wskaźnik nieobecności** ogółem,
+  per lekarz i per specjalizacja (gdy jest co najmniej 10 rozstrzygniętych
+  wizyt); otwarcia i kliknięcia e-maili; odpowiedzi w skrzynce; **recall do
+  zrobienia** (ostatnia wizyta ponad rok temu, nic umówionego); **pierwsza
+  wizyta bez kolejnej**; **po wizycie bez odpowiedzi** (7 dni); **pacjenci
+  dryfujący** (pół roku bez śladu). Liczby i listy kontaktów za nimi są tym
+  samym wierszem w bazie.
+- **Ryzyko nieobecności dla każdej nadchodzącej wizyty** (30 dni naprzód)
+  z trzema czynnikami, które je podniosły lub obniżyły: wyprzedzenie
+  rezerwacji, pora, dzień tygodnia, wcześniejsze nieobecności, pierwsza
+  wizyta, rezerwacja online, brak telefonu lub zgody SMS, świeży kontakt.
+  Mały model (regresja logistyczna) uczony co noc na historii instalacji;
+  przy mniej niż 40 rozstrzygniętych wizytach uczciwie podaje częstość
+  bazową i mówi, że to za mało historii.
+- **Karta „PRM_Agent — sygnały” na pulpicie**: wskaźniki z trendem, kto
+  wymaga uwagi, wizyty najbardziej zagrożone nieobecnością z uzasadnieniem.
+- Migracja 0068: tabele `agent_signals`, `agent_models`, `agent_scores`.
+  Nowy rodzaj wpisu w dzienniku silnika: `agent`.
+
 ## [1.67.0] — PRM_Agent: dane pacjentów zostają na serwerze
 
 **Aktualizacja u klienta z włączonym AI: ustaw `PRM_AI_MODE=hosted` w `.env`

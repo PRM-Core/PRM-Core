@@ -15,8 +15,10 @@ Everything below follows from taking those three literally.
 **Status.** Since 1.67.0 the foundation is in the product: `PRM_AI_MODE`
 (section 2), the local adapter with its egress guard, the pseudonymisation
 layer in front of every prompt builder (section 3), the boundary check in the
-daily security report, and the tests of section 8. The signals, predictions,
-drafts queue and brief (sections 5 and 9, phase 1) are next.
+daily security report, and the tests of section 8. Since 1.68.0 the signals
+layer runs nightly (`src/lib/agent/`): the measures of section 5, a no-show
+risk per upcoming visit with its factors, and a dashboard card that shows
+them. Recommendations, the drafts queue and the brief are next.
 
 ## 1. Where intelligence runs
 

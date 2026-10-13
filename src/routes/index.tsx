@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getDashboard, type DashboardData } from "@/lib/api/dashboard.functions";
 import { PatientActivityCard } from "@/components/dashboard/PatientActivityCard";
+import { AgentSignalsCard } from "@/components/dashboard/AgentSignalsCard";
 import { intlLocale, t, localized } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
@@ -163,6 +164,9 @@ function Dashboard() {
               );
             })}
       </div>
+
+      {/* PRM_Agent: what the nightly signals say — no model involved */}
+      <AgentSignalsCard />
 
       {/* Chart + Quick actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
