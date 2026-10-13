@@ -1,8 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, inArray } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import {
   agentDrafts,
+  agentInsights,
   agentScores,
   agentSignals,
   contacts,
@@ -17,6 +18,7 @@ import { createCampaign } from "../campaigns/campaigns.server";
 import { getSnapshot } from "../engine/snapshots.server";
 import { logStep } from "../engine/log.server";
 import { deriveRecommendations, type Recommendation } from "./recommend";
+import { writeDraftText } from "./language.server";
 import { t } from "@/lib/i18n";
 
 /**
@@ -60,9 +62,30 @@ export async function recommendFromSignals(
     fromAi: false,
   }));
   await saveInsights(insights);
+  await resolveGone(new Set(recs.map((r) => r.signature)), now);
 
   for (const r of recs) if (r.draft) await proposeDraft(r, rows, now);
   return recs;
+}
+
+/** A recommendation the numbers no longer support is resolved; a dismissed one is left alone. */
+async function resolveGone(seen: Set<string>, now: number): Promise<void> {
+  const db = getDb();
+  const open = await db
+    .select({ id: agentInsights.id, signature: agentInsights.signature })
+    .from(agentInsights)
+    .where(
+      and(
+        like(agentInsights.signature, "agent:%"),
+        inArray(agentInsights.status, ["new", "acknowledged"]),
+      ),
+    );
+  for (const row of open)
+    if (!seen.has(row.signature))
+      await db
+        .update(agentInsights)
+        .set({ status: "resolved", updatedAt: now })
+        .where(eq(agentInsights.id, row.id));
 }
 
 async function proposeDraft(r: Recommendation, rows: AgentSignalRow[], now: number): Promise<void> {
@@ -103,6 +126,17 @@ async function proposeDraft(r: Recommendation, rows: AgentSignalRow[], now: numb
     .get();
   if (rejected?.decidedAt && now - rejected.decidedAt < REJECTED_COOLDOWN_DAYS * DAY) return;
 
+  // A model inside the perimeter may write the text from the facts; the
+  // template stays as the fallback and as the version a person can go back to.
+  const audienceCount = Math.round(signal?.value ?? ids.length);
+  const written = await writeDraftText({
+    title: draft.title,
+    channel: draft.channel,
+    audienceSignal: draft.audienceSignal,
+    audienceCount,
+    detail: r.detail,
+    templateMessage: draft.message,
+  });
   await db.insert(agentDrafts).values({
     id: randomUUID(),
     kind: "campaign",
@@ -110,13 +144,49 @@ async function proposeDraft(r: Recommendation, rows: AgentSignalRow[], now: numb
     audienceSignal: draft.audienceSignal,
     title: draft.title,
     channel: draft.channel,
-    message: draft.message,
-    audienceCount: Math.round(signal?.value ?? ids.length),
+    message: written.ok ? written.text : draft.message,
+    templateMessage: draft.message,
+    textSource: written.ok ? "model" : "template",
+    audienceCount,
     audienceIds: ids,
     evidence: r.evidence,
     createdAt: now,
     updatedAt: now,
   });
+}
+
+/** Ask the model for the text of an open draft, on request. The template is untouched. */
+export async function rewriteDraftText(
+  id: string,
+  now = Date.now(),
+): Promise<{ ok: boolean; error?: string; draft?: AgentDraftRow }> {
+  const db = getDb();
+  const draft = await db.select().from(agentDrafts).where(eq(agentDrafts.id, id)).get();
+  if (!draft) return { ok: false, error: t("Nie ma takiego draftu.") };
+  if (draft.status !== "proposed")
+    return { ok: false, error: t("Ten draft został już rozstrzygnięty.") };
+  const written = await writeDraftText({
+    title: draft.title,
+    channel: draft.channel,
+    audienceSignal: draft.audienceSignal,
+    audienceCount: draft.audienceCount,
+    detail: draft.evidence?.detail ?? "",
+    templateMessage: draft.templateMessage || draft.message,
+  });
+  if (!written.ok) return { ok: false, error: written.reason };
+  await db
+    .update(agentDrafts)
+    .set({
+      message: written.text,
+      templateMessage: draft.templateMessage || draft.message,
+      textSource: "model",
+      updatedAt: now,
+    })
+    .where(eq(agentDrafts.id, id));
+  return {
+    ok: true,
+    draft: await db.select().from(agentDrafts).where(eq(agentDrafts.id, id)).get(),
+  };
 }
 
 export async function listDrafts(): Promise<AgentDraftRow[]> {

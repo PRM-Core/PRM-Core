@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.69.0",
+    "version": "1.70.0",
     "date": "2026-10-13",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.69.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.70.0",
     "notes": {
-      "en": "PRM_Agent recommends and prepares: recommendations with evidence, campaign drafts a person approves, call lists for the front desk, a leadership brief — still no model needed.",
-      "pl": "PRM_Agent rekomenduje i przygotowuje: rekomendacje z dowodem, drafty kampanii do zatwierdzenia, listy dla rejestracji, brief dla zarządu — nadal bez modelu."
+      "en": "PRM_Agent language layer: a model inside the perimeter polishes the brief and writes draft texts — accepted only when every number survives; template kept.",
+      "pl": "Warstwa językowa PRM_Agenta: model w sieci placówki wygładza brief i pisze treść draftów — przyjmowane tylko, gdy zachowa każdą liczbę; szablon zostaje."
     }
   },
   "messages": []

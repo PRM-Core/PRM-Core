@@ -92,13 +92,15 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   code, with its limits and consent gate) or rejects; call lists for the
   front desk with CSV export; a leadership brief from a template. No model
   involved.
+- **The language layer** — a model inside the perimeter polishes the brief
+  and writes draft texts from the facts; accepted only when every number of
+  the template survives and the draft rules hold, so the screen is correct
+  with AI off.
 
 ### Next
 
-1. **The language layer on the drafts and the brief** — a local model
-   polishes the draft text and the brief's wording from the facts the rules
-   produced; the facts stay in the template so the screen is correct with AI
-   off. _(help wanted)_
+1. **Triage of inbound messages** — urgency, topic and suggested owner, so
+   reception sees what needs a human first. _(help wanted)_
 2. **Drafts for automations** — the first N messages of every new automation
    go through the same approval queue.
 3. **Decision log a human can read** — why the agent routed this patient this
@@ -109,13 +111,11 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 5. **Evaluation harness for prompts** — a set of cases (consent traps,
    medical-advice traps, Polish and English) run against a prompt change
    before it ships. Today a prompt edit is unverified.
-6. **Triage of inbound messages** — urgency, topic and suggested owner, so
-   reception sees what needs a human first.
-7. **Patient history summary for reception** — three sentences before the
+6. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-8. **Per-automation budgets and a hard stop** — one flow must not consume the
+7. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
-9. **Local model support** (Ollama or a compatible endpoint) for clinics that
+8. **Local model support** (Ollama or a compatible endpoint) for clinics that
    will not send anything to a hosted provider.
 
 ## Security

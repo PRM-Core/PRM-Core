@@ -114,9 +114,7 @@
       "indexes": {
         "agent_insights_signature_unique": {
           "name": "agent_insights_signature_unique",
-          "columns": [
-            "signature"
-          ],
+          "columns": ["signature"],
           "isUnique": true
         }
       },
@@ -275,18 +273,12 @@
       "indexes": {
         "idx_runs_automation_contact": {
           "name": "idx_runs_automation_contact",
-          "columns": [
-            "automation_id",
-            "contact_id",
-            "status"
-          ],
+          "columns": ["automation_id", "contact_id", "status"],
           "isUnique": false
         },
         "idx_runs_status": {
           "name": "idx_runs_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -550,9 +542,7 @@
       "indexes": {
         "idx_campaigns_status": {
           "name": "idx_campaigns_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -774,20 +764,14 @@
       "indexes": {
         "idx_contact_consents_key": {
           "name": "idx_contact_consents_key",
-          "columns": [
-            "consent_key",
-            "granted"
-          ],
+          "columns": ["consent_key", "granted"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "contact_consents_contact_id_consent_key_pk": {
-          "columns": [
-            "contact_id",
-            "consent_key"
-          ],
+          "columns": ["contact_id", "consent_key"],
           "name": "contact_consents_contact_id_consent_key_pk"
         }
       },
@@ -868,9 +852,7 @@
       "indexes": {
         "idx_documents_contact": {
           "name": "idx_documents_contact",
-          "columns": [
-            "contact_id"
-          ],
+          "columns": ["contact_id"],
           "isUnique": false
         }
       },
@@ -1163,10 +1145,7 @@
       "indexes": {
         "idx_contact_plans": {
           "name": "idx_contact_plans",
-          "columns": [
-            "contact_id",
-            "assigned_at"
-          ],
+          "columns": ["contact_id", "assigned_at"],
           "isUnique": false
         }
       },
@@ -1175,12 +1154,8 @@
           "name": "contact_treatment_plans_plan_id_treatment_plans_id_fk",
           "tableFrom": "contact_treatment_plans",
           "tableTo": "treatment_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1292,17 +1267,12 @@
       "indexes": {
         "contact_visits_external_id_unique": {
           "name": "contact_visits_external_id_unique",
-          "columns": [
-            "external_id"
-          ],
+          "columns": ["external_id"],
           "isUnique": true
         },
         "idx_contact_visits_contact": {
           "name": "idx_contact_visits_contact",
-          "columns": [
-            "contact_id",
-            "starts_at"
-          ],
+          "columns": ["contact_id", "starts_at"],
           "isUnique": false
         }
       },
@@ -1611,10 +1581,7 @@
       "indexes": {
         "idx_content_items_kind": {
           "name": "idx_content_items_kind",
-          "columns": [
-            "kind",
-            "updated_at"
-          ],
+          "columns": ["kind", "updated_at"],
           "isUnique": false
         }
       },
@@ -1791,18 +1758,12 @@
       "indexes": {
         "idx_copilot_conversation": {
           "name": "idx_copilot_conversation",
-          "columns": [
-            "conversation_id",
-            "created_at"
-          ],
+          "columns": ["conversation_id", "created_at"],
           "isUnique": false
         },
         "idx_copilot_user_recent": {
           "name": "idx_copilot_user_recent",
-          "columns": [
-            "user_id",
-            "created_at"
-          ],
+          "columns": ["user_id", "created_at"],
           "isUnique": false
         }
       },
@@ -1993,16 +1954,12 @@
       "indexes": {
         "doctors_ic_id_unique": {
           "name": "doctors_ic_id_unique",
-          "columns": [
-            "ic_id"
-          ],
+          "columns": ["ic_id"],
           "isUnique": true
         },
         "idx_doctors_spec": {
           "name": "idx_doctors_spec",
-          "columns": [
-            "spec_key"
-          ],
+          "columns": ["spec_key"],
           "isUnique": false
         }
       },
@@ -2060,9 +2017,7 @@
       "indexes": {
         "idx_email_events_token": {
           "name": "idx_email_events_token",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": false
         }
       },
@@ -2071,12 +2026,8 @@
           "name": "email_events_token_email_sends_token_fk",
           "tableFrom": "email_events",
           "tableTo": "email_sends",
-          "columnsFrom": [
-            "token"
-          ],
-          "columnsTo": [
-            "token"
-          ],
+          "columnsFrom": ["token"],
+          "columnsTo": ["token"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2189,16 +2140,12 @@
       "indexes": {
         "idx_email_sends_to": {
           "name": "idx_email_sends_to",
-          "columns": [
-            "to_email"
-          ],
+          "columns": ["to_email"],
           "isUnique": false
         },
         "idx_email_sends_campaign": {
           "name": "idx_email_sends_campaign",
-          "columns": [
-            "campaign_id"
-          ],
+          "columns": ["campaign_id"],
           "isUnique": false
         }
       },
@@ -2304,10 +2251,7 @@
       "indexes": {
         "idx_engine_events_unprocessed": {
           "name": "idx_engine_events_unprocessed",
-          "columns": [
-            "processed_at",
-            "occurred_at"
-          ],
+          "columns": ["processed_at", "occurred_at"],
           "isUnique": false
         }
       },
@@ -2388,24 +2332,17 @@
       "indexes": {
         "engine_jobs_idempotency_key_unique": {
           "name": "engine_jobs_idempotency_key_unique",
-          "columns": [
-            "idempotency_key"
-          ],
+          "columns": ["idempotency_key"],
           "isUnique": true
         },
         "idx_engine_jobs_due": {
           "name": "idx_engine_jobs_due",
-          "columns": [
-            "status",
-            "due_at"
-          ],
+          "columns": ["status", "due_at"],
           "isUnique": false
         },
         "idx_engine_jobs_run": {
           "name": "idx_engine_jobs_run",
-          "columns": [
-            "run_id"
-          ],
+          "columns": ["run_id"],
           "isUnique": false
         }
       },
@@ -2505,25 +2442,17 @@
       "indexes": {
         "idx_log_contact": {
           "name": "idx_log_contact",
-          "columns": [
-            "contact_id",
-            "created_at"
-          ],
+          "columns": ["contact_id", "created_at"],
           "isUnique": false
         },
         "idx_log_kind": {
           "name": "idx_log_kind",
-          "columns": [
-            "kind",
-            "created_at"
-          ],
+          "columns": ["kind", "created_at"],
           "isUnique": false
         },
         "idx_log_run": {
           "name": "idx_log_run",
-          "columns": [
-            "run_id"
-          ],
+          "columns": ["run_id"],
           "isUnique": false
         }
       },
@@ -2615,10 +2544,7 @@
       "indexes": {
         "idx_feed_rows_key": {
           "name": "idx_feed_rows_key",
-          "columns": [
-            "feed_id",
-            "key_value"
-          ],
+          "columns": ["feed_id", "key_value"],
           "isUnique": false
         }
       },
@@ -2627,12 +2553,8 @@
           "name": "feed_rows_feed_id_feeds_id_fk",
           "tableFrom": "feed_rows",
           "tableTo": "feeds",
-          "columnsFrom": [
-            "feed_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["feed_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2901,17 +2823,12 @@
       "indexes": {
         "inbox_messages_external_id_unique": {
           "name": "inbox_messages_external_id_unique",
-          "columns": [
-            "external_id"
-          ],
+          "columns": ["external_id"],
           "isUnique": true
         },
         "idx_inbox_messages_thread": {
           "name": "idx_inbox_messages_thread",
-          "columns": [
-            "thread_id",
-            "created_at"
-          ],
+          "columns": ["thread_id", "created_at"],
           "isUnique": false
         }
       },
@@ -3009,18 +2926,12 @@
       "indexes": {
         "idx_inbox_threads_contact_channel": {
           "name": "idx_inbox_threads_contact_channel",
-          "columns": [
-            "contact_id",
-            "channel"
-          ],
+          "columns": ["contact_id", "channel"],
           "isUnique": false
         },
         "idx_inbox_threads_recent": {
           "name": "idx_inbox_threads_recent",
-          "columns": [
-            "status",
-            "last_message_at"
-          ],
+          "columns": ["status", "last_message_at"],
           "isUnique": false
         }
       },
@@ -3205,12 +3116,8 @@
           "name": "login_challenges_user_id_users_id_fk",
           "tableFrom": "login_challenges",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3276,10 +3183,7 @@
       "indexes": {
         "idx_media_files_folder": {
           "name": "idx_media_files_folder",
-          "columns": [
-            "folder",
-            "created_at"
-          ],
+          "columns": ["folder", "created_at"],
           "isUnique": false
         }
       },
@@ -3482,10 +3386,7 @@
       "indexes": {
         "idx_popup_events_item": {
           "name": "idx_popup_events_item",
-          "columns": [
-            "content_item_id",
-            "created_at"
-          ],
+          "columns": ["content_item_id", "created_at"],
           "isUnique": false
         }
       },
@@ -3585,10 +3486,7 @@
       "indexes": {
         "idx_popup_queue_contact": {
           "name": "idx_popup_queue_contact",
-          "columns": [
-            "contact_id",
-            "shown_at"
-          ],
+          "columns": ["contact_id", "shown_at"],
           "isUnique": false
         }
       },
@@ -3772,12 +3670,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3836,9 +3730,7 @@
       "indexes": {
         "sms_senders_value_unique": {
           "name": "sms_senders_value_unique",
-          "columns": [
-            "value"
-          ],
+          "columns": ["value"],
           "isUnique": true
         }
       },
@@ -3919,16 +3811,12 @@
       "indexes": {
         "idx_sms_sends_contact": {
           "name": "idx_sms_sends_contact",
-          "columns": [
-            "contact_id"
-          ],
+          "columns": ["contact_id"],
           "isUnique": false
         },
         "idx_sms_sends_campaign": {
           "name": "idx_sms_sends_campaign",
-          "columns": [
-            "campaign_id"
-          ],
+          "columns": ["campaign_id"],
           "isUnique": false
         }
       },
@@ -4003,10 +3891,7 @@
       "indexes": {
         "idx_recovery_user": {
           "name": "idx_recovery_user",
-          "columns": [
-            "user_id",
-            "used_at"
-          ],
+          "columns": ["user_id", "used_at"],
           "isUnique": false
         }
       },
@@ -4015,12 +3900,8 @@
           "name": "totp_recovery_codes_user_id_users_id_fk",
           "tableFrom": "totp_recovery_codes",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4134,16 +4015,12 @@
       "indexes": {
         "idx_pings_contact_token": {
           "name": "idx_pings_contact_token",
-          "columns": [
-            "contact_token"
-          ],
+          "columns": ["contact_token"],
           "isUnique": false
         },
         "idx_pings_host": {
           "name": "idx_pings_host",
-          "columns": [
-            "host"
-          ],
+          "columns": ["host"],
           "isUnique": false
         }
       },
@@ -4260,12 +4137,8 @@
           "name": "trusted_devices_user_id_users_id_fk",
           "tableFrom": "trusted_devices",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4319,12 +4192,8 @@
           "name": "user_totp_user_id_users_id_fk",
           "tableFrom": "user_totp",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4412,9 +4281,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },

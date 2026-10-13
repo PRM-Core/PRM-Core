@@ -8,6 +8,41 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.70.0] — PRM_Agent: warstwa językowa, model w sieci placówki
+
+Pierwszy krok fazy „język na wierzchu”: model (lokalny albo, za jawną
+decyzją, hostowany) pisze lepiej to, co reguły już ustaliły. Fakty zostają
+w szablonie, więc ekran jest poprawny także przy `PRM_AI_MODE=off`.
+
+- **Brief wygładzony przez model.** Co noc, po policzeniu sygnałów, brief
+  z szablonu jest zapisywany (tabela `agent_briefs`), a gdy model jest
+  w zasięgu — także jego wersja w pełnych zdaniach. Wersja modelu jest
+  przyjmowana tylko wtedy, gdy zachowała **każdą liczbę** szablonu i nie
+  dodała żadnej (daty 13.10.2026 i 2026-10-13 to te same liczby);
+  w przeciwnym razie zostaje szablon, a dziennik mówi, które liczby
+  zniknęły lub się pojawiły. Na ekranie przełącznik „wersja modelu / z
+  szablonu” i przycisk „Wygładź modelem”.
+- **Treść draftu napisana przez model.** Nowy draft dostaje tekst z faktów
+  (cel, kanał, ilu pacjentów, co ich łączy) — do modelu nie idzie żaden
+  pacjent. Tekst jest przyjmowany, gdy zaczyna się od `{{firstName}}`, nie
+  używa innych pól, nie wymyśla linku, numeru ani daty, nie ma HTML
+  i mieści się w kanale (SMS 320 znaków). Szablon jest zawsze zachowany
+  (`template_message`) — „Wróć do szablonu” jednym kliknięciem;
+  „Napisz modelem” dla draftu, który tekstu z modelu jeszcze nie ma.
+- Każde wywołanie przechodzi przez ten sam tor co reszta PRM_Agenta:
+  `PRM_AI_MODE`, strażnik wyjścia, pseudonimizacja, dzienny limit kosztów
+  (wpisy `ai` w dzienniku silnika). Przy `off`, bez konfiguracji serwera
+  modelu albo po wyczerpaniu limitu nic nie jest wywoływane, a ekran mówi
+  dlaczego.
+- Migracja 0070: tabela `agent_briefs`, kolumny `template_message`
+  i `text_source` w `agent_drafts`.
+- **Poprawka (1.69.0):** co 15 minut przegląd Supervisora zamykał
+  rekomendacje PRM_Agenta jako „rozwiązane”, bo nie były jego ustaleniami.
+  Teraz przegląd nie dotyka sygnatur `agent:`; nocne liczenie samo zamyka
+  rekomendację, której liczby już nie potwierdzają, a ustalenie (także
+  Supervisora), które wraca po rozwiązaniu, jest znów nowe. Odrzucone
+  zostaje odrzucone.
+
 ## [1.69.0] — PRM_Agent: rekomendacje, drafty do zatwierdzenia, listy i brief
 
 Druga warstwa agenta — nadal bez modelu językowego. Agent analizuje, wyciąga

@@ -22,8 +22,12 @@ them. Since 1.69.0 the agent also recommends and prepares (section 4):
 rules over the signals become findings on the supervisor's panel, audiences
 become campaign drafts that a person approves or rejects, the "who needs
 attention" counts are call lists for the front desk, and a leadership brief
-is built from a template — all without a language model. The language layer
-(drafts and the brief polished by a local model, triage) is next.
+is built from a template — all without a language model. Since 1.70.0 the
+language layer sits on top (`language.ts`, `language.server.ts`): a model
+inside the perimeter polishes the brief and writes draft texts from the
+facts, and its output is accepted only when it keeps every number of the
+template and follows the draft rules — otherwise the template stands.
+Triage of inbound messages and recommendation explanations are next.
 
 ## 1. Where intelligence runs
 
@@ -128,7 +132,9 @@ src/lib/agent/
   predict/recall.ts      due dates and likelihood
   recommend.server.ts    rules over signals → agent_insights (reuse)
   drafts.server.ts       proposals with status; approval → campaign runner
-  brief.server.ts        weekly brief: template first, model polish optional
+  brief.ts / brief.server.ts  the brief: template first, stored nightly, model polish optional
+  language.ts            the checks a model's text must pass (numbers kept, draft rules)
+  language.server.ts     brief polish and draft text through the provider, budget and log
 ```
 
 Existing modules move onto the same foundation without changing what they
@@ -176,9 +182,10 @@ ship a model; it documents what works:
    with factors; recall and call lists; the weekly brief from a template;
    the drafts queue screen. After this phase the website's "Analyzes →
    Draws conclusions → Prepares → You decide" is true with the AI off.
-2. **Language on top.** Local model drafts for campaigns and replies; the
-   brief polished by the model; recommendation explanations; triage of
-   inbound messages (urgency, topic, owner).
+2. **Language on top.** Local model drafts for campaigns (done in 1.70.0)
+   and replies; the brief polished by the model (done in 1.70.0);
+   recommendation explanations; triage of inbound messages (urgency,
+   topic, owner).
 3. **Roles and measurement.** CFO and Marketing views, A/B split with
    results in the brief, goals and conversion per campaign, the evaluation
    harness in CI.

@@ -1904,6 +1904,10 @@ export const agentDrafts = sqliteTable(
     decidedBy: text("decided_by").notNull().default(""),
     decidedAt: integer("decided_at"),
     note: text("note").notNull().default(""),
+    /** The rule's own text, kept when a model wrote `message`, so a person can go back to it. */
+    templateMessage: text("template_message").notNull().default(""),
+    /** Who wrote `message`: the rule's template, or a language model inside the perimeter. */
+    textSource: text("text_source").notNull().default("template").$type<"template" | "model">(),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
   },
@@ -1911,6 +1915,21 @@ export const agentDrafts = sqliteTable(
 );
 
 export type AgentDraftRow = typeof agentDrafts.$inferSelect;
+
+/**
+ * The brief, one per day: the text built from the template and, when a model
+ * inside the perimeter polished it and kept every number, that version too.
+ */
+export const agentBriefs = sqliteTable("agent_briefs", {
+  day: text("day").primaryKey(),
+  text: text("text").notNull(),
+  polished: text("polished").notNull().default(""),
+  model: text("model").notNull().default(""),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+export type AgentBriefRow = typeof agentBriefs.$inferSelect;
 
 export type AgentSignalRow = typeof agentSignals.$inferSelect;
 export type AgentScoreRow = typeof agentScores.$inferSelect;

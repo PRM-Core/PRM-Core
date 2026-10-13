@@ -13,6 +13,8 @@ import {
   Loader2,
   Mail,
   MessageSquare,
+  Sparkles,
+  Undo2,
   X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,8 +44,12 @@ import {
   getAgentDrafts,
   getAgentList,
   getAgentRecommendations,
+  polishAgentBrief,
+  rewriteAgentDraft,
+  type AgentBriefView,
   type AgentDraftView,
   type AgentRecommendationView,
+  type LanguageState,
 } from "@/lib/api/agent.functions";
 import type { AgentListRow, ListKey } from "@/lib/agent/drafts.server";
 import { factorLabel } from "@/lib/agent/factor-labels";
@@ -173,7 +179,7 @@ function AgentPage() {
           />
         </TabsContent>
         <TabsContent value="brief" className="mt-4">
-          <BriefTab />
+          <BriefTab readOnly={readOnly} />
         </TabsContent>
       </Tabs>
     </div>
@@ -252,7 +258,13 @@ function DraftsTab({ readOnly }: { readOnly: boolean }) {
     () =>
       getAgentDrafts()
         .then(setData)
-        .catch(() => setData({ drafts: [], templates: { sms: [], email: [] } })),
+        .catch(() =>
+          setData({
+            drafts: [],
+            templates: { sms: [], email: [] },
+            language: { available: false, mode: "off", reason: "" },
+          }),
+        ),
     [],
   );
   useEffect(() => {
@@ -277,6 +289,7 @@ function DraftsTab({ readOnly }: { readOnly: boolean }) {
               key={d.id}
               draft={d}
               templates={data.templates[d.channel]}
+              language={data.language}
               readOnly={readOnly}
               onDecided={load}
             />
@@ -346,18 +359,40 @@ function ChannelIcon({ channel }: { channel: "sms" | "email" }) {
 function DraftCard({
   draft,
   templates,
+  language,
   readOnly,
   onDecided,
 }: {
   draft: AgentDraftView;
   templates: string[];
+  language: LanguageState;
   readOnly: boolean;
   onDecided: () => Promise<void>;
 }) {
   const [message, setMessage] = useState(draft.message);
+  const [source, setSource] = useState<"template" | "model">(draft.textSource);
   const [template, setTemplate] = useState<string>("");
   const [note, setNote] = useState("");
-  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const [busy, setBusy] = useState<"approve" | "reject" | "rewrite" | null>(null);
+  const templateText = draft.templateMessage || draft.message;
+
+  const rewrite = async () => {
+    setBusy("rewrite");
+    try {
+      const r = await rewriteAgentDraft({ data: { id: draft.id } });
+      if (!r.ok) {
+        toast.error(t("Model nie napisał treści"), { description: r.error });
+        return;
+      }
+      setMessage(r.message);
+      setSource("model");
+      toast.success(t("Treść napisana przez model — sprawdź ją przed zatwierdzeniem."));
+    } catch (err) {
+      toast.error(t("Model nie napisał treści"), { description: String(err) });
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const decide = async (decision: "approve" | "reject") => {
     setBusy(decision);
@@ -420,13 +455,57 @@ function DraftCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-1">
-          <label className="text-xs font-medium">{t("Treść (z polami {{firstName}} itd.)")}</label>
+          <div className="flex items-center justify-between gap-2">
+            <label className="text-xs font-medium">
+              {t("Treść (z polami {{firstName}} itd.)")}
+            </label>
+            <span className="text-[11px] text-muted-foreground">
+              {source === "model" ? t("napisał model w sieci placówki") : t("tekst z szablonu")}
+            </span>
+          </div>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={4}
             disabled={readOnly}
           />
+          {!readOnly && (
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {language.available ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 h-7 px-2 text-xs"
+                  disabled={!!busy}
+                  onClick={() => void rewrite()}
+                >
+                  {busy === "rewrite" ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  {t("Napisz modelem")}
+                </Button>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">{language.reason}</span>
+              )}
+              {message !== templateText && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="gap-1.5 h-7 px-2 text-xs"
+                  disabled={!!busy}
+                  onClick={() => {
+                    setMessage(templateText);
+                    setSource("template");
+                  }}
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                  {t("Wróć do szablonu")}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
@@ -670,8 +749,10 @@ function factorsText(r: AgentListRow): string {
 
 // ── brief ───────────────────────────────────────────────────────────────────
 
-function BriefTab() {
-  const [brief, setBrief] = useState<{ day: string; text: string } | null | undefined>(undefined);
+function BriefTab({ readOnly }: { readOnly: boolean }) {
+  const [brief, setBrief] = useState<AgentBriefView | null | undefined>(undefined);
+  const [view, setView] = useState<"polished" | "template">("polished");
+  const [busy, setBusy] = useState(false);
   useEffect(() => {
     getAgentBrief()
       .then(setBrief)
@@ -679,6 +760,28 @@ function BriefTab() {
   }, []);
   if (brief === undefined) return <Loading />;
   if (!brief) return <Empty>{t("Brief powstanie po pierwszym nocnym liczeniu sygnałów.")}</Empty>;
+
+  const showPolished = view === "polished" && !!brief.polished;
+  const text = showPolished ? brief.polished : brief.text;
+
+  const polish = async () => {
+    setBusy(true);
+    try {
+      const r = await polishAgentBrief();
+      if (!r.ok) {
+        toast.error(t("Model nie wygładził briefu"), { description: r.error });
+        return;
+      }
+      setBrief({ ...brief, polished: r.polished, model: r.model });
+      setView("polished");
+      toast.success(t("Brief wygładzony — każda liczba sprawdzona z wersją z szablonu."));
+    } catch (err) {
+      toast.error(t("Model nie wygładził briefu"), { description: String(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Card className="border-border/60">
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
@@ -687,26 +790,61 @@ function BriefTab() {
             {t("Brief dla zarządu — {day}", { day: brief.day })}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            {t(
-              "Z liczb tej instalacji, bez modelu językowego. Do wklejenia w e-mail albo na spotkanie.",
-            )}
+            {showPolished
+              ? t(
+                  "Wygładzony przez model w sieci placówki ({model}); każda liczba sprawdzona z wersją z szablonu.",
+                  { model: brief.model },
+                )
+              : t(
+                  "Z liczb tej instalacji, bez modelu językowego. Do wklejenia w e-mail albo na spotkanie.",
+                )}
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-1.5 shrink-0"
-          onClick={() => {
-            void navigator.clipboard
-              .writeText(brief.text)
-              .then(() => toast.success(t("Skopiowano brief.")));
-          }}
-        >
-          <ClipboardCopy className="h-3.5 w-3.5" /> {t("Kopiuj")}
-        </Button>
+        <div className="flex flex-wrap gap-2 shrink-0 justify-end">
+          {brief.polished && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setView(showPolished ? "template" : "polished")}
+            >
+              {showPolished ? t("Pokaż wersję z szablonu") : t("Pokaż wersję modelu")}
+            </Button>
+          )}
+          {!readOnly && brief.language.available && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              disabled={busy}
+              onClick={() => void polish()}
+            >
+              {busy ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              {t("Wygładź modelem")}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            onClick={() => {
+              void navigator.clipboard
+                .writeText(text)
+                .then(() => toast.success(t("Skopiowano brief.")));
+            }}
+          >
+            <ClipboardCopy className="h-3.5 w-3.5" /> {t("Kopiuj")}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{brief.text}</pre>
+        <pre className="whitespace-pre-wrap text-sm font-sans leading-relaxed">{text}</pre>
+        {!brief.polished && !brief.language.available && brief.language.reason && (
+          <p className="text-[11px] text-muted-foreground mt-3">{brief.language.reason}</p>
+        )}
       </CardContent>
     </Card>
   );

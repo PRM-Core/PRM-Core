@@ -634,8 +634,10 @@ export async function saveInsights(
         proposedAction: draft.proposedAction,
         evidence: draft.evidence ?? null,
         seenCount: existing.seenCount + 1,
-        // Getting worse is new information; the same problem at the same level is not.
-        status: escalated ? "new" : existing.status,
+        // Getting worse is new information; the same problem at the same
+        // level is not. A problem that was resolved and is back is new again —
+        // only a dismissal is the user's last word.
+        status: escalated || existing.status === "resolved" ? "new" : existing.status,
         updatedAt: now,
       })
       .where(eq(agentInsights.id, existing.id));
@@ -660,7 +662,12 @@ async function resolveMissing(seen: Set<string>): Promise<number> {
       and(eq(agentInsights.fromAi, 0), inArray(agentInsights.status, ["new", "acknowledged"])),
     );
 
-  const gone = open.filter((row) => !seen.has(row.signature));
+  // PRM_Agent's recommendations (`agent:` signatures) live in the same table
+  // but come from the nightly run, which keeps them in step itself — the
+  // sweep must not close findings it did not make.
+  const gone = open.filter(
+    (row) => !seen.has(row.signature) && !row.signature.startsWith("agent:"),
+  );
   for (const row of gone) {
     await db
       .update(agentInsights)

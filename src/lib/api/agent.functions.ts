@@ -202,6 +202,8 @@ export interface AgentDraftView {
   decidedBy: string;
   decidedAt: number | null;
   note: string;
+  templateMessage: string;
+  textSource: "template" | "model";
   updatedAt: number;
 }
 
@@ -211,6 +213,7 @@ export const getAgentDrafts = createServerFn({ method: "GET" })
     async (): Promise<{
       drafts: AgentDraftView[];
       templates: Record<"sms" | "email", string[]>;
+      language: LanguageState;
     }> => {
       const { listDrafts } = await import("../agent/drafts.server");
       const { listSnapshots } = await import("../engine/snapshots.server");
@@ -236,9 +239,12 @@ export const getAgentDrafts = createServerFn({ method: "GET" })
           decidedBy: r.decidedBy,
           decidedAt: r.decidedAt,
           note: r.note,
+          templateMessage: r.templateMessage,
+          textSource: r.textSource,
           updatedAt: r.updatedAt,
         })),
         templates,
+        language: await languageState(),
       };
     },
   );
@@ -255,51 +261,91 @@ export const decideAgentDraft = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const { getSessionUser } = await import("../auth/session.server");
-    const { isReadOnlyRole } = await import("../auth/roles");
-    const user = await getSessionUser();
-    if (!user || isReadOnlyRole(user.role))
-      throw new Error(t("Decyzję o drafcie może podjąć osoba z prawem do zmian."));
+    const who = await requireEditor();
     const { decideDraft } = await import("../agent/drafts.server");
-    const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
     return decideDraft({ ...data, decidedBy: who });
+  });
+
+// ── the language layer ──────────────────────────────────────────────────────
+
+/** Whether a model inside the perimeter can rewrite text right now, and why not. */
+export interface LanguageState {
+  available: boolean;
+  mode: "off" | "local" | "hosted";
+  reason: string;
+}
+
+async function languageState(): Promise<LanguageState> {
+  const { modelGate } = await import("../agent/language.server");
+  const { aiMode } = await import("../ai/boundary.server");
+  const gate = await modelGate();
+  return { available: gate.ok, mode: aiMode(), reason: gate.ok ? "" : gate.reason };
+}
+
+async function requireEditor(): Promise<string> {
+  const { getSessionUser } = await import("../auth/session.server");
+  const { isReadOnlyRole } = await import("../auth/roles");
+  const user = await getSessionUser();
+  if (!user || isReadOnlyRole(user.role))
+    throw new Error(t("Decyzję o drafcie może podjąć osoba z prawem do zmian."));
+  return `${user.firstName} ${user.lastName}`.trim() || user.email;
+}
+
+export const rewriteAgentDraft = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(z.object({ id: z.string().max(80) }))
+  .handler(async ({ data }) => {
+    await requireEditor();
+    const { rewriteDraftText } = await import("../agent/drafts.server");
+    const r = await rewriteDraftText(data.id);
+    return {
+      ok: r.ok,
+      error: r.error,
+      message: r.draft?.message ?? "",
+      templateMessage: r.draft?.templateMessage ?? "",
+    };
   });
 
 // ── the brief ───────────────────────────────────────────────────────────────
 
+export interface AgentBriefView {
+  day: string;
+  text: string;
+  polished: string;
+  model: string;
+  language: LanguageState;
+}
+
 export const getAgentBrief = createServerFn({ method: "GET" })
   .middleware([allowReporter])
-  .handler(async (): Promise<{ day: string; text: string } | null> => {
-    const o = await overview();
-    if (!o.computed) return null;
-    const { getDb } = await import("../db/client.server");
-    const { agentInsights } = await import("../db/schema");
-    const { buildBrief } = await import("../agent/brief");
-    const recs = await getDb()
-      .select()
-      .from(agentInsights)
-      .where(like(agentInsights.signature, "agent:%"))
-      .orderBy(desc(agentInsights.updatedAt))
-      .limit(10);
-    const text = buildBrief({
-      day: o.computed.day,
-      signals: o.signals,
-      recommendations: recs
-        .filter((r) => r.status !== "dismissed" && r.status !== "resolved")
-        .map((r) => ({
-          signature: r.signature,
-          severity: r.severity,
-          title: r.title,
-          detail: r.detail,
-          proposedAction: r.proposedAction,
-          evidence: r.evidence ?? {},
-        })),
-      risks: o.risks.map((r) => ({
-        patient: r.patient,
-        startsAt: r.startsAt,
-        probability: r.probability,
-      })),
-      model: o.model ? { mode: o.model.mode, samples: o.model.samples } : null,
-    });
-    return { day: o.computed.day, text };
+  .handler(async (): Promise<AgentBriefView | null> => {
+    const { composeBrief, latestBrief } = await import("../agent/brief.server");
+    // Stored by the nightly run; composed live until the first run after
+    // the update stores one.
+    const stored = await latestBrief();
+    const brief = stored ?? (await composeBrief());
+    if (!brief) return null;
+    return {
+      day: brief.day,
+      text: brief.text,
+      polished: stored?.polished ?? "",
+      model: stored?.model ?? "",
+      language: await languageState(),
+    };
+  });
+
+export const polishAgentBrief = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .handler(async () => {
+    await requireEditor();
+    const { latestBrief, polishLatestBrief, storeBrief } = await import("../agent/brief.server");
+    // Nothing stored yet (the first day after the update): store today's first.
+    if (!(await latestBrief())) await storeBrief();
+    const r = await polishLatestBrief();
+    return {
+      ok: r.ok,
+      error: r.error ?? "",
+      polished: r.brief?.polished ?? "",
+      model: r.brief?.model ?? "",
+    };
   });

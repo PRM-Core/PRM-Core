@@ -420,6 +420,10 @@ export async function runAgentNightly(
   const model = await trainAndScoreNoShow(now);
   // Recommendations read the scores, so they come after the model.
   const recs = await recommendFromSignals(rows, now);
+  // The brief reads the recommendations, so it comes last; a model, if any,
+  // polishes it here — the nightly run is the one place that pays for it.
+  const { storeBrief } = await import("./brief.server");
+  await storeBrief(now);
   await logStep({
     kind: "agent",
     message: t(

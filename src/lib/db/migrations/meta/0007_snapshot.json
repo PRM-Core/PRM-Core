@@ -256,12 +256,8 @@
           "name": "email_events_token_email_sends_token_fk",
           "tableFrom": "email_events",
           "tableTo": "email_sends",
-          "columnsFrom": [
-            "token"
-          ],
-          "columnsTo": [
-            "token"
-          ],
+          "columnsFrom": ["token"],
+          "columnsTo": ["token"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -424,12 +420,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -610,9 +602,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },

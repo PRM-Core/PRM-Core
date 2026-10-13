@@ -105,6 +105,28 @@ describe("recommendFromSignals", () => {
     expect(insights.map((i) => i.signature)).toContain("agent:recall-due");
   });
 
+  test("a finding the numbers no longer support is resolved; back again, it is new; the supervisor's sweep leaves it alone", async () => {
+    const db = getDb();
+    const ids = Array.from({ length: 12 }, (_, i) => `c${i}`);
+    await db.insert(contacts).values(ids.map(person));
+    const rows = [signalRow("recall_due", 12, ids)];
+    await recommendFromSignals(rows as never, NOW);
+    const status = async () =>
+      (await db.select().from(agentInsights)).find((i) => i.signature === "agent:recall-due")
+        ?.status;
+    expect(await status()).toBe("new");
+    // The supervisor's own sweep finds nothing of its own and must not close ours.
+    const { runSupervisor } = await import("../engine/supervisor.server");
+    await runSupervisor();
+    expect(await status()).toBe("new");
+    // Next night: recall below the threshold — resolved.
+    await recommendFromSignals([signalRow("recall_due", 3, ids.slice(0, 3))] as never, NOW + DAY);
+    expect(await status()).toBe("resolved");
+    // And when it comes back, it is a new finding again.
+    await recommendFromSignals(rows as never, NOW + 2 * DAY);
+    expect(await status()).toBe("new");
+  });
+
   test("a rejected proposal does not come back the next morning", async () => {
     const db = getDb();
     const ids = Array.from({ length: 12 }, (_, i) => `c${i}`);
