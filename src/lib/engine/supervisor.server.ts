@@ -209,7 +209,7 @@ async function detectBrokenSendSteps(): Promise<InsightDraft[]> {
     ) {
       missingKeys.push("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN");
     }
-    if (needs.ai && !keys.anthropic && !keys.openai && !keys.google) {
+    if (needs.ai && !keys.anthropic && !keys.openai && !keys.google && !keys.local) {
       missingKeys.push("klucz dostawcy AI");
     }
     if (missingKeys.length > 0) {

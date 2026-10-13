@@ -12,6 +12,12 @@ Three sentences from the landing page are the contract:
 
 Everything below follows from taking those three literally.
 
+**Status.** Since 1.67.0 the foundation is in the product: `PRM_AI_MODE`
+(section 2), the local adapter with its egress guard, the pseudonymisation
+layer in front of every prompt builder (section 3), the boundary check in the
+daily security report, and the tests of section 8. The signals, predictions,
+drafts queue and brief (sections 5 and 9, phase 1) are next.
+
 ## 1. Where intelligence runs
 
 The agent has three layers. Two of them need no model at all, and the third

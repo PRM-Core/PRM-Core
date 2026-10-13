@@ -23,6 +23,7 @@ import { knowledgeForPrompt } from "../ai/knowledge.server";
 import { getAiConfig, isOverDailyLimit } from "../ai/settings.server";
 import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "../ai/provider.server";
 import { intlLocale, t } from "@/lib/i18n";
+import { identifiersOf, pseudonym } from "../ai/redact";
 
 // The PRM_Agent as an automation node. It reads the contact and their recent
 // history, then decides which outgoing path the run should take — and may tag,
@@ -234,11 +235,12 @@ async function loadContext(
 
   return [
     "## Pacjent",
-    t("Imię i nazwisko: {v0}", {
-      v0: [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "(brak)",
-    }),
-    `E-mail: ${contact.email || "(brak)"}`,
-    `Telefon: ${contact.phone || "(brak)"}`,
+    // A pseudonym and the record id. The message the agent writes uses
+    // {{firstName}} and is personalised at send time, so the model has no
+    // reason to know the name.
+    t("Identyfikator: {v0} (PRM ID {v1})", { v0: pseudonym(contact.id), v1: contact.prmId }),
+    t("E-mail: {v0}", { v0: contact.email ? t("jest") : t("(brak)") }),
+    t("Telefon: {v0}", { v0: contact.phone ? t("jest") : t("(brak)") }),
     `Status: ${contact.status}`,
     `Segmenty: ${(contact.segments ?? []).join(", ") || "(brak)"}`,
     `Tagi: ${(contact.tags ?? []).join(", ") || "(brak)"}`,
@@ -614,6 +616,7 @@ export async function runAgentNode(
         tools,
         maxTokens: MAX_TOKENS,
         webSearch,
+        identifiers: identifiersOf(contact),
       });
 
       tokensIn += completion.usage.inputTokens;

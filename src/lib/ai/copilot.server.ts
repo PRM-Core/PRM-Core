@@ -22,6 +22,7 @@ import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "./pr
 import { knowledgeForPrompt } from "./knowledge.server";
 import { logStep } from "../engine/log.server";
 import { t as tr, localized } from "@/lib/i18n";
+import { pseudonym } from "./redact";
 
 // PRM_Agent as a chat assistant — the same model layer as the automation node
 // (M3), but pointed at the workspace instead of at one patient's journey.
@@ -162,11 +163,14 @@ async function runTool(name: string, input: Record<string, unknown>): Promise<st
               .includes(q),
           )
           .slice(0, limit)
+          // The record, not the person: staff open it by PRM ID; the model
+          // never sees a name, an e-mail or a phone number.
           .map((c) => ({
             id: c.id,
-            imię: `${c.firstName} ${c.lastName}`.trim(),
-            email: c.email,
-            telefon: c.phone,
+            pacjent: pseudonym(c.id),
+            prmId: c.prmId,
+            maEmail: !!c.email,
+            maTelefon: !!c.phone,
             status: c.status,
             segmenty: c.segments ?? [],
             tagi: c.tags ?? [],

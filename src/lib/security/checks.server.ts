@@ -216,51 +216,119 @@ export interface SecuritySnapshot {
   awarieBramkiSms: number;
 }
 
+/**
+ * Granica danych PRM_Agent. `local` i `off` są w porządku; `hosted` jest
+ * dopuszczalny, ale raport mówi to wprost. Klucz zewnętrznego dostawcy przy
+ * trybie `local` to niespójność: nic go nie użyje, a leży na serwerze.
+ */
+async function checkAiBoundary(): Promise<Check> {
+  const { aiMode, localEndpoint } = await import("../ai/boundary.server");
+  const { getCredentials } = await import("@/lib/credentials/store.server");
+  const mode = aiMode();
+  const keys = await getCredentials("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY");
+  const hostedKey = !!(keys.ANTHROPIC_API_KEY || keys.OPENAI_API_KEY || keys.GOOGLE_API_KEY);
+  const nazwa = t("Granica danych PRM_Agent");
+  if (mode === "off")
+    return {
+      nazwa,
+      ok: true,
+      szczegol: t("AI wyłączone (PRM_AI_MODE=off) — żadne zapytanie do modelu nie wychodzi."),
+    };
+  if (mode === "local") {
+    const e = localEndpoint();
+    if (!e.url || !e.model) {
+      return {
+        nazwa,
+        ok: false,
+        szczegol: t(
+          "tryb local bez PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL — funkcje AI nie działają",
+        ),
+      };
+    }
+    if (e.hostClass === "public") {
+      return {
+        nazwa,
+        ok: false,
+        szczegol: t(
+          "PRM_AI_LOCAL_URL wskazuje na {host} poza siecią placówki — wywołania są odrzucane",
+          { host: e.host },
+        ),
+      };
+    }
+    if (hostedKey) {
+      return {
+        nazwa,
+        ok: false,
+        szczegol: t(
+          "tryb local, a na serwerze leży klucz zewnętrznego dostawcy AI — usuń go, nic go nie używa",
+        ),
+      };
+    }
+    return {
+      nazwa,
+      ok: true,
+      szczegol: t("model lokalny: {host} ({klasa}); prompty bez nazwisk, adresów i numerów", {
+        host: e.host,
+        klasa: e.hostClass,
+      }),
+    };
+  }
+  return {
+    nazwa,
+    ok: true,
+    szczegol: t(
+      "tryb hosted: prompty wychodzą do zewnętrznego dostawcy — bez nazwisk, e-maili, telefonów i PESEL",
+    ),
+  };
+}
+
 export async function collectSecuritySnapshot(now = Date.now()): Promise<SecuritySnapshot> {
   const db = getDb();
   const doba = now - 24 * 60 * 60 * 1000;
 
-  const [publiczne, kopie, dysk, blokady, bledy, sesje, admini, bramka] = await Promise.all([
-    checkPublicSurface(),
-    checkBackups(),
-    checkDisk(),
-    db
-      .select({ id: engineLog.id })
-      .from(engineLog)
-      .where(
-        and(
-          // Tagged in detail; the message is translated. Polish text = older rows.
-          or(
-            like(engineLog.detail, '%"source":"login-throttle"%'),
-            like(engineLog.message, "%BLOKADA LOGOWANIA%"),
+  const [publiczne, kopie, dysk, granicaAi, blokady, bledy, sesje, admini, bramka] =
+    await Promise.all([
+      checkPublicSurface(),
+      checkBackups(),
+      checkDisk(),
+      checkAiBoundary(),
+      db
+        .select({ id: engineLog.id })
+        .from(engineLog)
+        .where(
+          and(
+            // Tagged in detail; the message is translated. Polish text = older rows.
+            or(
+              like(engineLog.detail, '%"source":"login-throttle"%'),
+              like(engineLog.message, "%BLOKADA LOGOWANIA%"),
+            ),
+            gte(engineLog.createdAt, doba),
           ),
-          gte(engineLog.createdAt, doba),
         ),
-      ),
-    db
-      .select({ message: engineLog.message, createdAt: engineLog.createdAt })
-      .from(engineLog)
-      .where(and(eq(engineLog.kind, "error"), gte(engineLog.createdAt, doba)))
-      .limit(12),
-    db.select({ id: sessions.id }).from(sessions).where(gte(sessions.expiresAt, now)),
-    db.select({ id: users.id }).from(users).where(eq(users.role, "admin")),
-    db
-      .select({ id: engineLog.id })
-      .from(engineLog)
-      .where(
-        and(
-          or(
-            like(engineLog.detail, '%"source":"2fa-gateway"%'),
-            like(engineLog.message, "%bramki SMS%"),
+      db
+        .select({ message: engineLog.message, createdAt: engineLog.createdAt })
+        .from(engineLog)
+        .where(and(eq(engineLog.kind, "error"), gte(engineLog.createdAt, doba)))
+        .limit(12),
+      db.select({ id: sessions.id }).from(sessions).where(gte(sessions.expiresAt, now)),
+      db.select({ id: users.id }).from(users).where(eq(users.role, "admin")),
+      db
+        .select({ id: engineLog.id })
+        .from(engineLog)
+        .where(
+          and(
+            or(
+              like(engineLog.detail, '%"source":"2fa-gateway"%'),
+              like(engineLog.message, "%bramki SMS%"),
+            ),
+            gte(engineLog.createdAt, doba),
           ),
-          gte(engineLog.createdAt, doba),
         ),
-      ),
-  ]);
+    ]);
 
   return {
     wersja: APP_VERSION,
-    checks: [...publiczne, kopie, dysk],
+    checks: [...publiczne, kopie, dysk, granicaAi],
     blokadyLogowania: blokady.length,
     bledySilnika: bledy.map((b) => ({
       message: b.message.slice(0, 200),

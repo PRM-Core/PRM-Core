@@ -106,6 +106,10 @@ export function localized<T extends object>(build: () => T): T {
     get: (_, key) => {
       const copy = current() as Record<PropertyKey, unknown>;
       const value = copy[key];
+      // `constructor` must stay the real Object / Array: a serializer (the
+      // server-function transport) identifies plain data by it, and a bound
+      // copy made every localized value unserializable.
+      if (key === "constructor") return value;
       // Inherited methods (map, find, …) must run against the real array. Own
       // values — e.g. an icon component — are returned as they are, so React
       // sees the same component on every render.

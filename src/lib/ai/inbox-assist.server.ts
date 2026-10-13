@@ -6,6 +6,7 @@ import { priceCall, AiProviderError } from "./provider.server";
 import { knowledgeForPrompt } from "./knowledge.server";
 import { logStep } from "../engine/log.server";
 import { t } from "@/lib/i18n";
+import { identifiersOf, pseudonym } from "./redact";
 
 // "Sugestia AI" in the inbox: drafts a reply for a human to read, edit and send.
 //
@@ -110,7 +111,9 @@ export async function draftInboxReply(threadId: string): Promise<InboxDraftResul
   const contact = await db.select().from(contacts).where(eq(contacts.id, thread.contactId)).get();
   const profile = contact
     ? [
-        `Pacjent: ${`${contact.firstName} ${contact.lastName}`.trim() || contact.email}`,
+        // A pseudonym, not a name: the model drafts a reply, it does not need
+        // to know who the patient is.
+        `Pacjent: ${pseudonym(contact.id)} (${contact.prmId})`,
         `Status: ${contact.status}`,
         (contact.segments ?? []).length > 0
           ? `Segmenty: ${(contact.segments ?? []).join(", ")}`
@@ -155,6 +158,7 @@ export async function draftInboxReply(threadId: string): Promise<InboxDraftResul
       // will read before anything reaches the patient.
       tools: [],
       maxTokens: MAX_TOKENS,
+      identifiers: contact ? identifiersOf(contact) : undefined,
     });
 
     const costUsd = priceCall(config.providerId, config.model, completion.usage);

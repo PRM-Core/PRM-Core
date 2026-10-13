@@ -8,4 +8,5 @@ export const PROVIDER_LABELS: Record<AiProviderId, string> = {
   anthropic: "Anthropic (Claude)",
   openai: "OpenAI (GPT)",
   google: "Google (Gemini)",
+  local: "Model lokalny (w sieci placówki)",
 };

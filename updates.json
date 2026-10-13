@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.66.1",
-    "date": "2026-09-21",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.66.1",
+    "version": "1.67.0",
+    "date": "2026-10-13",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.67.0",
     "notes": {
-      "en": "Spreadsheet reading: security patch (SheetJS 0.20.3) and UTF-8 CSV fix.",
-      "pl": "Odczyt arkuszy: łatka bezpieczeństwa (SheetJS 0.20.3) i poprawka polskich znaków w CSV."
+      "en": "PRM_Agent keeps patient data inside: PRM_AI_MODE, local models, pseudonymised prompts.",
+      "pl": "PRM_Agent nie wysyła danych pacjentów na zewnątrz: PRM_AI_MODE, modele lokalne, pseudonimizacja promptów."
     }
   },
   "messages": []

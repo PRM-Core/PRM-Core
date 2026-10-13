@@ -238,6 +238,20 @@ app bugs, failed migrations and human error, not against losing the server. For
 that set `BACKUP_REMOTE=user@host:/backups` in `.env` — the newest copy is then
 also sent over `scp`.
 
+### AI and the data boundary
+
+Where text may go when PRM_Agent calls a model is one setting in `.env`,
+`PRM_AI_MODE`: `off` (no model calls; everything else works), `local` (only a
+model server inside your network — loopback, private address or an explicit
+allowlist, refused in code otherwise) or `hosted` (Anthropic, OpenAI or
+Google, never the default). Whatever the mode, every prompt is pseudonymised
+first: names, e-mail addresses, phone numbers and national IDs are replaced
+by placeholders before anything leaves the process, and the model refers to a
+patient by a short pseudonym. Any server that speaks the OpenAI Chat
+Completions protocol works as the local model (Ollama, vLLM, LM Studio,
+llama.cpp). The daily security report states the mode and the endpoint's
+host class. Design and what comes next: [docs/AGENT.md](docs/AGENT.md).
+
 ### Update notices
 
 Administrators see a banner when a new version is out or when the PRM Core

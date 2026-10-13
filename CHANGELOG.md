@@ -8,6 +8,44 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [1.67.0] — PRM_Agent: dane pacjentów zostają na serwerze
+
+**Aktualizacja u klienta z włączonym AI: ustaw `PRM_AI_MODE=hosted` w `.env`
+przed wdrożeniem.** Bez tego PRM_Agent po aktualizacji jest **wyłączony**
+(tryb `off`) — to świadomy wybór: dostawca zewnętrzny wymaga od teraz jawnej
+decyzji. Silnik, automatyzacje, segmenty i wysyłki działają niezależnie od
+trybu.
+
+- **Granica danych `PRM_AI_MODE`** — `off` / `local` / `hosted`. W trybie
+  `local` wywołania idą wyłącznie do serwera modelu w sieci placówki
+  (adres pętli zwrotnej, sieć prywatna albo host z `PRM_AI_EGRESS_ALLOW`);
+  adres publiczny jest odrzucany w kodzie, nie konwencją. `hosted` nigdy nie
+  jest domyślny.
+- **Model lokalny** — adapter dla każdego serwera zgodnego z OpenAI Chat
+  Completions (Ollama, vLLM, LM Studio, llama.cpp): `PRM_AI_LOCAL_URL`,
+  `PRM_AI_LOCAL_MODEL`, opcjonalnie `PRM_AI_LOCAL_KEY`. Zero kosztów za token.
+- **Pseudonimizacja przed każdym promptem, w każdym trybie.** Nazwiska,
+  e-maile, telefony i numery PESEL zamieniane są na symbole zastępcze
+  (`{{firstName}}`, `{{email}}`…) w prompcie systemowym, wiadomościach
+  i wynikach narzędzi; pacjent występuje jako pseudonim i PRM ID. Dotąd węzeł
+  Agent AI, podpowiedzi w skrzynce, Copilot i wyszukiwarka kontaktów
+  Copilota przekazywały modelowi imię, nazwisko, e-mail i telefon. Odmiana
+  polskich nazwisk (Kowalskiej, Kowalską) też jest rozpoznawana.
+- **Raport bezpieczeństwa** ma kontrolę „Granica danych PRM_Agent”: tryb,
+  klasa hosta modelu i — w trybie `local` — brak kluczy dostawców
+  zewnętrznych.
+- **Ustawienia → PRM_Agent** pokazują tryb i jego znaczenie; wybór dostawcy
+  i modelu dotyczy tylko trybu `hosted`.
+- Testy: klasyfikacja hostów, odmowa dla adresu publicznego bez jednego
+  żądania, pseudonimizacja (kształt, znane identyfikatory, odmiana,
+  idempotencja), tryb `off` bez wywołań. Projekt: `docs/AGENT.md`.
+
+- Poprawka: Ustawienia → PRM_Agent nie ładowały się (błąd 500) — obiekty
+  z przetłumaczonymi tekstami nie przechodziły przez transport funkcji
+  serwerowych. Dotyczy każdego takiego obiektu zwracanego do przeglądarki.
+
+Bez migracji bazy.
+
 ## [1.66.2] — raport bezpieczeństwa nie dobija się do zepsutej bramki
 
 - **Nieudana wysyłka dobowego raportu wstrzymuje kolejną próbę na godzinę.**

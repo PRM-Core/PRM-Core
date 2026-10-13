@@ -3,6 +3,8 @@ import { requireUser } from "./require-user";
 import { z } from "zod";
 import { getAiConfig, saveAiConfig, getKeyStatus, getSpendToday } from "../ai/settings.server";
 import { AI_MODELS, PROVIDER_ENV_VARS, type AiModelOption } from "../ai/provider.server";
+import { aiMode, localEndpoint } from "../ai/boundary.server";
+import type { AiMode, HostClass } from "../ai/boundary";
 import { generateFlow, type FlowGenerationResult } from "../ai/flow-builder.server";
 import type { AiProviderId } from "../db/schema";
 
@@ -17,6 +19,9 @@ export interface AiSettingsView {
   keyConfigured: Record<AiProviderId, boolean>;
   envVars: Record<AiProviderId, string>;
   models: Record<AiProviderId, AiModelOption[]>;
+  /** The data boundary in force — decided by .env, shown here, never edited here. */
+  mode: AiMode;
+  local: { host: string; hostClass: HostClass; model: string; configured: boolean };
 }
 
 export const getAiSettings = createServerFn({ method: "GET" })
@@ -31,6 +36,16 @@ export const getAiSettings = createServerFn({ method: "GET" })
       keyConfigured: await getKeyStatus(),
       envVars: PROVIDER_ENV_VARS,
       models: AI_MODELS,
+      mode: aiMode(),
+      local: (() => {
+        const e = localEndpoint();
+        return {
+          host: e.host,
+          hostClass: e.hostClass,
+          model: e.model,
+          configured: !!e.url && !!e.model && e.hostClass !== "public",
+        };
+      })(),
     };
   });
 

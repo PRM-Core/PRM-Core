@@ -1,4 +1,5 @@
 import type { AiProviderId } from "../db/schema";
+import type { KnownIdentifiers } from "./redact";
 import { t, localized } from "@/lib/i18n";
 
 // One interface, three adapters. The PRM_Agent talks only to this shape, so
@@ -87,6 +88,13 @@ export interface AiCompleteInput {
    * native server tool, or reports it unsupported via `supportsWebSearch`.
    */
   webSearch?: boolean;
+  /**
+   * Who the prompt is about. The boundary (`settings.server.ts`) replaces
+   * these names, addresses and numbers with placeholders in every text of the
+   * request before the adapter sees it — on top of the shape-based redaction
+   * it always applies. A builder that knows the contact passes them.
+   */
+  identifiers?: KnownIdentifiers;
 }
 
 export interface AiProvider {
@@ -152,6 +160,9 @@ export const AI_MODELS: Record<AiProviderId, AiModelOption[]> = localized(() => 
     { id: "gemini-3-pro", label: t("Gemini 3 Pro"), inputPerMTok: 1.25, outputPerMTok: 10 },
     { id: "gemini-2.5-flash", label: t("Gemini 2.5 Flash"), inputPerMTok: 0.3, outputPerMTok: 2.5 },
   ],
+  // The local model is named in .env (PRM_AI_LOCAL_MODEL) and costs nothing
+  // per token, so there is no list to choose from here.
+  local: [],
 }));
 
 export { PROVIDER_LABELS } from "./provider-labels";
@@ -161,6 +172,7 @@ export const PROVIDER_ENV_VARS: Record<AiProviderId, string> = {
   anthropic: "ANTHROPIC_API_KEY",
   openai: "OPENAI_API_KEY",
   google: "GOOGLE_API_KEY",
+  local: "PRM_AI_LOCAL_URL",
 };
 
 export function findModel(provider: AiProviderId, model: string): AiModelOption | undefined {

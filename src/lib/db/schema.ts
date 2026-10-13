@@ -1522,7 +1522,7 @@ export const engineSettings = sqliteTable("engine_settings", {
   updatedAt: text("updated_at").notNull(),
 });
 
-export type AiProviderId = "anthropic" | "openai" | "google";
+export type AiProviderId = "anthropic" | "openai" | "google" | "local";
 
 /**
  * Which LLM the PRM_Agent runs on, and how much it may spend per day.

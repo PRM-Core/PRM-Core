@@ -16,6 +16,7 @@ import { priceCall } from "./provider.server";
 import { logStep } from "../engine/log.server";
 import { formatActivityDate } from "../activity-date";
 import { t as tr } from "@/lib/i18n";
+import { identifiersOf, pseudonym } from "./redact";
 
 /**
  * PRM_Agent na karcie pacjenta.
@@ -108,9 +109,14 @@ async function gatherFacts(contactId: string): Promise<string | null> {
   }
 
   const lines: string[] = [
-    `PACJENT: ${c.firstName} ${c.lastName}`.trim(),
+    // Who the patient is stays on this side of the boundary: a pseudonym and
+    // the PRM ID identify the record for staff, not the person for the model.
+    `PACJENT: ${pseudonym(c.id)} (${c.prmId})`,
     tr("Status: {status} · w bazie od {createdAt}", { status: c.status, createdAt: c.createdAt }),
-    `Kontakt: ${c.email || "brak e-maila"} · ${c.phone || "brak telefonu"}`,
+    tr("Kanały: e-mail {v0}, telefon {v1}", {
+      v0: c.email ? tr("jest") : tr("brak"),
+      v1: c.phone ? tr("jest") : tr("brak"),
+    }),
     tr("Pozyskanie: źródło {v0}, medium {v1}, kampania {v2}", {
       v0: c.source || "—",
       v1: c.medium || "—",
@@ -219,6 +225,7 @@ async function callModel(
 
   const facts = await gatherFacts(contactId);
   if (!facts) return { ok: false, error: tr("Nie znaleziono pacjenta.") };
+  const who = await getDb().select().from(contacts).where(eq(contacts.id, contactId)).get();
 
   try {
     const completion = await config.provider.complete({
@@ -233,6 +240,7 @@ async function callModel(
       // których nikt nie przewidział przy karcie pacjenta.
       tools: [],
       maxTokens: MAX_TOKENS,
+      identifiers: who ? identifiersOf(who) : undefined,
     });
 
     const costUsd = priceCall(config.providerId, config.model, completion.usage);
