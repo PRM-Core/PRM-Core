@@ -8,6 +8,45 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.0.0] — PRM_Agent nie wychodzi: bez dostawców zewnętrznych; agent rozwija się sam, administrator wyznacza kierunki
+
+**Zmiana główna.** Produkt nie ma już adapterów Anthropic, OpenAI ani Google.
+Warstwa językowa agenta działa wyłącznie na modelu w sieci placówki
+(`PRM_AI_LOCAL_URL`) albo wcale. Instalacja, która miała
+`PRM_AI_MODE=hosted`: po aktualizacji tryb jest czytany jako `off`, a ekran
+Ustawienia → PRM_Agent i raport bezpieczeństwa wskazują pozostałe wpisy
+(`PRM_AI_MODE=hosted`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+`GOOGLE_API_KEY`) do usunięcia z `.env`. Żadna migracja nie dotyka danych;
+wiersz ustawień z dawnym dostawcą jest ignorowany.
+
+- **Usunięte**: adaptery dostawców hostowanych, wybór dostawcy i modelu
+  w ustawieniach, wpisy Anthropic / OpenAI / Google w katalogu integracji
+  i ich sprawdzenia, zależność `@anthropic-ai/sdk`. `PRM_AI_MODE` ma dwie
+  wartości: `off` i `local`; każde inne słowo to `off`.
+- **Agent rozwija się sam.** Co noc uczy model nieobecności na historii
+  placówki i zapisuje jego trafność względem częstości bazowej jako sygnał
+  z wartością z wczoraj (`model.no_show_skill`). Tekst każdego
+  zatwierdzonego draftu zostaje jako przykład (`agent_examples`).
+- **Kierunki rozwoju — administrator decyduje.** Agent proponuje kierunek,
+  gdy ma podstawy, z dowodem i opisem, co się zmieni: _treść draftów pisana
+  przez model_, _brief wygładzany przez model_, _triaż przez model_ (gdy
+  serwer modelu w sieci placówki odpowiada), _uczenie się z zatwierdzonych
+  draftów_ (po pierwszym zatwierdzeniu), _uzupełnianie brakujących
+  telefonów_ (gdy co najmniej jedna piąta kontaktów nie ma numeru).
+  Nowa zakładka **PRM_Agent → Kierunki**: Włącz / Odrzuć / Wyłącz, decyzja
+  z nazwiskiem i datą w dzienniku. **Żadna zdolność modelu nie rusza sama** —
+  do decyzji administratora warstwa językowa mówi, na co czeka. Przy
+  włączonym „uzupełnianiu telefonów” pacjenci bez numeru są listą dla
+  rejestracji i rekomendacją.
+- **Brief** ma sekcję „Jak rozwija się agent”: trafność modelu wobec
+  wczoraj, liczba przykładów, kierunki czekające na decyzję. Pulpit
+  pokazuje, ile kierunków czeka.
+- Migracja 0072: tabele `agent_directions`, `agent_examples`.
+- **Dla instalacji z modelem lokalnym z 1.70.0/1.71.0:** po aktualizacji
+  drafty, brief i triaż przez model **zatrzymują się do czasu włączenia
+  kierunków** — agent zaproponuje je pierwszej nocy (albo po „Przelicz
+  teraz”), administrator włącza jednym kliknięciem.
+
 ## [1.71.0] — PRM_Agent: triaż wiadomości od pacjentów
 
 Rejestracja widzi od razu, która rozmowa wymaga człowieka najpierw, czego

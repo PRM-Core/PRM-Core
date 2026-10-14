@@ -223,62 +223,54 @@ export interface SecuritySnapshot {
  */
 async function checkAiBoundary(): Promise<Check> {
   const { aiMode, localEndpoint } = await import("../ai/boundary.server");
-  const { getCredentials } = await import("@/lib/credentials/store.server");
+  const { hasStaleHostedConfig } = await import("../ai/boundary");
   const mode = aiMode();
-  const keys = await getCredentials("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY");
-  const hostedKey = !!(keys.ANTHROPIC_API_KEY || keys.OPENAI_API_KEY || keys.GOOGLE_API_KEY);
+  const stale = hasStaleHostedConfig(process.env);
   const nazwa = t("Granica danych PRM_Agent");
+  // A key of a provider the product no longer has must not lie on the server.
+  if (stale.length > 0)
+    return {
+      nazwa,
+      ok: false,
+      szczegol: t(
+        "w .env leżą wpisy, których produkt nie używa od 2.0.0: {list} — usuń je, żaden kod ich nie czyta",
+        { list: stale.join(", ") },
+      ),
+    };
   if (mode === "off")
     return {
       nazwa,
       ok: true,
-      szczegol: t("AI wyłączone (PRM_AI_MODE=off) — żadne zapytanie do modelu nie wychodzi."),
+      szczegol: t(
+        "model językowy wyłączony (PRM_AI_MODE=off) — żadne zapytanie do modelu nie wychodzi",
+      ),
     };
-  if (mode === "local") {
-    const e = localEndpoint();
-    if (!e.url || !e.model) {
-      return {
-        nazwa,
-        ok: false,
-        szczegol: t(
-          "tryb local bez PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL — funkcje AI nie działają",
-        ),
-      };
-    }
-    if (e.hostClass === "public") {
-      return {
-        nazwa,
-        ok: false,
-        szczegol: t(
-          "PRM_AI_LOCAL_URL wskazuje na {host} poza siecią placówki — wywołania są odrzucane",
-          { host: e.host },
-        ),
-      };
-    }
-    if (hostedKey) {
-      return {
-        nazwa,
-        ok: false,
-        szczegol: t(
-          "tryb local, a na serwerze leży klucz zewnętrznego dostawcy AI — usuń go, nic go nie używa",
-        ),
-      };
-    }
+  const e = localEndpoint();
+  if (!e.url || !e.model)
     return {
       nazwa,
-      ok: true,
-      szczegol: t("model lokalny: {host} ({klasa}); prompty bez nazwisk, adresów i numerów", {
-        host: e.host,
-        klasa: e.hostClass,
-      }),
+      ok: false,
+      szczegol: t(
+        "tryb local bez PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL — funkcje językowe nie działają",
+      ),
     };
-  }
+  if (e.hostClass === "public")
+    return {
+      nazwa,
+      ok: false,
+      szczegol: t(
+        "PRM_AI_LOCAL_URL wskazuje na {host} poza siecią placówki — wywołania są odrzucane",
+        { host: e.host },
+      ),
+    };
   return {
     nazwa,
     ok: true,
-    szczegol: t(
-      "tryb hosted: prompty wychodzą do zewnętrznego dostawcy — bez nazwisk, e-maili, telefonów i PESEL",
-    ),
+    szczegol: t("model w sieci placówki: {host} ({klasa}), model {model}", {
+      host: e.host,
+      klasa: e.hostClass,
+      model: e.model,
+    }),
   };
 }
 

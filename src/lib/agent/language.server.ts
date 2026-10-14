@@ -14,6 +14,9 @@ import {
   keepsFacts,
   type DraftFacts,
 } from "./language";
+import { DIRECTIONS } from "./directions";
+import { examplesFor, isEnabled } from "./directions.server";
+import type { DirectionKey } from "../db/schema";
 import { t } from "@/lib/i18n";
 
 /**
@@ -33,7 +36,16 @@ const DRAFT_TOKENS = 400;
 export type Gate = { ok: true; config: ResolvedAiConfig } | { ok: false; reason: string };
 
 /** Whether a model may be used right now, and which. */
-export async function modelGate(): Promise<Gate> {
+export async function modelGate(capability?: DirectionKey): Promise<Gate> {
+  // What the agent may *start* doing is the administrator's decision —
+  // a direction proposed on PRM_Agent → Kierunki, enabled or not.
+  if (capability && !(await isEnabled(capability)))
+    return {
+      ok: false,
+      reason: t("Kierunek „{title}” czeka na decyzję administratora (PRM_Agent → Kierunki).", {
+        title: DIRECTIONS[capability].title,
+      }),
+    };
   const config = await getAiConfig();
   if (config.mode === "off")
     return { ok: false, reason: t("Model językowy jest wyłączony (PRM_AI_MODE=off).") };
@@ -95,7 +107,7 @@ async function ask(
 
 /** The brief in plain language — accepted only when every number survived and none appeared. */
 export async function polishBrief(text: string): Promise<Rewrite> {
-  const gate = await modelGate();
+  const gate = await modelGate("brief_by_model");
   if (!gate.ok) return gate;
   const r = await ask(
     gate.config,
@@ -124,12 +136,15 @@ export async function polishBrief(text: string): Promise<Rewrite> {
 
 /** A draft message from the facts behind a signal — accepted only when the draft checks pass. */
 export async function writeDraftText(facts: DraftFacts): Promise<Rewrite> {
-  const gate = await modelGate();
+  const gate = await modelGate("drafts_by_model");
   if (!gate.ok) return gate;
   const r = await ask(
     gate.config,
     draftSystemPrompt(facts.channel),
-    draftUserPrompt(facts),
+    draftUserPrompt(
+      facts,
+      (await examplesFor(facts.channel, facts.audienceSignal)).map((e) => e.text),
+    ),
     DRAFT_TOKENS,
     "agent-draft",
     t("PRM_Agent: treść draftu „{title}” napisana przez model.", { title: facts.title }),

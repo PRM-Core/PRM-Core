@@ -197,6 +197,18 @@ export function AgentSignalsCard() {
               </div>
             </div>
 
+            {data.directionsPending > 0 && (
+              <Link
+                to="/agent"
+                search={{ tab: "directions" }}
+                className="block rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm hover:bg-primary/10 transition-colors"
+              >
+                {t("Agent proponuje {n} kierunków rozwoju — czekają na Twoją decyzję.", {
+                  n: data.directionsPending,
+                })}
+              </Link>
+            )}
+
             <div>
               <div className="text-xs font-medium mb-2 flex items-center justify-between">
                 <span>{t("Nadchodzące wizyty najbardziej zagrożone nieobecnością")}</span>

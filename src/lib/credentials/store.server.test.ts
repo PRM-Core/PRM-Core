@@ -140,22 +140,22 @@ describe("zapis", () => {
 
 describe("zmiana albo brak klucza głównego", () => {
   test("inny klucz: system spada na .env, panel pokazuje problem", async () => {
-    process.env.OPENAI_API_KEY = "sk-z-env";
-    await saveCredentials({ OPENAI_API_KEY: "sk-z-panelu-123456" }, "x");
+    process.env.META_APP_SECRET = "sk-z-env";
+    await saveCredentials({ META_APP_SECRET: "sk-z-panelu-123456" }, "x");
     process.env.PRM_SECRETS_KEY = randomBytes(32).toString("hex");
     __forgetCredentialCache();
-    expect(await getCredential("OPENAI_API_KEY")).toBe("sk-z-env");
-    const stan = (await listCredentialStatuses()).find((s) => s.name === "OPENAI_API_KEY")!;
+    expect(await getCredential("META_APP_SECRET")).toBe("sk-z-env");
+    const stan = (await listCredentialStatuses()).find((s) => s.name === "META_APP_SECRET")!;
     expect(stan.source).toBe("env");
     expect(stan.problem).toBe("key-mismatch");
   });
 
   test("brak klucza: wpis nieczytelny, bez .env — pusto i key-missing", async () => {
-    await saveCredentials({ OPENAI_API_KEY: "sk-z-panelu-123456" }, "x");
+    await saveCredentials({ META_APP_SECRET: "sk-z-panelu-123456" }, "x");
     delete process.env.PRM_SECRETS_KEY;
     __forgetCredentialCache();
-    expect(await getCredential("OPENAI_API_KEY")).toBe("");
-    const stan = (await listCredentialStatuses()).find((s) => s.name === "OPENAI_API_KEY")!;
+    expect(await getCredential("META_APP_SECRET")).toBe("");
+    const stan = (await listCredentialStatuses()).find((s) => s.name === "META_APP_SECRET")!;
     expect(stan.source).toBe("none");
     expect(stan.problem).toBe("key-missing");
   });
@@ -180,22 +180,22 @@ describe("stan dla panelu", () => {
 
 describe("przeniesienie z .env do panelu", () => {
   test("przenosi to, co działa z .env; wpisu z panelu nie nadpisuje; błędny format zostaje w .env", async () => {
-    process.env.OPENAI_API_KEY = "sk-z-env-openai-1234";
+    process.env.META_APP_SECRET = "sekret-z-env-1234";
     process.env.TESTSYS_PASSWORD = "abc$def-z-env";
     process.env.SENDGRID_API_KEY = "SG.test.z-env.0000";
     process.env.TWILIO_ACCOUNT_SID = "SK-to-nie-jest-sid-konta";
     await saveCredentials({ SENDGRID_API_KEY: "SG.test.panel.9876" }, "Anna Test");
 
     const wynik = await importCredentialsFromEnv("Anna Test");
-    expect(wynik.imported.sort()).toEqual(["OPENAI_API_KEY", "TESTSYS_PASSWORD"]);
+    expect(wynik.imported.sort()).toEqual(["META_APP_SECRET", "TESTSYS_PASSWORD"]);
     expect(wynik.skipped.map((s) => s.name)).toEqual(["TWILIO_ACCOUNT_SID"]);
     expect(JSON.stringify(wynik).includes("SK-to-nie")).toBe(false);
 
     // Po usunięciu z .env wartości zostają — czytane już z panelu.
-    delete process.env.OPENAI_API_KEY;
+    delete process.env.META_APP_SECRET;
     delete process.env.TESTSYS_PASSWORD;
     __forgetCredentialCache();
-    expect(await getCredential("OPENAI_API_KEY")).toBe("sk-z-env-openai-1234");
+    expect(await getCredential("META_APP_SECRET")).toBe("sekret-z-env-1234");
     expect(await getCredential("TESTSYS_PASSWORD")).toBe("abc$def-z-env");
     expect(await getCredential("SENDGRID_API_KEY")).toBe("SG.test.panel.9876");
 
@@ -205,7 +205,7 @@ describe("przeniesienie z .env do panelu", () => {
   });
 
   test("drugie uruchomienie nic nie robi", async () => {
-    process.env.OPENAI_API_KEY = "sk-z-env-openai-1234";
+    process.env.META_APP_SECRET = "sekret-z-env-1234";
     await importCredentialsFromEnv("x");
     expect((await importCredentialsFromEnv("x")).imported).toEqual([]);
   });

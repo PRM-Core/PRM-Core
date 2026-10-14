@@ -82,12 +82,6 @@ export const server3: Record<string, string> = {
   "Automatyzacja została wyłączona — przebieg zatrzymany.":
     "The automation was turned off — run stopped.",
   "BEZ drugiego składnika. Powód: {reason}": "WITHOUT a second factor. Reason: {reason}",
-  "Brak klucza Anthropic — uzupełnij go w Integracje → Klucze i dane dostępowe. PRM_Agent nie może wykonać zapytania.":
-    "No Anthropic key — add it in Integrations → Keys and credentials. PRM_Agent cannot run the request.",
-  "Brak klucza Google — uzupełnij go w Integracje → Klucze i dane dostępowe. PRM_Agent nie może wykonać zapytania.":
-    "No Google key — add it in Integrations → Keys and credentials. PRM_Agent cannot run the request.",
-  "Brak klucza OpenAI — uzupełnij go w Integracje → Klucze i dane dostępowe. PRM_Agent nie może wykonać zapytania.":
-    "No OpenAI key — add it in Integrations → Keys and credentials. PRM_Agent cannot run the request.",
   "Brak skonfigurowanego klucza SendGrid — uzupełnij go w Integracje → Klucze i dane dostępowe.":
     "No SendGrid key configured — add it in Integrations → Keys and credentials.",
   "Brak skonfigurowanego nadawcy SMS — nie wysłano nic.":
@@ -100,11 +94,7 @@ export const server3: Record<string, string> = {
     "Missing content: {v0}. Send steps will fail.",
   "Bramka SMS nie wysłała kodu weryfikacyjnego — {email} został zalogowany ":
     "The SMS gateway did not send the verification code — {email} was signed in ",
-  "Błąd połączenia z Claude API: {v0}": "Error connecting to the Claude API: {v0}",
   "Błąd wywołania AI: {v0}": "AI call error: {v0}",
-  "Claude API odrzuciło zapytanie: {message}": "The Claude API rejected the request: {message}",
-  "Claude odmówił wykonania zapytania ze względów bezpieczeństwa.":
-    "Claude declined the request for safety reasons.",
   "Dodano odnogę „Pozostali” bez filtra — bez niej kontakt niepasujący do żadnego filtra trafiłby na ostatnią odnogę wbrew jej warunkom.":
     "Added an “Everyone else” branch without a filter — without it, a contact matching no filter would go to the last branch against its conditions.",
   "Dostęp zewnętrznych asystentów AI do narzędzi systemu. Bez tokenu dostęp jest wyłączony.":
@@ -116,7 +106,6 @@ export const server3: Record<string, string> = {
   "E-maile: kampanie, automatyzacje, Skrzynka, kody logowania i raport bezpieczeństwa.":
     "Emails: campaigns, automations, Inbox, sign-in codes and the security report.",
   "Funkcje serwerowe wymagają zalogowania": "Server functions require signing in",
-  "Gemini odrzucił zapytanie: {detail}": "Gemini rejected the request: {detail}",
   "Hasło zostaje takie, jakie jest, a odnośnik wygaśnie sam.</p>":
     "The password stays as it is, and the link will expire by itself.</p>",
   "Jednokrotny wybór": "Single choice",
@@ -183,7 +172,6 @@ export const server3: Record<string, string> = {
   "Odmowa: {reason} Nie wysłano nic.": "Refused: {reason} Nothing was sent.",
   "Omówienie bez udziału modelu — poniżej same liczby. ":
     "Overview without the model — the numbers only below. ",
-  "OpenAI odrzuciło zapytanie: {detail}": "OpenAI rejected the request: {detail}",
   "Ostatni błąd: {error}": "Last error: {error}",
   "Otwórz Przebiegi tej automatyzacji, sprawdź krok, na którym się zatrzymuje, i popraw jego konfigurację.":
     "Open this automation's Runs, check the step where it stops and fix its configuration.",

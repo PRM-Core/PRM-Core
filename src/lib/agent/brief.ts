@@ -16,6 +16,14 @@ export interface BriefInput {
   recommendations: Recommendation[];
   risks: { patient: string; startsAt: number | null; probability: number }[];
   model: { mode: "trained" | "prior"; samples: number } | null;
+  /** How the agent itself is doing: its model's skill, what it has learned, what waits for a decision. */
+  development?: {
+    skill: number | null;
+    previousSkill: number | null;
+    examples: number;
+    directionsPending: number;
+    directionsEnabled: number;
+  };
 }
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -119,6 +127,35 @@ export function buildBrief(input: BriefInput): string {
           })
         : t("- Ocena ryzyka: za mało historii ({n} wizyt) — podana jest częstość bazowa.", {
             n: input.model.samples,
+          }),
+    );
+  }
+  if (input.development) {
+    const d = input.development;
+    lines.push("");
+    lines.push(t("Jak rozwija się agent"));
+    if (d.skill !== null && input.model?.mode === "trained") {
+      const prev =
+        d.previousSkill === null ? "" : ` (${t("wczoraj {v}", { v: pct(d.previousSkill) })})`;
+      lines.push(
+        t("- Model nieobecności: o {v} lepszy niż sama częstość bazowa{prev}.", {
+          v: pct(d.skill),
+          prev,
+        }),
+      );
+    }
+    lines.push(
+      d.examples > 0
+        ? t("- Przykładów zatwierdzonych przez zespół: {n}.", { n: d.examples })
+        : t("- Agent nie ma jeszcze zatwierdzonych przykładów do nauki."),
+    );
+    lines.push(
+      d.directionsPending > 0
+        ? t("- Kierunki rozwoju czekające na decyzję administratora: {n} (PRM_Agent → Kierunki).", {
+            n: d.directionsPending,
+          })
+        : t("- Włączone kierunki rozwoju: {n}; nic nie czeka na decyzję.", {
+            n: d.directionsEnabled,
           }),
     );
   }

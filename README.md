@@ -51,29 +51,30 @@ self-hosted, in English and Polish.
   fonts served from your own server (no Google Fonts).
 - **Reports.** Built-in dashboards plus drag-and-drop custom reports over
   contacts, visits, emails, SMS, campaigns and the inbox (aggregates only).
-- **AI.** An agent node in automations, reply suggestions in the inbox and a
-  read-only Copilot. Pluggable providers (Anthropic, OpenAI, Google) with a
-  shared daily cost limit. Where this is going — an agent whose analysis and
-  predictions need no model and whose model, when used, runs inside your
-  perimeter and never sees identities — is in [docs/AGENT.md](docs/AGENT.md).
+- **PRM_Agent.** Analyses, draws conclusions and prepares — a person
+  decides. Nightly signals and a no-show model trained on your own history,
+  recommendations with evidence, campaign drafts with approval, call lists,
+  triage of patient messages, a leadership brief. The language layer runs
+  only on a model inside your network; there is no external provider in the
+  product. The agent develops itself and proposes directions; the
+  administrator enables them. Design: [docs/AGENT.md](docs/AGENT.md).
 - **Security.** Two-factor login (SMS or authenticator app), a read-only
   reviewer role, login throttling, 30-minute sessions, encrypted integration
   keys (AES-256-GCM) and a daily security report.
 
 ### Integrations today
 
-| Integration                 | Direction | What for                                                     |
-| --------------------------- | --------- | ------------------------------------------------------------ |
-| SendGrid                    | out + in  | email sending, delivery events, replies to the inbox         |
-| Twilio                      | out + in  | SMS sending, replies, SMS login codes                        |
-| Anthropic / OpenAI / Google | out       | AI agent, Copilot, reply suggestions                         |
-| Meta Lead Ads               | in        | leads from Facebook and Instagram ad forms                   |
-| Canva                       | in        | importing designs into the content studio                    |
-| Booking system connectors   | in        | patients, visits and schedules — pluggable providers         |
-| Docplanner (ZnanyLekarz)    | in        | keys and connection test; visit sync in progress             |
-| Generic lead webhook        | in        | any system that can send JSON (n8n, Make, Zapier, your code) |
-| Booking webhook             | in        | visit bookings from an online booking system                 |
-| MCP                         | out       | read-only access for AI assistants                           |
+| Integration               | Direction | What for                                                     |
+| ------------------------- | --------- | ------------------------------------------------------------ |
+| SendGrid                  | out + in  | email sending, delivery events, replies to the inbox         |
+| Twilio                    | out + in  | SMS sending, replies, SMS login codes                        |
+| Meta Lead Ads             | in        | leads from Facebook and Instagram ad forms                   |
+| Canva                     | in        | importing designs into the content studio                    |
+| Booking system connectors | in        | patients, visits and schedules — pluggable providers         |
+| Docplanner (ZnanyLekarz)  | in        | keys and connection test; visit sync in progress             |
+| Generic lead webhook      | in        | any system that can send JSON (n8n, Make, Zapier, your code) |
+| Booking webhook           | in        | visit bookings from an online booking system                 |
+| MCP                       | out       | read-only access for AI assistants                           |
 
 ## Contributors wanted: connect a medical system
 
@@ -241,10 +242,10 @@ also sent over `scp`.
 ### AI and the data boundary
 
 Where text may go when PRM_Agent calls a model is one setting in `.env`,
-`PRM_AI_MODE`: `off` (no model calls; everything else works), `local` (only a
-model server inside your network — loopback, private address or an explicit
-allowlist, refused in code otherwise) or `hosted` (Anthropic, OpenAI or
-Google, never the default). Whatever the mode, every prompt is pseudonymised
+`PRM_AI_MODE`: `off` (no model calls; everything else works) or `local` (only
+a model server inside your network — loopback, private address or an explicit
+allowlist, refused in code otherwise). There is no third option: the product
+has no adapter for an external provider. Whatever the mode, every prompt is pseudonymised
 first: names, e-mail addresses, phone numbers and national IDs are replaced
 by placeholders before anything leaves the process, and the model refers to a
 patient by a short pseudonym. Any server that speaks the OpenAI Chat

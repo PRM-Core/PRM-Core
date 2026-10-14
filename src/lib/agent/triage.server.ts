@@ -51,7 +51,7 @@ export async function triageThread(
     .slice(-TEXT_LIMIT);
 
   let result: TriageResult = { ...triageByRules(text), source: "rules" };
-  const gate = await modelGate();
+  const gate = await modelGate("triage_by_model");
   if (gate.ok) {
     const contact = await db.select().from(contacts).where(eq(contacts.id, thread.contactId)).get();
     try {

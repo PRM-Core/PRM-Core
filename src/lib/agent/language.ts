@@ -120,10 +120,16 @@ export interface DraftFacts {
   templateMessage: string;
 }
 
-export function draftUserPrompt(f: DraftFacts): string {
-  return [
+export function draftUserPrompt(f: DraftFacts, examples: string[] = []): string {
+  const lines = [
     t("Cel: {title}", { title: f.title }),
     t("Kto dostanie: {n} pacjentów — {detail}", { n: f.audienceCount, detail: f.detail }),
     t("Wersja robocza z szablonu (możesz napisać lepiej): {text}", { text: f.templateMessage }),
-  ].join("\n");
+  ];
+  if (examples.length > 0) {
+    // What the team approved before — the house style, not a constraint on content.
+    lines.push(t("Przykłady zatwierdzone przez zespół (tak piszemy u nas):"));
+    examples.forEach((e, i) => lines.push(`${i + 1}. ${e}`));
+  }
+  return lines.join("\n");
 }

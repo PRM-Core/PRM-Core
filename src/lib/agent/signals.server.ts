@@ -418,6 +418,10 @@ export async function runAgentNightly(
 ): Promise<{ signals: number; model: NoShowModel; recommendations: number }> {
   const rows = await computeSignals(now);
   const model = await trainAndScoreNoShow(now);
+  rows.push(await recordModelSkill(model, now));
+  // Directions first: an enabled one may add to the recommendations.
+  const { proposeDirections } = await import("./directions.server");
+  await proposeDirections(now);
   // Recommendations read the scores, so they come after the model.
   const recs = await recommendFromSignals(rows, now);
   // The brief reads the recommendations, so it comes last; a model, if any,
@@ -438,6 +442,46 @@ export async function runAgentNightly(
     detail: { source: "agent-nightly", dzien: warsawDay(now), mode: model.mode },
   });
   return { signals: rows.length, model, recommendations: recs.length };
+}
+
+/**
+ * How much better than the base rate the no-show model is tonight, as a
+ * signal with yesterday's value beside it — the agent's own report card.
+ * 0 = no better than the base rate (or no model yet); 1 = perfect.
+ */
+async function recordModelSkill(model: NoShowModel, now: number): Promise<AgentSignalRow> {
+  const db = getDb();
+  const day = warsawDay(now);
+  const skill =
+    model.mode === "trained" && model.priorLogLoss > 0
+      ? Math.max(0, 1 - model.logLoss / model.priorLogLoss)
+      : 0;
+  const yesterday = await db
+    .select({ value: agentSignals.value })
+    .from(agentSignals)
+    .where(
+      and(
+        eq(agentSignals.key, "model.no_show_skill"),
+        eq(agentSignals.dimension, ""),
+        lt(agentSignals.day, day),
+      ),
+    )
+    .orderBy(desc(agentSignals.day))
+    .limit(1)
+    .get();
+  const row: AgentSignalRow = {
+    id: randomUUID(),
+    day,
+    key: "model.no_show_skill",
+    dimension: "",
+    value: skill,
+    previous: yesterday?.value ?? null,
+    count: model.samples,
+    detail: { mode: model.mode },
+    computedAt: now,
+  };
+  await db.insert(agentSignals).values(row);
+  return row;
 }
 
 /** On the engine clock: once a day, after 02:00 Warsaw time. Never throws. */

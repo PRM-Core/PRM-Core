@@ -8,11 +8,15 @@ describe("resolveMode — unset means the safe answer", () => {
   test("no mode, local endpoint set → local", () => {
     expect(resolveMode({ PRM_AI_LOCAL_URL: "http://localhost:11434/v1" })).toBe("local");
   });
-  test("hosted only when said explicitly", () => {
-    expect(resolveMode({ PRM_AI_MODE: "hosted" })).toBe("hosted");
-    expect(resolveMode({ PRM_AI_MODE: " Hosted " })).toBe("hosted");
+  test("there is no hosted mode: the old word, like any other, is off", () => {
+    expect(resolveMode({ PRM_AI_MODE: "hosted" })).toBe("off");
+    expect(resolveMode({ PRM_AI_MODE: " Hosted ", PRM_AI_LOCAL_URL: "http://127.0.0.1:1" })).toBe(
+      "off",
+    );
+    expect(resolveMode({ PRM_AI_MODE: "cloud" })).toBe("off");
+    // An unknown word is not a guess: off, even with a local endpoint set.
     expect(resolveMode({ PRM_AI_MODE: "cloud", PRM_AI_LOCAL_URL: "http://127.0.0.1:1" })).toBe(
-      "local",
+      "off",
     );
   });
 });

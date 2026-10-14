@@ -46,8 +46,8 @@ describe("sprawdzenie formatu", () => {
   });
 
   test("pusta wartość, nowa linia, przełącznik, adres", () => {
-    expect(credentialProblem("OPENAI_API_KEY", "")).toMatch(/Usuń/);
-    expect(credentialProblem("OPENAI_API_KEY", "sk-a\nb")).toMatch(/nowej linii/);
+    expect(credentialProblem("META_APP_SECRET", "")).toMatch(/Usuń/);
+    expect(credentialProblem("META_APP_SECRET", "sk-a\nb")).toMatch(/nowej linii/);
     expect(credentialProblem("TESTSYS_INSECURE", "tak")).not.toBeNull();
     expect(credentialProblem("TESTSYS_INSECURE", "0")).toBeNull();
     expect(credentialProblem("TESTSYS_URL", "ftp://x")).not.toBeNull();

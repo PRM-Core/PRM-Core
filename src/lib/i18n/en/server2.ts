@@ -2,10 +2,7 @@
 export const server2: Record<string, string> = {
   Twilio: "Twilio",
   Meta: "Meta",
-  "Google odrzucił klucz (HTTP 400) — klucz jest błędny.":
-    "Google rejected the key (HTTP 400) — the key is wrong.",
   "{what} odpowiedział HTTP {status}.": "{what} responded with HTTP {status}.",
-  "Klucz {what} działa.": "The {what} key works.",
   "Meta odrzuciła dane aplikacji: {v0}.": "Meta rejected the app credentials: {v0}.",
   "Połączono z aplikacją {v0}.": "Connected to app {v0}.",
   "Połączono z kontem Canva{v0}.": "Connected to Canva account{v0}.",

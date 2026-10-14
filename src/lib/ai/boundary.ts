@@ -9,17 +9,18 @@
  *              loopback, a private-network address, or a host the
  *              administrator listed explicitly. Refused in code, not by
  *              convention.
- * - `hosted` — a cloud provider (Anthropic, OpenAI, Google). Never the
- *              default; prompts are pseudonymised before they leave (see
- *              `redact.ts`).
+ *
+ * There is no third mode. Since 2.0.0 the product has no adapter for a cloud
+ * provider at all: a value of `hosted` left in an older `.env` is read as
+ * `off`, and the settings screen says so.
  *
  * The server-side half (`boundary.server.ts`) reads the environment and
  * hands the values to these functions, so the rules can be tested without one.
  */
 
-export type AiMode = "off" | "local" | "hosted";
+export type AiMode = "off" | "local";
 
-export const AI_MODES: AiMode[] = ["off", "local", "hosted"];
+export const AI_MODES: AiMode[] = ["off", "local"];
 
 export interface AiEnv {
   PRM_AI_MODE?: string;
@@ -30,13 +31,23 @@ export interface AiEnv {
 
 /**
  * The mode in force. Unset means the safe answer: `local` when a local
- * endpoint is configured, otherwise `off`. Reaching a hosted provider always
- * takes an explicit `PRM_AI_MODE=hosted`.
+ * endpoint is configured, otherwise `off`. Anything else — including the
+ * `hosted` of releases before 2.0.0 — is `off`.
  */
 export function resolveMode(env: AiEnv): AiMode {
   const raw = (env.PRM_AI_MODE ?? "").trim().toLowerCase();
-  if (raw === "off" || raw === "local" || raw === "hosted") return raw;
+  if (raw === "off" || raw === "local") return raw;
+  if (raw) return "off";
   return (env.PRM_AI_LOCAL_URL ?? "").trim() ? "local" : "off";
+}
+
+/** True when `.env` still carries a mode or a key the product no longer uses — worth a line in the security report. */
+export function hasStaleHostedConfig(env: AiEnv & Record<string, string | undefined>): string[] {
+  const stale: string[] = [];
+  if ((env.PRM_AI_MODE ?? "").trim().toLowerCase() === "hosted") stale.push("PRM_AI_MODE=hosted");
+  for (const k of ["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY"])
+    if ((env[k] ?? "").trim()) stale.push(k);
+  return stale;
 }
 
 export type HostClass = "loopback" | "private" | "allowlisted" | "public";

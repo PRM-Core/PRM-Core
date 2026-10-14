@@ -110,46 +110,6 @@ async function twilio(read: Reader): Promise<CheckResult> {
   };
 }
 
-async function anthropic(read: Reader): Promise<CheckResult> {
-  const { ANTHROPIC_API_KEY: key } = await read("ANTHROPIC_API_KEY");
-  if (!key) return missing("klucz API");
-  const res = await get("https://api.anthropic.com/v1/models?limit=1", {
-    "x-api-key": key,
-    "anthropic-version": "2023-06-01",
-  });
-  return modelsResult(res, "Anthropic");
-}
-
-async function openai(read: Reader): Promise<CheckResult> {
-  const { OPENAI_API_KEY: key } = await read("OPENAI_API_KEY");
-  if (!key) return missing("klucz API");
-  const res = await get("https://api.openai.com/v1/models", { Authorization: `Bearer ${key}` });
-  return modelsResult(res, "OpenAI");
-}
-
-async function google(read: Reader): Promise<CheckResult> {
-  const { GOOGLE_API_KEY: key } = await read("GOOGLE_API_KEY");
-  if (!key) return missing("klucz API");
-  const res = await get("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1", {
-    "x-goog-api-key": key,
-  });
-  // Google zwraca 400 „API key not valid" zamiast 401.
-  if (res.status === 400)
-    return { ok: false, message: t("Google odrzucił klucz (HTTP 400) — klucz jest błędny.") };
-  return modelsResult(res, "Google");
-}
-
-function modelsResult(res: Response, what: string): CheckResult {
-  const denied = authFailure(res.status, what);
-  if (denied) return denied;
-  if (!res.ok)
-    return {
-      ok: false,
-      message: t("{what} odpowiedział HTTP {status}.", { what: what, status: res.status }),
-    };
-  return { ok: true, message: t("Klucz {what} działa.", { what: what }) };
-}
-
 async function meta(read: Reader): Promise<CheckResult> {
   const c = await read("META_APP_ID", "META_APP_SECRET");
   if (!c.META_APP_ID || !c.META_APP_SECRET) return missing(t("App ID i App Secret"));
@@ -302,9 +262,6 @@ const CHECKS: Partial<
 > = {
   sendgrid,
   twilio,
-  anthropic,
-  openai,
-  google,
   meta,
   canva,
   docplanner,

@@ -50,11 +50,8 @@ export function localEndpoint(): LocalEndpoint {
 export function describeBoundary(): string {
   const mode = aiMode();
   if (mode === "off") return "PRM_AI_MODE=off";
-  if (mode === "local") {
-    const e = localEndpoint();
-    return e.url
-      ? `PRM_AI_MODE=local · ${e.host} (${e.hostClass})`
-      : "PRM_AI_MODE=local · PRM_AI_LOCAL_URL unset";
-  }
-  return "PRM_AI_MODE=hosted";
+  const e = localEndpoint();
+  return e.url
+    ? `PRM_AI_MODE=local · ${e.host} (${e.hostClass})`
+    : "PRM_AI_MODE=local · PRM_AI_LOCAL_URL unset";
 }

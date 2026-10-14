@@ -49,12 +49,6 @@ export const server6: Record<string, string> = {
   "Nieznane pole: {name}.": "Unknown field: {name}.",
   "Nowy segment": "New segment",
   "Osoby z tagiem RDS bez zgody na SMS": "People with the VIP tag without SMS consent",
-  "PRM_Agent, Copilot i kroki AI — gdy w Ustawieniach → PRM_Agent wybrano Anthropic.":
-    "PRM_Agent, Copilot and AI steps — when Anthropic is selected in Settings → PRM_Agent.",
-  "PRM_Agent, Copilot i kroki AI — gdy w Ustawieniach → PRM_Agent wybrano Google.":
-    "PRM_Agent, Copilot and AI steps — when Google is selected in Settings → PRM_Agent.",
-  "PRM_Agent, Copilot i kroki AI — gdy w Ustawieniach → PRM_Agent wybrano OpenAI.":
-    "PRM_Agent, Copilot and AI steps — when OpenAI is selected in Settings → PRM_Agent.",
   "Pacjenci znani z numeru telefonu — rejestracja telefoniczna i import list.":
     "Patients known by phone number — phone bookings and imported lists.",
   "Pacjent przypisany do segmentu „{match}”.": "Patient assigned to segment “{match}”.",

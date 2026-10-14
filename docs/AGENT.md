@@ -30,26 +30,27 @@ template and follows the draft rules — otherwise the template stands. Since
 1.71.0 inbound messages are triaged (`triage.ts`, `triage.server.ts`):
 urgency, topic and owner from rules for every message, and from a model
 inside the perimeter when one is in reach, accepted only within the three
-vocabularies. Recommendation explanations are next.
+vocabularies. Since 2.0.0 there is no external provider at all, and the
+agent's development is governed by directions (section 11): it proposes,
+the administrator enables.
 
 ## 1. Where intelligence runs
 
 The agent has three layers. Two of them need no model at all, and the third
 runs inside the clinic's perimeter by default.
 
-| Layer                     | What it does                                                                 | Where it runs                                                                                                                                   | Needs a model? |
-| ------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
-| **Rules** (PRM Engine)    | reminders, follow-ups, recalls on the clinic's rules                         | the installation                                                                                                                                | no             |
-| **Signals & predictions** | reads replies, visits, no-shows; scores risk; finds who needs attention      | the installation, in TypeScript over the installation's own database                                                                            | no             |
-| **Language**              | writes the draft, the brief, the reply suggestion; explains a recommendation | a model endpoint **inside the perimeter** (local by default); a hosted provider only as an explicit opt-in, and then only on pseudonymised text | yes            |
+| Layer                     | What it does                                                                 | Where it runs                                                                                                              | Needs a model? |
+| ------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| **Rules** (PRM Engine)    | reminders, follow-ups, recalls on the clinic's rules                         | the installation                                                                                                           | no             |
+| **Signals & predictions** | reads replies, visits, no-shows; scores risk; finds who needs attention      | the installation, in TypeScript over the installation's own database                                                       | no             |
+| **Language**              | writes the draft, the brief, the reply suggestion; explains a recommendation | a model endpoint **inside the perimeter** — the only place it can run; the product has no adapter for an external provider | yes            |
 
 The consequence that matters for the product: **"Analyzes" and "Draws
 conclusions" on the website are the signals layer, not the language model.**
 Who is drifting, who is due for a recall, where no-shows went up — these are
 counts, rates and a small scoring model over data the installation already
 holds. They work with the AI switched off, and they are the same whether the
-clinic runs a local model, a hosted one, or none. The language layer only
-puts words on top.
+clinic runs a local model or none. The language layer only puts words on top.
 
 ## 2. The data boundary — `PRM_AI_MODE`
 
@@ -59,17 +60,21 @@ One setting decides where the language layer may send text:
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `off`                                        | No model calls at all. Signals, predictions, recommendations, call lists and the weekly brief still work — the brief is generated from a template, in plain language, from the numbers.                                                                                                                                                         |
 | `local` (default when a model is configured) | Model calls go only to an **OpenAI-compatible endpoint whose host is loopback, a private network address (RFC 1918 / ULA) or an explicit allowlist** (`PRM_AI_LOCAL_URL`, `PRM_AI_EGRESS_ALLOW`). Any other host is refused by the client, not by convention. Ollama, vLLM, LM Studio, llama.cpp and a GPU box in the clinic's VPC all qualify. |
-| `hosted`                                     | Anthropic, OpenAI or Google, as today — but every prompt passes through the pseudonymisation layer (section 3), and the setting screen says in one sentence what leaves the server. Never the default.                                                                                                                                          |
 
-The mode is enforced in `src/lib/ai/provider.server.ts`, the one place every
-model call already goes through. The daily security report and
-`scripts/sprawdz-bezpieczenstwo.sh` state the mode and, in `local`, confirm
-that no hosted provider key is set.
+There is no third mode. Until 1.71.0 a `hosted` mode could send pseudonymised
+prompts to a cloud provider; 2.0.0 removed the adapters, so nothing in the
+product can be configured to send text outside the perimeter. A `hosted` left
+in an older `.env` is read as `off`, and the settings screen and the daily
+security report say so.
+
+The mode is enforced in `src/lib/ai/settings.server.ts`, the one place every
+model call already goes through. The daily security report states the mode,
+the endpoint's host class, and flags any leftover provider key in `.env`.
 
 ## 3. The model never sees who the patient is
 
 Even in `local` mode the model does not need identities to write a recall
-message, and in `hosted` mode it must not have them. A pseudonymisation layer
+message, and it does not need them. A pseudonymisation layer
 (`src/lib/ai/redact.ts`) sits between the database and every prompt builder:
 
 - Names, e-mail addresses, phone numbers and the national ID are replaced by
@@ -116,8 +121,9 @@ Two consequences for the product story:
 
 - **The agent is in the Community Edition**, entire. There is no reason to
   hold back a layer that runs on the clinic's own server anyway.
-- **"Agent you control — model hosting"** on the website resolves to: _local
-  by default, hosted only by explicit choice, and never with identities._
+- **"Agent you control — model hosting"** on the website resolves to: _a
+  model inside your perimeter, or none; never an external provider, never
+  with identities; and what the agent may start doing is your decision._
 
 ## 6. Modules
 
@@ -175,9 +181,9 @@ ship a model; it documents what works:
   prompts and the chosen local model before a prompt or a model changes.
 - **Decision log**: every recommendation, draft and routing decision is a
   row in the engine log with its evidence, readable by a person.
-- **Security report**: states the mode, the endpoint host class
-  (loopback / private / allowlisted) and the absence of hosted keys in
-  `local` mode.
+- **Security report**: states the mode and the endpoint host class
+  (loopback / private / allowlisted), and flags a leftover provider key or
+  `hosted` setting in `.env`.
 
 ## 9. Phases
 
@@ -211,3 +217,28 @@ describe one that does not. Each needs a decision, not a "to confirm":
 | "No copy of patient data at PRM Core"                      | true by architecture: no telemetry, update check downloads only                                                                     | keep, and link the README's "Update notices" section as the evidence                         |
 | "Encryption at rest, SBOM, pen-test report"                | not provided today                                                                                                                  | decide what Enterprise delivers; remove the rest                                             |
 | "Patient Communication Standards" PDF, 5 rules             | rules 01, 04 and 05 are enforced in code (consent gate, drafts queue, redaction); 02 and 03 are guidance plus quiet hours (roadmap) | write the PDF from what the code enforces, in that order                                     |
+
+## 11. The agent develops itself; the administrator sets the direction
+
+The agent improves inside the installation, on the installation's data, and
+asks a person only about _what it may start doing_:
+
+- **It trains itself.** The no-show model is retrained every night on the
+  clinic's own visits; its skill against the base rate is a signal with
+  yesterday's value beside it (`model.no_show_skill`), and the brief reports
+  it. Signals, thresholds and lists follow the data with no training at all.
+- **It learns from decisions.** The final text of every approved draft is
+  kept as an example (`agent_examples`); with the "learn from approvals"
+  direction enabled, the model sees the latest ones when it writes the next
+  draft — the house style, not a constraint. Examples never leave the
+  database.
+- **It proposes directions.** When the state gives grounds — a model in
+  reach, a first approval, a data gap such as a fifth of contacts without a
+  phone — the agent proposes a direction (`agent_directions`, `directions.ts`):
+  what would change and why now, with the evidence. The administrator
+  enables or declines it on PRM_Agent → Kierunki; the proposal is refreshed
+  nightly while it waits and never enabled by the agent itself. Every model
+  capability (drafts, the brief, triage) is such a direction, so a model that
+  appears on the network changes nothing until someone says so.
+- **It reports on itself.** The brief's last section says how the model is
+  doing, how many examples it has, and what waits for a decision.

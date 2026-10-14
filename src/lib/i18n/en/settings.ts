@@ -32,24 +32,10 @@ export const settings: Record<string, string> = {
   " Otwórz Integracje": " Open Integrations",
 
   // PRM_Agent
-  "Zapisano ustawienia PRM_Agent": "PRM_Agent settings saved",
   "Nie udało się zapisać ustawień": "Could not save the settings",
   PRM_Agent: "PRM_Agent",
-  "Model, na którym działa węzeł Agent AI w automatyzacjach.":
-    "The model used by the AI agent step in automations.",
   Dostawca: "Provider",
   Model: "Model",
-  " za MTok": " per MTok",
-  " Klucz skonfigurowany": " Key configured",
-  " Brak klucza": " No key",
-  "Klucz jest ustawiony. Zmienia się go w Integracje → Klucze i dane dostępowe.":
-    "The key is set. It is changed in Integrations → Keys and credentials.",
-  "Uzupełnij klucz w Integracje → Klucze i dane dostępowe. Bez klucza silnik działa dalej — pomija tylko węzły Agent AI.":
-    "Add the key in Integrations → Keys and credentials. Without a key the engine keeps working — it only skips AI agent steps.",
-  "Dzienny limit kosztów (USD)": "Daily cost limit (USD)",
-  "Wydano dzisiaj": "Spent today",
-  "Po przekroczeniu limitu węzły Agent AI są pomijane (przebieg idzie pierwszą ścieżką i zapisuje to w dzienniku), a deterministyczna część silnika — maile, SMS-y, tagi, lejki — działa dalej bez zmian.":
-    "Once the limit is exceeded, AI agent steps are skipped (the run takes the first path and logs it), while the deterministic part of the engine — emails, SMS, tags, funnels — keeps working unchanged.",
 
   // Authenticator
   "Nie udało się rozpocząć konfiguracji.": "Could not start the setup.",

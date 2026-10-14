@@ -88,13 +88,6 @@ export const server: Record<string, string> = {
     "Channel: {channelName}.\n{profile}\n\nConversation:",
   "Sugestia odpowiedzi w skrzynce ({channel}).": "Inbox reply suggestion ({channel}).",
   "Model nie zwrócił treści — spróbuj ponownie.": "The model returned no text — try again.",
-  "Claude Opus 5": "Claude Opus 5",
-  "Claude Sonnet 5": "Claude Sonnet 5",
-  "Claude Haiku 4.5": "Claude Haiku 4.5",
-  "GPT-5.1": "GPT-5.1",
-  "GPT-5 mini": "GPT-5 mini",
-  "Gemini 3 Pro": "Gemini 3 Pro",
-  "Gemini 2.5 Flash": "Gemini 2.5 Flash",
   "Proponuje definicję segmentu. Wywołuj dopiero wtedy, gdy masz wszystkie potrzebne wartości (adresy, tagi, nazwy). Nie zgaduj ich.":
     "Proposes a segment definition. Call it only when you have all the values you need (URLs, tags, names). Do not guess them.",
   "Krótka nazwa segmentu, np. „Zainteresowani implantem”.":

@@ -10,6 +10,7 @@ import {
 import { buildBrief } from "./brief";
 import { polishBrief } from "./language.server";
 import { latestSignals } from "./signals.server";
+import { countDirections, countExamples } from "./directions.server";
 
 /**
  * The brief as a stored thing: composed from the template every night, and
@@ -41,6 +42,8 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
     db.select().from(agentModels).where(eq(agentModels.id, "no-show")).get(),
   ]);
   const params = (model?.params ?? null) as { mode?: "trained" | "prior" } | null;
+  const skill = latest.rows.find((r) => r.key === "model.no_show_skill" && r.dimension === "");
+  const [directions, examples] = await Promise.all([countDirections(), countExamples()]);
   const text = buildBrief({
     day: latest.day,
     signals: latest.rows,
@@ -56,6 +59,13 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
       })),
     risks: scores.map((s) => ({ patient: "", startsAt: null, probability: s.score })),
     model: model && params ? { mode: params.mode ?? "prior", samples: model.samples } : null,
+    development: {
+      skill: skill ? skill.value : null,
+      previousSkill: skill?.previous ?? null,
+      examples,
+      directionsPending: directions.pending,
+      directionsEnabled: directions.enabled,
+    },
   });
   return { day: latest.day, text };
 }

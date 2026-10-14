@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "1.71.0",
-    "date": "2026-10-13",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v1.71.0",
+    "version": "2.0.0",
+    "date": "2026-10-14",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.0.0",
     "notes": {
-      "en": "PRM_Agent triages patient messages: urgency, topic and owner within a minute — rules always, a model inside the perimeter when there is one; urgent conversations first in the inbox.",
-      "pl": "PRM_Agent triażuje wiadomości pacjentów: pilność, temat i właściciel w ciągu minuty — reguły zawsze, model w sieci placówki gdy jest; pilne rozmowy na górze skrzynki."
+      "en": "PRM Core 2.0: no external AI providers — the agent's language layer runs only inside your network. The agent trains itself nightly, learns from approvals and proposes directions; the administrator enables them. Installs on PRM_AI_MODE=hosted fall to off: remove the old keys.",
+      "pl": "PRM Core 2.0: bez zewnętrznych dostawców AI — warstwa językowa agenta działa tylko w sieci placówki. Agent uczy się co noc, zapamiętuje zatwierdzone drafty i proponuje kierunki; administrator je włącza. Instalacje z PRM_AI_MODE=hosted przechodzą na off: usuń stare klucze."
     }
   },
   "messages": []

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gte, inArray, like } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, like, or, sql } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import {
   agentDrafts,
@@ -19,6 +19,7 @@ import { getSnapshot } from "../engine/snapshots.server";
 import { logStep } from "../engine/log.server";
 import { deriveRecommendations, type Recommendation } from "./recommend";
 import { writeDraftText } from "./language.server";
+import { recommendationsFromDirections, rememberExample } from "./directions.server";
 import { t } from "@/lib/i18n";
 
 /**
@@ -48,7 +49,10 @@ export async function recommendFromSignals(
     .select({ id: agentScores.id })
     .from(agentScores)
     .where(and(eq(agentScores.kind, "no-show"), gte(agentScores.score, HIGH_RISK)));
-  const recs = deriveRecommendations(rows, high.length);
+  const recs = [
+    ...deriveRecommendations(rows, high.length),
+    ...(await recommendationsFromDirections()),
+  ];
 
   const insights: InsightDraft[] = recs.map((r) => ({
     signature: r.signature,
@@ -303,6 +307,15 @@ export async function decideDraft(
       campaignId: campaignId ?? "",
     },
   });
+  // What the team approved is how the clinic writes — kept as an example
+  // for the next draft (used only with the "learn from approvals" direction).
+  await rememberExample({
+    channel: draft.channel,
+    audienceSignal: draft.audienceSignal,
+    text: input.message?.trim() || draft.message,
+    decidedBy: input.decidedBy,
+    now,
+  });
   const updated = await db.select().from(agentDrafts).where(eq(agentDrafts.id, draft.id)).get();
   return { ok: true, draft: updated! };
 }
@@ -328,6 +341,7 @@ export const LIST_KEYS = [
   "post_visit_no_reply",
   "drifting",
   "high_risk",
+  "no_phone",
 ] as const;
 export type ListKey = (typeof LIST_KEYS)[number];
 
@@ -359,6 +373,15 @@ export async function agentList(key: ListKey, now = Date.now()): Promise<AgentLi
         doctor: v?.doctor,
       };
     });
+  }
+  if (key === "no_phone") {
+    // Not a signal: the gap itself, straight from the contacts.
+    const people = await db
+      .select()
+      .from(contacts)
+      .where(or(isNull(contacts.phone), eq(sql`trim(${contacts.phone})`, "")))
+      .limit(200);
+    return people.map((p) => base(p.id, p));
   }
   const latest = await db
     .select()

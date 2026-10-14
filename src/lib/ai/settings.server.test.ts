@@ -95,13 +95,15 @@ describe("PRM_AI_MODE", () => {
     expect(body).toContain('{\\"email\\":\\"{{email}}\\"}');
   });
 
-  test("hosted needs the word: a key alone does not open the door", async () => {
+  test("no hosted mode exists: the old word and a provider key change nothing", async () => {
     process.env.OPENAI_API_KEY = "sk-test";
-    expect((await getAiConfig()).mode).toBe("off");
+    process.env.ANTHROPIC_API_KEY = "sk-ant-test";
     process.env.PRM_AI_MODE = "hosted";
     const config = await getAiConfig();
-    expect(config.mode).toBe("hosted");
-    expect(config.providerId).toBe("anthropic");
+    expect(config.mode).toBe("off");
+    expect(config.providerId).toBe("local");
+    await expect(config.provider.complete(request)).rejects.toBeInstanceOf(AiProviderError);
+    expect(sent).toHaveLength(0);
   });
 });
 

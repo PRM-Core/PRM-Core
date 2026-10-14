@@ -1,51 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireUser } from "./require-user";
 import { z } from "zod";
-import { getAiConfig, saveAiConfig, getKeyStatus, getSpendToday } from "../ai/settings.server";
-import { AI_MODELS, PROVIDER_ENV_VARS, type AiModelOption } from "../ai/provider.server";
 import { aiMode, localEndpoint } from "../ai/boundary.server";
-import type { AiMode, HostClass } from "../ai/boundary";
+import { hasStaleHostedConfig, type AiMode, type HostClass } from "../ai/boundary";
 import { generateFlow, type FlowGenerationResult } from "../ai/flow-builder.server";
-import type { AiProviderId } from "../db/schema";
 
-// Settings surface for the PRM_Agent. Note what is NOT here: API keys. The
-// client only ever learns whether a key is present, never its value.
+// Settings surface for PRM_Agent's language layer. Nothing here is edited:
+// where a model runs is decided in .env by whoever runs the server, and the
+// product has no provider other than a model inside the perimeter. The
+// screen shows the decision and what it means.
 
 export interface AiSettingsView {
-  provider: AiProviderId;
-  model: string;
-  dailyLimitUsd: number;
-  spentTodayUsd: number;
-  keyConfigured: Record<AiProviderId, boolean>;
-  envVars: Record<AiProviderId, string>;
-  models: Record<AiProviderId, AiModelOption[]>;
   /** The data boundary in force — decided by .env, shown here, never edited here. */
   mode: AiMode;
   local: { host: string; hostClass: HostClass; model: string; configured: boolean };
+  /** Leftovers of releases before 2.0.0 found in .env (a hosted mode, a provider key) — unused, worth removing. */
+  stale: string[];
 }
 
 export const getAiSettings = createServerFn({ method: "GET" })
   .middleware([requireUser])
   .handler(async (): Promise<AiSettingsView> => {
-    const [config, spentTodayUsd] = await Promise.all([getAiConfig(), getSpendToday()]);
+    const e = localEndpoint();
     return {
-      provider: config.providerId,
-      model: config.model,
-      dailyLimitUsd: config.dailyLimitUsd,
-      spentTodayUsd,
-      keyConfigured: await getKeyStatus(),
-      envVars: PROVIDER_ENV_VARS,
-      models: AI_MODELS,
       mode: aiMode(),
-      local: (() => {
-        const e = localEndpoint();
-        return {
-          host: e.host,
-          hostClass: e.hostClass,
-          model: e.model,
-          configured: !!e.url && !!e.model && e.hostClass !== "public",
-        };
-      })(),
+      local: {
+        host: e.host,
+        hostClass: e.hostClass,
+        model: e.model,
+        configured: !!e.url && !!e.model && e.hostClass !== "public",
+      },
+      stale: hasStaleHostedConfig(process.env),
     };
   });
 
@@ -65,18 +50,4 @@ export const generateAutomationFlow = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<FlowGenerationResult> => {
     return generateFlow({ prompt: data.prompt, templates: data.templates });
-  });
-
-export const saveAiSettings = createServerFn({ method: "POST" })
-  .middleware([requireUser])
-  .inputValidator(
-    z.object({
-      provider: z.enum(["anthropic", "openai", "google"]),
-      model: z.string().min(1),
-      dailyLimitUsd: z.number().min(0).max(1000),
-    }),
-  )
-  .handler(async ({ data }) => {
-    await saveAiConfig(data);
-    return { ok: true };
   });

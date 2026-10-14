@@ -63,14 +63,6 @@ describe("sprawdzenie połączenia", () => {
     expect(bez.message).toMatch(/Mail Send/);
   });
 
-  test("odrzucony klucz", async () => {
-    odczyt.OPENAI_API_KEY = "sk-zly";
-    odpowiedz(401, {});
-    const r = await checkIntegration("openai");
-    expect(r.ok).toBe(false);
-    expect(r.message).toMatch(/odrzucił/);
-  });
-
   test("Twilio: konto zawieszone to błąd", async () => {
     odczyt.TWILIO_ACCOUNT_SID = `AC${"0".repeat(32)}`;
     odczyt.TWILIO_AUTH_TOKEN = "token";
@@ -83,14 +75,11 @@ describe("sprawdzenie połączenia", () => {
     });
   });
 
-  test("Meta i Google: sekret nie trafia do adresu", async () => {
+  test("Meta: sekret nie trafia do adresu", async () => {
     odczyt.META_APP_ID = "123";
     odczyt.META_APP_SECRET = "tajny-sekret";
     odpowiedz(200, { name: "Aplikacja" });
     expect((await checkIntegration("meta")).ok).toBe(true);
-    odczyt.GOOGLE_API_KEY = "AIza-tajny";
-    odpowiedz(400, {});
-    expect((await checkIntegration("google")).ok).toBe(false);
     for (const w of wywolania) {
       expect(w.url.includes("tajny")).toBe(false);
       expect(w.init.method).toBe("GET");
@@ -98,11 +87,11 @@ describe("sprawdzenie połączenia", () => {
   });
 
   test("brak sieci nie wywraca panelu", async () => {
-    odczyt.ANTHROPIC_API_KEY = "sk-ant-x";
+    odczyt.SENDGRID_API_KEY = "SG.x";
     globalThis.fetch = (async () => {
       throw new TypeError("fetch failed");
     }) as unknown as typeof fetch;
-    const r = await checkIntegration("anthropic");
+    const r = await checkIntegration("sendgrid");
     expect(r.ok).toBe(false);
     expect(r.message).toMatch(/Nie udało się połączyć/);
   });

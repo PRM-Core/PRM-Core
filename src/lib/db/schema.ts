@@ -1530,7 +1530,8 @@ export const engineSettings = sqliteTable("engine_settings", {
   updatedAt: text("updated_at").notNull(),
 });
 
-export type AiProviderId = "anthropic" | "openai" | "google" | "local";
+/** The only provider: a model endpoint inside the clinic's perimeter. Older rows may still say "anthropic" — the value is not read. */
+export type AiProviderId = "local";
 
 /**
  * Which LLM the PRM_Agent runs on, and how much it may spend per day.
@@ -1952,6 +1953,55 @@ export const agentBriefs = sqliteTable("agent_briefs", {
 });
 
 export type AgentBriefRow = typeof agentBriefs.$inferSelect;
+
+/**
+ * Directions of the agent's development. The agent proposes a direction when
+ * it has grounds for it (a model in reach, enough approvals, a data gap); the
+ * administrator enables or declines it. Titles and explanations live in
+ * code (`src/lib/agent/directions.ts`); the row holds the decision.
+ */
+export type DirectionKey =
+  | "drafts_by_model"
+  | "brief_by_model"
+  | "triage_by_model"
+  | "learn_from_approvals"
+  | "collect_phones";
+export type DirectionStatus = "proposed" | "enabled" | "declined";
+
+export const agentDirections = sqliteTable("agent_directions", {
+  key: text("key").primaryKey().$type<DirectionKey>(),
+  status: text("status").notNull().default("proposed").$type<DirectionStatus>(),
+  /** The numbers behind the proposal, refreshed each night while it waits. */
+  evidence: text("evidence", { mode: "json" }).$type<Record<string, string>>(),
+  proposedAt: integer("proposed_at").notNull(),
+  decidedBy: text("decided_by").notNull().default(""),
+  decidedAt: integer("decided_at"),
+  note: text("note").notNull().default(""),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+export type AgentDirectionRow = typeof agentDirections.$inferSelect;
+
+/**
+ * What the team approved, kept as examples: the final text of an approved
+ * draft. With the "learn from approvals" direction enabled, the model sees
+ * the latest ones when it writes the next draft — "this is how we write".
+ */
+export const agentExamples = sqliteTable(
+  "agent_examples",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").notNull().default("draft"),
+    channel: text("channel").notNull(),
+    audienceSignal: text("audience_signal").notNull().default(""),
+    text: text("text").notNull(),
+    decidedBy: text("decided_by").notNull().default(""),
+    createdAt: integer("created_at").notNull(),
+  },
+  (t) => [index("idx_agent_examples_kind").on(t.kind, t.createdAt)],
+);
+
+export type AgentExampleRow = typeof agentExamples.$inferSelect;
 
 export type AgentSignalRow = typeof agentSignals.$inferSelect;
 export type AgentScoreRow = typeof agentScores.$inferSelect;

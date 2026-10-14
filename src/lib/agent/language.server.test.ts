@@ -18,8 +18,15 @@ const { polishBrief, writeDraftText } = await import("./language.server");
 const { storeBrief, latestBrief } = await import("./brief.server");
 const { recommendFromSignals, listDrafts } = await import("./drafts.server");
 const { getDb } = await import("../db/client.server");
-const { agentBriefs, agentDrafts, agentInsights, agentSignals, contacts, engineLog } =
-  await import("../db/schema");
+const {
+  agentBriefs,
+  agentDirections,
+  agentDrafts,
+  agentInsights,
+  agentSignals,
+  contacts,
+  engineLog,
+} = await import("../db/schema");
 
 const realFetch = globalThis.fetch;
 let reply = "";
@@ -46,8 +53,25 @@ beforeEach(async () => {
     });
   }) as unknown as typeof fetch;
   const db = getDb();
-  for (const t of [agentBriefs, agentDrafts, agentInsights, agentSignals, contacts, engineLog])
+  for (const t of [
+    agentBriefs,
+    agentDirections,
+    agentDrafts,
+    agentInsights,
+    agentSignals,
+    contacts,
+    engineLog,
+  ])
     await db.delete(t);
+  // The administrator has enabled the language directions; this file tests what happens next.
+  await db.insert(agentDirections).values(
+    (["drafts_by_model", "brief_by_model"] as const).map((key) => ({
+      key,
+      status: "enabled" as const,
+      proposedAt: 0,
+      updatedAt: 0,
+    })),
+  );
 });
 afterAll(() => {
   globalThis.fetch = realFetch;

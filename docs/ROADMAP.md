@@ -77,10 +77,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Copilot** — read-only answers about data on screen.
 - **Supervisor** — reviews automations and reports findings (broken graphs,
   automations that never fire, consent risks).
-- **Cost control** — shared daily limit, provider chosen per installation
-  (Anthropic, OpenAI, Google), spend visible in settings.
-- **Data boundary** — `PRM_AI_MODE` (off / local / hosted), a local model
-  adapter with an egress guard, pseudonymised prompts in every mode.
+- **Data boundary** — `PRM_AI_MODE` (off / local), a local model adapter
+  with an egress guard, pseudonymised prompts; no external provider in the
+  product at all.
 - **Signals and predictions without a model** — nightly: no-show rate and
   trend (overall, by doctor, by specialisation), e-mail open and click rates,
   recall due, first visit without a follow-up, post-visit without a reply,
@@ -100,6 +99,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   every patient message within a minute, from rules always and from a model
   inside the perimeter when there is one; urgent conversations first in
   the inbox.
+- **Directions** — the agent trains itself nightly, keeps approved drafts as
+  examples, and proposes what it could start doing (model capabilities, data
+  gaps) with the evidence; the administrator enables or declines.
 
 ### Next
 
@@ -117,8 +119,6 @@ pseudonymisation layer, and what the agent does with no model at all — is in
    call, from visits and correspondence only.
 6. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
-7. **Local model support** (Ollama or a compatible endpoint) for clinics that
-   will not send anything to a hosted provider.
 
 ## Security
 

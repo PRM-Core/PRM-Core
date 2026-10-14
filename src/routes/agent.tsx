@@ -6,6 +6,7 @@ import {
   Bot,
   Check,
   ClipboardCopy,
+  Compass,
   Download,
   FileText,
   Lightbulb,
@@ -39,8 +40,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  decideAgentDirection,
   decideAgentDraft,
   getAgentBrief,
+  getAgentDirections,
+  type AgentDirectionView,
   getAgentDrafts,
   getAgentList,
   getAgentRecommendations,
@@ -65,14 +69,15 @@ import { intlLocale, localized, t } from "@/lib/i18n";
  * has its own throttle, quiet hours and consent gate.
  */
 
-type Tab = "recommendations" | "drafts" | "lists" | "brief";
-const TABS: Tab[] = ["recommendations", "drafts", "lists", "brief"];
+type Tab = "recommendations" | "drafts" | "lists" | "brief" | "directions";
+const TABS: Tab[] = ["recommendations", "drafts", "lists", "brief", "directions"];
 const LIST_KEYS: ListKey[] = [
   "recall_due",
   "first_visit_no_followup",
   "post_visit_no_reply",
   "drifting",
   "high_risk",
+  "no_phone",
 ];
 
 export const Route = createFileRoute("/agent")({
@@ -90,6 +95,7 @@ const LIST_LABELS: Record<ListKey, string> = localized(() => ({
   post_visit_no_reply: t("Po wizycie, bez odpowiedzi"),
   drifting: t("Pacjenci dryfujący"),
   high_risk: t("Wizyty zagrożone nieobecnością"),
+  no_phone: t("Bez telefonu"),
 }));
 
 const LIST_HINTS: Record<ListKey, string> = localized(() => ({
@@ -98,6 +104,7 @@ const LIST_HINTS: Record<ListKey, string> = localized(() => ({
   post_visit_no_reply: t("Wizyta w ostatnich 7 dniach, brak odpowiedzi i nic umówionego."),
   drifting: t("Pół roku bez wizyty, bez otwartego e-maila i bez odpowiedzi."),
   high_risk: t("Nadchodzące wizyty z ryzykiem nieobecności co najmniej 30%, z czynnikami."),
+  no_phone: t("Kontakty bez numeru telefonu — rejestracja dopyta przy najbliższym kontakcie."),
 }));
 
 const SEVERITY: Record<string, { label: string; className: string }> = localized(() => ({
@@ -131,6 +138,18 @@ function AgentPage() {
   const { user } = useRouteContext({ from: "__root__" });
   const readOnly = isReadOnlyRole(user?.role);
   const tab = search.tab ?? "recommendations";
+  const [directions, setDirections] = useState<AgentDirectionView[]>([]);
+  const loadDirections = useCallback(
+    () =>
+      getAgentDirections()
+        .then(setDirections)
+        .catch(() => setDirections([])),
+    [],
+  );
+  useEffect(() => {
+    void loadDirections();
+  }, [loadDirections]);
+  const pending = directions.filter((d) => d.status === "proposed").length;
 
   return (
     <div className="space-y-6">
@@ -165,6 +184,14 @@ function AgentPage() {
           <TabsTrigger value="brief" className="gap-1.5">
             <FileText className="h-3.5 w-3.5" /> {t("Brief")}
           </TabsTrigger>
+          <TabsTrigger value="directions" className="gap-1.5">
+            <Compass className="h-3.5 w-3.5" /> {t("Kierunki")}
+            {pending > 0 && (
+              <span className="rounded-full bg-primary text-primary-foreground text-[10px] px-1.5 leading-4">
+                {pending}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="recommendations" className="mt-4">
           <RecommendationsTab />
@@ -180,6 +207,13 @@ function AgentPage() {
         </TabsContent>
         <TabsContent value="brief" className="mt-4">
           <BriefTab readOnly={readOnly} />
+        </TabsContent>
+        <TabsContent value="directions" className="mt-4">
+          <DirectionsTab
+            isAdmin={user?.role === "admin"}
+            directions={directions}
+            onChange={loadDirections}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -847,6 +881,126 @@ function BriefTab({ readOnly }: { readOnly: boolean }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── directions ──────────────────────────────────────────────────────────────
+
+const DIRECTION_STATUS: Record<string, { label: string; className: string }> = localized(() => ({
+  proposed: { label: t("Czeka na decyzję"), className: "bg-amber-500/10 text-amber-600" },
+  enabled: { label: t("Włączony"), className: "bg-success/10 text-success" },
+  declined: { label: t("Odrzucony"), className: "bg-muted text-muted-foreground" },
+}));
+
+function DirectionsTab({
+  isAdmin,
+  directions,
+  onChange,
+}: {
+  isAdmin: boolean;
+  directions: AgentDirectionView[];
+  onChange: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const decide = async (key: AgentDirectionView["key"], decision: "enable" | "decline") => {
+    setBusy(key);
+    try {
+      const r = await decideAgentDirection({ data: { key, decision } });
+      if (!r.ok) toast.error(t("Nie udało się zapisać decyzji"), { description: r.error });
+      else
+        toast.success(
+          decision === "enable"
+            ? t("Kierunek włączony — agent zacznie od najbliższego przebiegu.")
+            : t("Kierunek odrzucony. Możesz go włączyć później na tej liście."),
+        );
+      await onChange();
+    } catch (err) {
+      toast.error(t("Nie udało się zapisać decyzji"), { description: String(err) });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        {t(
+          "Agent rozwija się sam: co noc uczy model nieobecności na historii tej placówki, zapamiętuje, co zespół zatwierdził, i proponuje, co mógłby robić dalej. Każdy nowy kierunek czeka tu na decyzję administratora — nic nie rusza samo.",
+        )}
+      </p>
+      {directions.length === 0 ? (
+        <Empty>
+          {t(
+            "Agent nie ma jeszcze propozycji. Pojawią się, gdy będzie miał podstawy — np. serwer modelu w sieci placówki, pierwszy zatwierdzony draft albo lukę w danych.",
+          )}
+        </Empty>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-2">
+          {directions.map((d) => {
+            const st = DIRECTION_STATUS[d.status] ?? DIRECTION_STATUS.proposed;
+            return (
+              <Card key={d.key} className="border-border/60">
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="text-base leading-snug">{d.title}</CardTitle>
+                    <Badge variant="secondary" className={`shrink-0 ${st.className}`}>
+                      {st.label}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <p className="text-muted-foreground">{d.what}</p>
+                  <p className="flex gap-2">
+                    <Compass className="h-4 w-4 shrink-0 text-primary mt-0.5" />
+                    <span>
+                      {t("Dlaczego teraz: {why}", { why: d.why })}
+                      {Object.entries(d.evidence)
+                        .filter(([, v]) => v)
+                        .map(([k, v]) => ` · ${k}: ${v}`)
+                        .join("")}
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {d.decidedAt
+                      ? t("Decyzja: {who}, {when}", {
+                          who: d.decidedBy,
+                          when: when(d.decidedAt, true),
+                        })
+                      : t("Zaproponowany {when}", { when: when(d.proposedAt, true) })}
+                  </p>
+                  {isAdmin && (
+                    <div className="flex gap-2 pt-1">
+                      {d.status !== "enabled" && (
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          disabled={busy === d.key}
+                          onClick={() => void decide(d.key, "enable")}
+                        >
+                          <Check className="h-3.5 w-3.5" /> {t("Włącz")}
+                        </Button>
+                      )}
+                      {d.status !== "declined" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          disabled={busy === d.key}
+                          onClick={() => void decide(d.key, "decline")}
+                        >
+                          <X className="h-3.5 w-3.5" />{" "}
+                          {d.status === "enabled" ? t("Wyłącz") : t("Odrzuć")}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

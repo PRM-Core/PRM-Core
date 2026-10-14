@@ -505,6 +505,13 @@
       "when": 1791918479753,
       "tag": "0071_inbox_triage",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "6",
+      "when": 1791959820989,
+      "tag": "0072_agent_directions",
+      "breakpoints": true
     }
   ]
 }

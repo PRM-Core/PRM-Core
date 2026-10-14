@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { desc, eq, inArray, like } from "drizzle-orm";
 import { z } from "zod";
 import { allowReporter, requireUser } from "./require-user";
+import type { DirectionKey } from "../db/schema";
 import { t } from "@/lib/i18n";
 
 /**
@@ -36,12 +37,15 @@ export interface AgentOverview {
   signals: AgentSignalView[];
   risks: AgentRiskView[];
   model: { mode: "trained" | "prior"; samples: number; baseRate: number } | null;
+  /** Directions of development waiting for the administrator. */
+  directionsPending: number;
 }
 
 async function overview(): Promise<AgentOverview> {
   const { getDb } = await import("../db/client.server");
   const { agentModels, agentScores, contactVisits, contacts } = await import("../db/schema");
   const { latestSignals } = await import("../agent/signals.server");
+  const { countDirections } = await import("../agent/directions.server");
   const db = getDb();
 
   const latest = await latestSignals();
@@ -76,6 +80,7 @@ async function overview(): Promise<AgentOverview> {
 
   return {
     computed: latest ? { day: latest.day, computedAt: latest.computedAt } : null,
+    directionsPending: (await countDirections()).pending,
     signals: (latest?.rows ?? []).map((r) => ({
       key: r.key,
       dimension: r.dimension,
@@ -175,6 +180,7 @@ const LIST_KEY = z.enum([
   "post_visit_no_reply",
   "drifting",
   "high_risk",
+  "no_phone",
 ]);
 
 export const getAgentList = createServerFn({ method: "GET" })
@@ -244,7 +250,7 @@ export const getAgentDrafts = createServerFn({ method: "GET" })
           updatedAt: r.updatedAt,
         })),
         templates,
-        language: await languageState(),
+        language: await languageState("drafts_by_model"),
       };
     },
   );
@@ -271,14 +277,14 @@ export const decideAgentDraft = createServerFn({ method: "POST" })
 /** Whether a model inside the perimeter can rewrite text right now, and why not. */
 export interface LanguageState {
   available: boolean;
-  mode: "off" | "local" | "hosted";
+  mode: "off" | "local";
   reason: string;
 }
 
-async function languageState(): Promise<LanguageState> {
+async function languageState(capability?: DirectionKey): Promise<LanguageState> {
   const { modelGate } = await import("../agent/language.server");
   const { aiMode } = await import("../ai/boundary.server");
-  const gate = await modelGate();
+  const gate = await modelGate(capability);
   return { available: gate.ok, mode: aiMode(), reason: gate.ok ? "" : gate.reason };
 }
 
@@ -330,7 +336,7 @@ export const getAgentBrief = createServerFn({ method: "GET" })
       text: brief.text,
       polished: stored?.polished ?? "",
       model: stored?.model ?? "",
-      language: await languageState(),
+      language: await languageState("brief_by_model"),
     };
   });
 
@@ -348,4 +354,61 @@ export const polishAgentBrief = createServerFn({ method: "POST" })
       polished: r.brief?.polished ?? "",
       model: r.brief?.model ?? "",
     };
+  });
+
+// ── directions of development ───────────────────────────────────────────────
+
+export interface AgentDirectionView {
+  key: DirectionKey;
+  title: string;
+  what: string;
+  why: string;
+  status: "proposed" | "enabled" | "declined";
+  evidence: Record<string, string>;
+  proposedAt: number;
+  decidedBy: string;
+  decidedAt: number | null;
+  note: string;
+}
+
+export const getAgentDirections = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async (): Promise<AgentDirectionView[]> => {
+    const { listDirections } = await import("../agent/directions.server");
+    const { DIRECTIONS } = await import("../agent/directions");
+    return (await listDirections()).map((r) => ({
+      key: r.key,
+      ...DIRECTIONS[r.key],
+      status: r.status,
+      evidence: r.evidence ?? {},
+      proposedAt: r.proposedAt,
+      decidedBy: r.decidedBy,
+      decidedAt: r.decidedAt,
+      note: r.note,
+    }));
+  });
+
+export const decideAgentDirection = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(
+    z.object({
+      key: z.enum([
+        "drafts_by_model",
+        "brief_by_model",
+        "triage_by_model",
+        "learn_from_approvals",
+        "collect_phones",
+      ]),
+      decision: z.enum(["enable", "decline"]),
+      note: z.string().max(500).optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const user = await getSessionUser();
+    if (!user || user.role !== "admin")
+      throw new Error(t("Kierunki rozwoju agenta ustala administrator."));
+    const { decideDirection } = await import("../agent/directions.server");
+    const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
+    return decideDirection({ ...data, decidedBy: who });
   });

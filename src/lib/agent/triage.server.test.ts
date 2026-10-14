@@ -16,7 +16,8 @@ process.env.DATABASE_URL = dbUrl;
 const { triageThread, triageDueThreads } = await import("./triage.server");
 const { recordInboundMessage, recordOutboundMessage } = await import("../inbox/inbox.server");
 const { getDb } = await import("../db/client.server");
-const { contacts, engineLog, inboxMessages, inboxThreads } = await import("../db/schema");
+const { agentDirections, contacts, engineLog, inboxMessages, inboxThreads } =
+  await import("../db/schema");
 const { eq } = await import("drizzle-orm");
 
 const realFetch = globalThis.fetch;
@@ -44,7 +45,14 @@ beforeEach(async () => {
     });
   }) as unknown as typeof fetch;
   const db = getDb();
-  for (const t of [contacts, engineLog, inboxMessages, inboxThreads]) await db.delete(t);
+  for (const t of [agentDirections, contacts, engineLog, inboxMessages, inboxThreads])
+    await db.delete(t);
+  await db.insert(agentDirections).values({
+    key: "triage_by_model",
+    status: "enabled",
+    proposedAt: 0,
+    updatedAt: 0,
+  });
   await db.insert(contacts).values({
     id: "c1",
     prmId: "PRM-1",

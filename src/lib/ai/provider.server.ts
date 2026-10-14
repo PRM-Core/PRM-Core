@@ -1,6 +1,6 @@
 import type { AiProviderId } from "../db/schema";
 import type { KnownIdentifiers } from "./redact";
-import { t, localized } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 
 // One interface, three adapters. The PRM_Agent talks only to this shape, so
 // swapping Claude for GPT or Gemini is a settings change rather than a code
@@ -129,51 +129,16 @@ export interface AiModelOption {
 }
 
 /**
- * Models offered in Ustawienia → PRM_Agent. Prices are what the daily cost
- * limit is computed against, so they need to stay in step with each provider's
- * published rates — a stale number here means a wrong spend figure, not a
- * failed call.
+ * The local model is named in .env (PRM_AI_LOCAL_MODEL) and costs nothing per
+ * token, so there is no catalogue to choose from and nothing to price. The
+ * shape stays so the daily-limit code keeps one path.
  */
-export const AI_MODELS: Record<AiProviderId, AiModelOption[]> = localized(() => ({
-  anthropic: [
-    {
-      id: "claude-opus-5",
-      label: t("Claude Opus 5"),
-      inputPerMTok: 5,
-      outputPerMTok: 25,
-      supportsThinking: true,
-    },
-    {
-      id: "claude-sonnet-5",
-      label: t("Claude Sonnet 5"),
-      inputPerMTok: 3,
-      outputPerMTok: 15,
-      supportsThinking: true,
-    },
-    { id: "claude-haiku-4-5", label: t("Claude Haiku 4.5"), inputPerMTok: 1, outputPerMTok: 5 },
-  ],
-  openai: [
-    { id: "gpt-5.1", label: t("GPT-5.1"), inputPerMTok: 1.25, outputPerMTok: 10 },
-    { id: "gpt-5-mini", label: t("GPT-5 mini"), inputPerMTok: 0.25, outputPerMTok: 2 },
-  ],
-  google: [
-    { id: "gemini-3-pro", label: t("Gemini 3 Pro"), inputPerMTok: 1.25, outputPerMTok: 10 },
-    { id: "gemini-2.5-flash", label: t("Gemini 2.5 Flash"), inputPerMTok: 0.3, outputPerMTok: 2.5 },
-  ],
-  // The local model is named in .env (PRM_AI_LOCAL_MODEL) and costs nothing
-  // per token, so there is no list to choose from here.
-  local: [],
-}));
+export const AI_MODELS: Record<AiProviderId, AiModelOption[]> = { local: [] };
 
 export { PROVIDER_LABELS } from "./provider-labels";
 
 /** Which .env variable each provider reads its key from — surfaced in the settings UI. */
-export const PROVIDER_ENV_VARS: Record<AiProviderId, string> = {
-  anthropic: "ANTHROPIC_API_KEY",
-  openai: "OPENAI_API_KEY",
-  google: "GOOGLE_API_KEY",
-  local: "PRM_AI_LOCAL_URL",
-};
+export const PROVIDER_ENV_VARS: Record<AiProviderId, string> = { local: "PRM_AI_LOCAL_URL" };
 
 export function findModel(provider: AiProviderId, model: string): AiModelOption | undefined {
   return AI_MODELS[provider].find((m) => m.id === model);

@@ -209,8 +209,8 @@ async function detectBrokenSendSteps(): Promise<InsightDraft[]> {
     ) {
       missingKeys.push("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN");
     }
-    if (needs.ai && !keys.anthropic && !keys.openai && !keys.google && !keys.local) {
-      missingKeys.push("klucz dostawcy AI");
+    if (needs.ai && !keys.local) {
+      missingKeys.push("PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL");
     }
     if (missingKeys.length > 0) {
       drafts.push({
