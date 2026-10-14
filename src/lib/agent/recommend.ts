@@ -35,8 +35,7 @@ const pp = (a: number, b: number) => Math.round((a - b) * 100);
 function dimLabel(dimension: string): string {
   const [kind, ...rest] = dimension.split(":");
   const name = rest.join(":");
-  if (kind === "doctor") return name;
-  if (kind === "specialization") return name;
+  if (kind === "doctor" || kind === "specialization" || kind === "location") return name;
   return "";
 }
 

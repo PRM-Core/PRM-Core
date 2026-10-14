@@ -1221,6 +1221,8 @@ export const contactVisits = sqliteTable(
      * while the speciality is the stable label worth building an audience on.
      */
     specialization: text("specialization").notNull().default(""),
+    /** The site the visit is at, when the source sends one ("Centrum", "Mokotów") — a dimension of the agent's signals. */
+    location: text("location").notNull().default(""),
     /** Start of the visit, epoch ms — what a "24 h before" reminder counts from. */
     startsAt: integer("starts_at"),
     /** As shown at booking, in grosze, so no float ever rounds a price. Null = not sent. */

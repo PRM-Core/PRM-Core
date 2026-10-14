@@ -44,6 +44,8 @@ export interface BookingInput {
   doctor: string;
   /** Medical speciality — the stable label a segment can be built on. */
   specialization: string;
+  /** The site, when the source sends one. */
+  location?: string;
   /** ISO 8601 with an offset, e.g. 2026-08-20T10:30:00+02:00. */
   visitAt: string;
   /** Price as shown at booking, in PLN. */
@@ -293,6 +295,7 @@ export async function recordBooking(input: BookingInput): Promise<BookingResult>
     title: input.title.trim(),
     doctor: input.doctor.trim(),
     specialization: input.specialization.trim(),
+    location: (input.location ?? "").trim(),
     startsAt,
     priceGrosze,
     source: input.source || "rejestracja-www",
@@ -331,6 +334,7 @@ export async function recordBooking(input: BookingInput): Promise<BookingResult>
       title: input.title.trim(),
       doctor: input.doctor.trim(),
       specialization: input.specialization.trim(),
+      location: (input.location ?? "").trim(),
       visitAt: startsAt === null ? "" : new Date(startsAt).toISOString(),
       price: priceGrosze === null ? "" : String(priceGrosze / 100),
       source: input.source || "rejestracja-www",
@@ -395,6 +399,7 @@ export async function visitsForContact(contactId: string): Promise<VisitActivity
       const parts = [`Termin: ${formatVisitAt(v.startsAt)}`];
       if (v.specialization) parts.push(v.specialization);
       if (v.doctor) parts.push(v.doctor);
+      if (v.location) parts.push(v.location);
       if (v.priceGrosze !== null) parts.push(formatPrice(v.priceGrosze));
       // Dopisek dostaje **wizyta pochodząca z webhooka rezerwacji** — to on
       // przyjmuje rezerwacje, więc jego wpis oznacza „pacjent umówił się

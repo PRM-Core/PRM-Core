@@ -102,6 +102,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Directions** — the agent trains itself nightly, keeps approved drafts as
   examples, and proposes what it could start doing (model capabilities, data
   gaps) with the evidence; the administrator enables or declines.
+- **Location as a dimension** — no-show rate and its trend per site
+  (`placowka` / `location` on the booking webhook), beside per doctor and
+  per specialisation; the largest rise, wherever it is, in the brief.
 - **Evaluation harness** — fixed cases for drafts, the brief and triage,
   traps included, put to the model in reach and judged by code; from the
   screen before enabling a direction, or `bun run agent:eval` in CI.
@@ -115,25 +118,23 @@ the rest.
 1. **A real local model through the harness** — the harness exists (below);
    what remains is running it against Bielik / Qwen on Ollama on a real
    installation and fixing what fails. _(help wanted)_
-2. **Location as a dimension** — no-show rate and its trend per site, next
-   to per doctor and per specialisation, where visits carry one.
-3. **Learning from more decisions** — a receptionist's correction of a
+2. **Learning from more decisions** — a receptionist's correction of a
    triage (owner, urgency) and a dismissed recommendation become examples
    and threshold signals, as approved drafts already do.
-4. **Drafts for automations** — the first N messages of every new automation
+3. **Drafts for automations** — the first N messages of every new automation
    go through the same approval queue.
-5. **Decision log a human can read** — why this patient is on this list,
+4. **Decision log a human can read** — why this patient is on this list,
    why this draft, why this routing: one view over the agent's log entries,
    next to the run.
-6. **Role views** — CFO (volumes and cost per channel) and Marketing
+5. **Role views** — CFO (volumes and cost per channel) and Marketing
    (campaign performance, A/B) over the same signals; the website promises
    them for every decision-maker.
-7. **Knowledge base as the single source of facts** — services, prices,
+6. **Knowledge base as the single source of facts** — services, prices,
    preparation instructions and opening hours, with the answer refusing to
    invent what the base does not contain.
-8. **Patient history summary for reception** — three sentences before the
+7. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-9. **Per-automation budgets and a hard stop** — one flow must not consume the
+8. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
 
 ## Security

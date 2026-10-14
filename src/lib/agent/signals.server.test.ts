@@ -62,7 +62,7 @@ function visit(
   contactId: string,
   daysFromNow: number,
   status: string,
-  over: Partial<{ doctor: string; source: string; createdAt: number }> = {},
+  over: Partial<{ doctor: string; location: string; source: string; createdAt: number }> = {},
 ) {
   const startsAt = NOW + daysFromNow * DAY;
   return {
@@ -72,6 +72,7 @@ function visit(
     title: "Konsultacja",
     doctor: over.doctor ?? "lek. Jan Kowalski",
     specialization: "Internista",
+    location: over.location ?? "",
     startsAt,
     source: over.source ?? "testsys",
     systemStatus: status,
@@ -149,6 +150,38 @@ describe("deriveSignals (pure)", () => {
     expect(
       (get("post_visit_no_reply").detail as { contactIds: string[] }).contactIds.sort(),
     ).toEqual(["a", "b"]);
+  });
+
+  test("a site is a dimension like a doctor: ten decided visits open it, with its own previous value", () => {
+    const people = Array.from({ length: 12 }, (_, i) => person(`p${i}`));
+    const visits = [
+      // this window at Mokotów: 8 completed, 4 no-shows → 33%
+      ...Array.from({ length: 8 }, (_, i) =>
+        visit(`m${i}`, `p${i}`, -3 - i, "completed", { location: "Mokotów" }),
+      ),
+      ...Array.from({ length: 4 }, (_, i) =>
+        visit(`n${i}`, `p${8 + i}`, -2 - i, "booked", { location: "Mokotów" }),
+      ),
+      // previous window at Mokotów: 10 completed, 1 no-show → 9%
+      ...Array.from({ length: 10 }, (_, i) =>
+        visit(`q${i}`, `p${i}`, -35 - i, "completed", { location: "Mokotów" }),
+      ),
+      visit("r0", "p11", -36, "booked", { location: "Mokotów" }),
+      // a second site with too few visits stays out
+      visit("s0", "p0", -4, "completed", { location: "Centrum" }),
+    ];
+    const out = deriveSignals({
+      now: NOW,
+      contacts: people,
+      visits,
+      sends: [],
+      events: [],
+      inbound: [],
+    });
+    const site = out.find((s) => s.key === "no_show_rate" && s.dimension === "location:Mokotów")!;
+    expect(site.value).toBeCloseTo(4 / 12, 6);
+    expect(site.previous).toBeCloseTo(1 / 11, 6);
+    expect(out.find((s) => s.dimension === "location:Centrum")).toBeUndefined();
   });
 
   test("e-mail rates count distinct messages; drifting is half a year of silence", () => {

@@ -8,6 +8,18 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.2.0] — PRM_Agent: placówka jako wymiar
+
+- **Wizyta ma placówkę** (`contact_visits.location`): webhook rezerwacji
+  przyjmuje `placowka` / `location` / `lokalizacja` / `branch`; wartość
+  widać na osi pacjenta i w zdarzeniu `visit.scheduled` (pole `location`,
+  do użycia w automatyzacjach).
+- **Wskaźnik nieobecności per placówka** obok per lekarz i per
+  specjalizacja (od 10 rozstrzygniętych wizyt); rekomendacja „Nieobecności
+  wzrosły: {placówka} — …” z tej samej reguły; w briefie „największy wzrost
+  nieobecności” wybiera spośród lekarzy i placówek razem.
+- Migracja 0074: kolumna `location`. Dokumentacja webhooka uzupełniona.
+
 ## [2.1.0] — PRM_Agent: sprawdzian modelu
 
 Zanim administrator włączy kierunek z modelem, może sprawdzić, jak model

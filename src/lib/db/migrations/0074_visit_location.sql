@@ -1,0 +1,1 @@
+ALTER TABLE `contact_visits` ADD `location` text DEFAULT '' NOT NULL;

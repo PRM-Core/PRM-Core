@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.1.0",
+    "version": "2.2.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.1.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.2.0",
     "notes": {
-      "en": "PRM_Agent model evaluation: fixed cases for drafts, the brief and triage, traps included, judged by code — from the screen before enabling a direction, or bun run agent:eval in CI.",
-      "pl": "Sprawdzian modelu PRM_Agenta: stałe przypadki dla draftów, briefu i triażu, z pułapkami, oceniane kodem — z ekranu przed włączeniem kierunku albo bun run agent:eval w CI."
+      "en": "Visits carry a site: the booking webhook accepts placowka/location, and PRM_Agent reports the no-show rate per site beside per doctor and per specialisation.",
+      "pl": "Wizyta ma placówkę: webhook rezerwacji przyjmuje placowka/location, a PRM_Agent liczy nieobecności per placówka obok per lekarz i per specjalizacja."
     }
   },
   "messages": []

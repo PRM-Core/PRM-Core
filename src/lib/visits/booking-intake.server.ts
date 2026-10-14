@@ -260,6 +260,7 @@ export async function processBooking(d: Record<string, unknown>): Promise<Bookin
   const title = text(d.title ?? d.service ?? d.usluga);
   const doctor = text(d.doctor ?? d.lekarz);
   const specialization = text(d.specialization ?? d.specjalizacja);
+  const location = text(d.location ?? d.placowka ?? d.lokalizacja ?? d.branch);
 
   // Either a ready-made timestamp, or a date and a wall-clock time sent
   // separately — the registration system does the latter.
@@ -345,6 +346,7 @@ export async function processBooking(d: Record<string, unknown>): Promise<Bookin
         usluga: title || "(brak)",
         lekarz: doctor || "(brak)",
         specjalizacja: specialization || "(brak)",
+        placowka: location || "(brak)",
         termin: visitAt || "(brak lub nieczytelny)",
         cena: price(d.price ?? d.cena) ?? "(brak)",
         kluczPowtorzen: bookingId,
@@ -367,6 +369,7 @@ export async function processBooking(d: Record<string, unknown>): Promise<Bookin
     title,
     doctor,
     specialization,
+    location,
     visitAt,
     price: price(d.price ?? d.cena),
     bookingId,

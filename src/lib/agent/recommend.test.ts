@@ -23,6 +23,7 @@ describe("deriveRecommendations", () => {
         sig("no_show_rate", 0.18, 0.1, 40),
         sig("no_show_rate", 0.3, 0.1, 25, "doctor:lek. Jan Kowalski"),
         sig("no_show_rate", 0.5, 0.0, 4, "doctor:dr Ewa Nowak"),
+        sig("no_show_rate", 0.2, 0.12, 30, "location:Mokotów"),
       ],
       0,
     );
@@ -30,6 +31,9 @@ describe("deriveRecommendations", () => {
     expect(sigs).toContain("agent:no-show-rise:all");
     expect(sigs).toContain("agent:no-show-rise:doctor:lek. Jan Kowalski");
     expect(sigs).not.toContain("agent:no-show-rise:doctor:dr Ewa Nowak");
+    expect(
+      recs.find((r) => r.signature === "agent:no-show-rise:location:Mokotów")?.title,
+    ).toContain("Mokotów");
     expect(recs.find((r) => r.signature === "agent:no-show-rise:all")?.severity).toBe("warning");
     expect(recs.find((r) => r.signature.endsWith("Kowalski"))?.severity).toBe("critical");
     expect(recs.find((r) => r.signature.endsWith("Kowalski"))?.title).toContain(

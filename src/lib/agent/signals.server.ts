@@ -155,8 +155,8 @@ export function deriveSignals(input: {
     count: noShowNow + completedNow,
   });
 
-  // By doctor and by specialisation — only where the sample means something.
-  for (const dim of ["doctor", "specialization"] as const) {
+  // By doctor, by specialisation and by site — only where the sample means something.
+  for (const dim of ["doctor", "specialization", "location"] as const) {
     const names = new Set(visits.map((v) => v[dim]).filter(Boolean));
     for (const name of names) {
       const pick = (v: ContactVisitRow) => v[dim] === name;

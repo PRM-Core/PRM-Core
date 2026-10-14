@@ -58,27 +58,28 @@ gdy zmienią się dane pacjenta.
 
 ## Wszystkie pola
 
-| pole | zamiennie | uwagi |
-|---|---|---|
-| `imie` | `firstName`, `first_name` | |
-| `nazwisko` | `lastName`, `last_name` | |
-| `telefon` | `phone` | dowolny format, normalizujemy |
-| `email` | | wymagany, jeśli nie ma telefonu |
-| `pesel` | `PESEL` | uzupełnia puste pole, nie nadpisuje |
-| `idx_osoby` | `idOsoby`, `patientId`, `idPacjenta` | **zalecane** |
-| `idx_terminu` | `idTerminu`, `visitId`, `idWizyty` | **zalecane** |
-| `usluga` | `title`, `service` | wymagane |
-| `lekarz` | `doctor` | |
-| `specjalizacja` | `specialization` | buduje segmenty — warto |
-| `data_wizyty` + `godzina_wizyty` | `visitAt`, `termin` | data `RRRR-MM-DD`, godzina `GG:MM` (czas warszawski) albo gotowy ISO 8601 |
-| `cena` | `price` | `"300,00 zł"` i `300` czytamy tak samo |
-| `tagi` | `tags`, `tag` | tablica `["kardiologia","VIP"]` albo tekst `"kardiologia, VIP"` |
-| `status` | | np. `pacjent`, `lead` — ustawiany tylko przy zakładaniu kontaktu |
-| `zgoda_email` | `consentEmail`, `consent_email` | bramkuje wysyłkę e-mail |
-| `zgoda_sms` | `consentSms`, `consent_sms` | bramkuje wysyłkę SMS |
-| `zgoda_profilowanie` | `consentProfiling`, `consent_profiling` | dobieranie treści pod pacjenta |
-| `zgoda_regulamin` | `regulamin`, `akceptacjaRegulaminu` | „Znam i akceptuję Politykę Prywatności oraz Regulamin" |
-| `zgoda_marketingowa` | `marketingConsent`, `zgodaMarketing` | **nieobowiązkowa** — realny wybór pacjenta |
+| pole                             | zamiennie                               | uwagi                                                                     |
+| -------------------------------- | --------------------------------------- | ------------------------------------------------------------------------- |
+| `imie`                           | `firstName`, `first_name`               |                                                                           |
+| `nazwisko`                       | `lastName`, `last_name`                 |                                                                           |
+| `telefon`                        | `phone`                                 | dowolny format, normalizujemy                                             |
+| `email`                          |                                         | wymagany, jeśli nie ma telefonu                                           |
+| `pesel`                          | `PESEL`                                 | uzupełnia puste pole, nie nadpisuje                                       |
+| `idx_osoby`                      | `idOsoby`, `patientId`, `idPacjenta`    | **zalecane**                                                              |
+| `idx_terminu`                    | `idTerminu`, `visitId`, `idWizyty`      | **zalecane**                                                              |
+| `usluga`                         | `title`, `service`                      | wymagane                                                                  |
+| `lekarz`                         | `doctor`                                |                                                                           |
+| `specjalizacja`                  | `specialization`                        | buduje segmenty — warto                                                   |
+| `placowka`                       | `location`, `lokalizacja`, `branch`     | placówka / filia — PRM_Agent liczy nieobecności także per placówka        |
+| `data_wizyty` + `godzina_wizyty` | `visitAt`, `termin`                     | data `RRRR-MM-DD`, godzina `GG:MM` (czas warszawski) albo gotowy ISO 8601 |
+| `cena`                           | `price`                                 | `"300,00 zł"` i `300` czytamy tak samo                                    |
+| `tagi`                           | `tags`, `tag`                           | tablica `["kardiologia","VIP"]` albo tekst `"kardiologia, VIP"`           |
+| `status`                         |                                         | np. `pacjent`, `lead` — ustawiany tylko przy zakładaniu kontaktu          |
+| `zgoda_email`                    | `consentEmail`, `consent_email`         | bramkuje wysyłkę e-mail                                                   |
+| `zgoda_sms`                      | `consentSms`, `consent_sms`             | bramkuje wysyłkę SMS                                                      |
+| `zgoda_profilowanie`             | `consentProfiling`, `consent_profiling` | dobieranie treści pod pacjenta                                            |
+| `zgoda_regulamin`                | `regulamin`, `akceptacjaRegulaminu`     | „Znam i akceptuję Politykę Prywatności oraz Regulamin"                    |
+| `zgoda_marketingowa`             | `marketingConsent`, `zgodaMarketing`    | **nieobowiązkowa** — realny wybór pacjenta                                |
 
 Nieznane pola są ignorowane — możecie wysłać cały swój obiekt.
 
@@ -97,12 +98,12 @@ wszystko inne jej brak.
 
 **Cztery zgody są obowiązkowe przy rezerwacji, jedna nie.**
 
-| Zgoda | Charakter | Co wysyłać |
-| --- | --- | --- |
-| `zgoda_email` | obowiązkowa | `true` |
-| `zgoda_sms` | obowiązkowa | `true` |
-| `zgoda_profilowanie` | obowiązkowa | `true` |
-| `zgoda_regulamin` | obowiązkowa | `true` |
+| Zgoda                | Charakter          | Co wysyłać                                  |
+| -------------------- | ------------------ | ------------------------------------------- |
+| `zgoda_email`        | obowiązkowa        | `true`                                      |
+| `zgoda_sms`          | obowiązkowa        | `true`                                      |
+| `zgoda_profilowanie` | obowiązkowa        | `true`                                      |
+| `zgoda_regulamin`    | obowiązkowa        | `true`                                      |
 | `zgoda_marketingowa` | **nieobowiązkowa** | `true` albo `false` — to, co pacjent wybrał |
 
 **Pole marketingowe wysyłajcie zawsze**, także gdy pacjent odmówił. Pominięcie
@@ -168,11 +169,11 @@ Gdy czegoś brakuje, `braki` wymienia to po polsku, a odpowiedź ma kod **400**.
 
 ## Odpowiedzi
 
-| kod | znaczenie |
-|---|---|
-| 200 | przyjęte; `powiazanieKartoteki` mówi, czy przyszło `idx_osoby` |
+| kod | znaczenie                                                            |
+| --- | -------------------------------------------------------------------- |
+| 200 | przyjęte; `powiazanieKartoteki` mówi, czy przyszło `idx_osoby`       |
 | 400 | brakuje wymaganego pola — treść wymienia które i jakie pola przyszły |
-| 401 | zły albo brakujący `X-Webhook-Secret` |
+| 401 | zły albo brakujący `X-Webhook-Secret`                                |
 
 Przy powtórzeniu tego samego `idx_terminu` odpowiedź ma `"duplicate": true`
 i **nie** tworzy drugiej wizyty. Możecie ponawiać bez obaw.

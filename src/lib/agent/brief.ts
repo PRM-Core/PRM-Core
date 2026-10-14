@@ -69,12 +69,17 @@ export function buildBrief(input: BriefInput): string {
   );
   lines.push(t("- Odpowiedzi pacjentów w skrzynce: {n}.", { n: n("inbox.inbound") }));
 
-  const byDoctor = input.signals.filter(
-    (x) => x.key === "no_show_rate" && x.dimension.startsWith("doctor:") && x.previous !== null,
+  // The largest rises by doctor and by site, together: whoever reads the
+  // brief wants the place where it hurts, whichever kind of place it is.
+  const byPlace = input.signals.filter(
+    (x) =>
+      x.key === "no_show_rate" &&
+      (x.dimension.startsWith("doctor:") || x.dimension.startsWith("location:")) &&
+      x.previous !== null,
   );
-  const worst = byDoctor
+  const worst = byPlace
     .map((x) => ({
-      name: x.dimension.slice("doctor:".length),
+      name: x.dimension.slice(x.dimension.indexOf(":") + 1),
       rise: (x.value - (x.previous ?? 0)) * 100,
       now: x.value,
     }))
