@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.5.0",
+    "version": "2.6.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.5.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.6.0",
     "notes": {
-      "en": "PRM_Agent says why: a decision log with who acted (person, agent, model), a reason on every list row, and on the patient's card what the agent holds about them and why.",
-      "pl": "PRM_Agent mówi dlaczego: dziennik decyzji z tym, kto działał (osoba, agent, model), powód przy każdym wierszu list, a na karcie pacjenta — co agent o nim wie i dlaczego."
+      "en": "Reports for every role: Finance (volumes and cost per channel, SMS parts, revenue and the no-show loss) and Marketing (campaign results, bookings after a send, A/B splits with a significance test).",
+      "pl": "Raporty dla każdej roli: Finanse (wolumeny i koszt per kanał, części SMS, przychód i strata na nieobecnościach) i Marketing (wyniki kampanii, wizyty po wysyłce, testy A/B z oceną istotności)."
     }
   },
   "messages": []

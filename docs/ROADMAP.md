@@ -114,6 +114,11 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Decision log a human can read** — PRM_Agent → Dziennik with who acted
   (person, agent, model) and links; a "why" on every list row; on the
   patient's card, what the agent holds about them and why.
+- **Reports for every role** — Reports → Finance (volumes and cost per
+  channel from the provider's unit prices, SMS parts with the Polish-letter
+  rate, revenue from completed visits and the loss on no-shows) and
+  Marketing (per campaign: opens, clicks, unsubscribes, recipients who
+  booked within 14 days; split variants with a two-proportion test).
 - **Evaluation harness** — fixed cases for drafts, the brief and triage,
   traps included, put to the model in reach and judged by code; from the
   screen before enabling a direction, or `bun run agent:eval` in CI.
@@ -127,15 +132,12 @@ the rest.
 1. **A real local model through the harness** — the harness exists (below);
    what remains is running it against Bielik / Qwen on Ollama on a real
    installation and fixing what fails. _(help wanted)_
-2. **Role views** — CFO (volumes and cost per channel) and Marketing
-   (campaign performance, A/B) over the same signals; the website promises
-   them for every decision-maker.
-3. **Knowledge base as the single source of facts** — services, prices,
+2. **Knowledge base as the single source of facts** — services, prices,
    preparation instructions and opening hours, with the answer refusing to
    invent what the base does not contain.
-4. **Patient history summary for reception** — three sentences before the
+3. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-5. **Per-automation budgets and a hard stop** — one flow must not consume the
+4. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
 
 ## Security

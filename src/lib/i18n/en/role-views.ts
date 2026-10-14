@@ -1,0 +1,60 @@
+/** Reports for every role — the finance and marketing views. */
+export const roleViews: Record<string, string> = {
+  "1000 e-maili (zł)": "1000 e-mails (PLN)",
+  "Brak kampanii w tym okresie.": "No campaigns in this period.",
+  "Ceny kanałów": "Channel prices",
+  "Ceny kanałów ustawia administrator.": "Channel prices are set by an administrator.",
+  "Ceny zapisane.": "Prices saved.",
+  "Części SMS": "SMS parts",
+  "Część SMS (zł)": "SMS part (PLN)",
+  Data: "Date",
+  "E-mail — automatyzacje, skrzynka, testy": "E-mail — automations, inbox, tests",
+  "E-mail — kampanie": "E-mail — campaigns",
+  Finanse: "Finance",
+  "Kampanie — ostatnie {n} dni": "Campaigns — the last {n} days",
+  Koszt: "Cost",
+  "Koszt komunikacji": "Communication cost",
+  "Koszt komunikacji na odbytą wizytę": "Communication cost per completed visit",
+  "Koszt modelu językowego: {v} USD.": "Language model cost: {v} USD.",
+  Marketing: "Marketing",
+  "Model językowy: 0 zł — działa w sieci placówki albo jest wyłączony.":
+    "Language model: 0 PLN — it runs inside the clinic's network or is off.",
+  "Nie udało się zapisać cen": "Could not save the prices",
+  "Ostatnie {n} dni wobec poprzednich {n}. Koszt liczony z cen jednostkowych ustawionych niżej; przychód — z cen wizyt podanych przy rezerwacji.":
+    "The last {n} days against the {n} before. Cost from the unit prices set below; revenue from the visit prices given at booking.",
+  Pacjenci: "Patients",
+  Poprzednio: "Before",
+  "Przychód z odbytych wizyt": "Revenue from completed visits",
+  "SMS — automatyzacje": "SMS — automations",
+  "SMS — kampanie": "SMS — campaigns",
+  "SMS — pozostałe": "SMS — other",
+  "Testy A/B w automatyzacjach": "A/B tests in automations",
+  "Umówili wizytę": "Booked a visit",
+  "Utracone na nieobecnościach": "Lost on no-shows",
+  Wariant: "Variant",
+  "Wobec pierwszego": "Against the first",
+  "Wolumeny i koszt per kanał": "Volumes and cost per channel",
+  Wysłano: "Sent",
+  "Z faktury operatora. Puste = nieustawione — koszt pokazujemy jako brak danych, nie zero.":
+    "From the provider's invoice. Empty = not set — the cost shows as no data, not zero.",
+  "Z kroku „Split”: każdy wariant porównany z pierwszym — odsetek pacjentów, którzy umówili wizytę w ciągu {d} dni, i otwarcia e-maili wysłanych dalej w tym przebiegu. Test dwóch proporcji; poniżej 30 pacjentów na wariant nie ogłaszamy zwycięzcy.":
+    "From the “Split” step: each variant against the first — the share of patients who booked a visit within {d} days, and the opens of e-mails sent later in that run. A two-proportion test; below 30 patients per variant no winner is called.",
+  "Zapisz ceny": "Save prices",
+  "brak porównania": "no comparison",
+  "punkt odniesienia": "baseline",
+  "ustaw ceny kanałów poniżej": "set the channel prices below",
+  "za mało danych (min. 30 na wariant)": "not enough data (min. 30 per variant)",
+  "{d}% wobec poprzednich 30 dni": "{d}% against the previous 30 days",
+  "{n} nieobecności": "{n} no-shows",
+  "{n} odbytych wizyt": "{n} completed visits",
+  "{n} rozstrzygniętych wizyt bez ceny — nie są wliczone do przychodu.":
+    "{n} decided visits without a price — not included in revenue.",
+  "{pp} pp, bez istotnej różnicy (p = {p})": "{pp} pp, no significant difference (p = {p})",
+  "{pp} pp, różnica istotna (p = {p})": "{pp} pp, significant difference (p = {p})",
+  "{p} SMS-ów zawiera polskie znaki — operator liczy wtedy części po 70 znaków zamiast 160. Szablony bez ogonków są nawet o połowę tańsze.":
+    "{p} of SMS messages contain Polish letters — the operator then bills parts of 70 characters instead of 160. Templates without diacritics can cost half as much.",
+  "Żadna automatyzacja nie przeprowadziła w tym okresie pacjentów przez krok „Split”.":
+    "No automation took patients through a “Split” step in this period.",
+  "„Umówili wizytę” — odbiorcy, którzy umówili wizytę w ciągu {d} dni po wysyłce. To zbieżność w czasie, nie dowód, że zadziałała kampania; porównuj kampanie między sobą.":
+    "“Booked a visit” — recipients who booked a visit within {d} days after the send. A coincidence in time, not proof the campaign worked; compare campaigns with each other.",
+};

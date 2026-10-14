@@ -67,7 +67,7 @@ interface SignalDraft {
 }
 
 /** A visit that happened or did not — cancelled and unknown ones are neither. */
-function outcome(v: ContactVisitRow, now: number): 0 | 1 | null {
+export function outcome(v: ContactVisitRow, now: number): 0 | 1 | null {
   if (v.startsAt === null) return null;
   const state = effectiveState(v.systemStatus, v.startsAt, now);
   if (state === "no_show") return 1;

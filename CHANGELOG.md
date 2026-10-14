@@ -8,6 +8,30 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.6.0] — Raporty dla każdej roli: finanse i marketing
+
+Raporty mają dwie nowe zakładki, z tych samych tabel, z których czyta
+PRM_Agent. Nic nie jest szacowane: nieustawiona cena to „brak danych”,
+nie zero.
+
+- **Finanse** (ostatnie 30 dni wobec poprzednich 30): wolumeny per kanał
+  i źródło (e-mail z kampanii / z automatyzacji, skrzynki, testów; SMS
+  z automatyzacji / kampanii), **części SMS** liczone jak u operatora —
+  jedna polska litera przełącza wiadomość na części po 70 znaków zamiast
+  160, raport mówi, jaki odsetek SMS-ów to dotyczy; **koszt** z cen
+  jednostkowych z faktury (administrator ustawia: część SMS, 1000 e-maili);
+  **przychód z odbytych wizyt** i **utracone na nieobecnościach** z cen
+  wizyt; koszt komunikacji na odbytą wizytę; koszt modelu językowego
+  (lokalnie 0 zł). Wizyty bez ceny są policzone osobno.
+- **Marketing**: per kampania (90 dni) — wysłano, otwarcia, kliknięcia,
+  wypisy, **odbiorcy, którzy umówili wizytę w ciągu 14 dni** (z wyraźnym
+  zastrzeżeniem, że to zbieżność w czasie, nie przypisanie). **Testy A/B
+  z kroku „Split”**: per wariant — pacjenci, odsetek umówionych wizyt,
+  otwarcia e-maili wysłanych dalej w przebiegu; porównanie z pierwszym
+  wariantem testem dwóch proporcji; poniżej 30 pacjentów na wariant
+  zwycięzca nie jest ogłaszany.
+- Odczyt dla roli podglądu; ceny ustawia administrator.
+
 ## [2.5.0] — PRM_Agent: dlaczego — dziennik decyzji czytelny dla człowieka
 
 - **Dziennik** (PRM_Agent → Dziennik): wszystkie decyzje wokół agenta,

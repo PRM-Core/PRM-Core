@@ -19,6 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SendsList } from "@/components/reports/SendsList";
 import { SendDetail } from "@/components/reports/SendDetail";
+import { FinanceView } from "@/components/reports/FinanceView";
+import { MarketingView } from "@/components/reports/MarketingView";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
 import { getReports, type ReportsData } from "@/lib/api/reports.functions";
@@ -82,8 +84,18 @@ function ReportsPage() {
         <TabsList>
           <TabsTrigger value="overview">{t("Przegląd")}</TabsTrigger>
           <TabsTrigger value="sends">{t("Wysyłki")}</TabsTrigger>
+          <TabsTrigger value="finance">{t("Finanse")}</TabsTrigger>
+          <TabsTrigger value="marketing">{t("Marketing")}</TabsTrigger>
           <TabsTrigger value="custom">{t("Własne raporty")}</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="finance" className="mt-5">
+          <FinanceView isAdmin={user?.role === "admin"} />
+        </TabsContent>
+
+        <TabsContent value="marketing" className="mt-5">
+          <MarketingView />
+        </TabsContent>
 
         <TabsContent value="custom" className="mt-5">
           <CustomReports canEdit={!isReadOnlyRole(user?.role)} />
