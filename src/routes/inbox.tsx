@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,10 +39,20 @@ import {
   setInboxThreadStatus,
   listInboxAssignees,
   triageInboxThread,
+  correctInboxTriage,
   type InboxThreadSummary,
   type InboxThreadDetail,
 } from "@/lib/api/inbox.functions";
-import { OWNER_LABELS, TOPIC_LABELS, URGENCY_LABELS } from "@/lib/agent/triage";
+import {
+  OWNERS,
+  OWNER_LABELS,
+  TOPICS,
+  TOPIC_LABELS,
+  URGENCIES,
+  URGENCY_LABELS,
+} from "@/lib/agent/triage";
+import { isReadOnlyRole } from "@/lib/auth/roles";
+import type { TriageOwner, TriageTopic, TriageUrgency } from "@/lib/db/schema";
 import type { InboxChannel } from "@/lib/db/schema";
 import { t as tr, localized } from "@/lib/i18n";
 
@@ -122,6 +132,13 @@ function InboxPage() {
   const [onlyUnread, setOnlyUnread] = useState(false);
   const [onlyUrgent, setOnlyUrgent] = useState(false);
   const [triaging, setTriaging] = useState(false);
+  const [correcting, setCorrecting] = useState<{
+    urgency: TriageUrgency;
+    topic: TriageTopic;
+    owner: TriageOwner;
+  } | null>(null);
+  const { user } = useRouteContext({ from: "__root__" });
+  const canEdit = !isReadOnlyRole(user?.role);
   const [includeClosed, setIncludeClosed] = useState(false);
   const [reply, setReply] = useState("");
   const [replyChannel, setReplyChannel] = useState<"email" | "sms">("email");
@@ -153,6 +170,7 @@ function InboxPage() {
   }, [refreshThreads]);
 
   const openThread = useCallback(async (threadId: string) => {
+    setCorrecting(null);
     setActiveId(threadId);
     const loaded = await getInboxThread({ data: { threadId } });
     setDetail(loaded);
@@ -227,6 +245,23 @@ function InboxPage() {
     });
     await openThread(detail.thread.id);
     await refreshThreads();
+  };
+
+  const saveCorrection = async () => {
+    if (!detail || !correcting) return;
+    try {
+      const r = await correctInboxTriage({ data: { threadId: detail.thread.id, ...correcting } });
+      if (!r.ok) {
+        toast.error(tr("Nie udało się zapisać oceny"), { description: r.error });
+        return;
+      }
+      toast.success(tr("Ocena zapisana — agent uczy się z tej decyzji."));
+      setCorrecting(null);
+      await openThread(detail.thread.id);
+      await refreshThreads();
+    } catch (err) {
+      toast.error(tr("Nie udało się zapisać oceny"), { description: String(err) });
+    }
   };
 
   const handleTriage = async () => {
@@ -419,7 +454,7 @@ function InboxPage() {
                     {detail.contact?.email ? ` · ${detail.contact.email}` : ""}
                     {detail.contact?.phone ? ` · ${detail.contact.phone}` : ""}
                   </div>
-                  {detail.thread.triage.urgency && (
+                  {detail.thread.triage.urgency && !correcting && (
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                       <TriageBadges triage={detail.thread.triage} />
                       <span className="text-muted-foreground">
@@ -428,6 +463,97 @@ function InboxPage() {
                           ? ` · ${tr("ocena modelu w sieci placówki")}`
                           : ""}
                       </span>
+                      {canEdit && (
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() =>
+                            setCorrecting({
+                              urgency: (detail.thread.triage.urgency || "normal") as TriageUrgency,
+                              topic: (detail.thread.triage.topic || "other") as TriageTopic,
+                              owner: (detail.thread.triage.owner || "reception") as TriageOwner,
+                            })
+                          }
+                        >
+                          {tr("Popraw ocenę")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {correcting && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                      <Select
+                        value={correcting.urgency}
+                        onValueChange={(v) =>
+                          setCorrecting({ ...correcting, urgency: v as TriageUrgency })
+                        }
+                      >
+                        <SelectTrigger className="h-7 w-[130px] text-xs" aria-label={tr("Pilność")}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {URGENCIES.map((u) => (
+                            <SelectItem key={u} value={u}>
+                              {URGENCY_LABELS[u]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={correcting.topic}
+                        onValueChange={(v) =>
+                          setCorrecting({ ...correcting, topic: v as TriageTopic })
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-7 w-[180px] text-xs"
+                          aria-label={tr("Temat sprawy")}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TOPICS.map((x) => (
+                            <SelectItem key={x} value={x}>
+                              {TOPIC_LABELS[x]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={correcting.owner}
+                        onValueChange={(v) =>
+                          setCorrecting({ ...correcting, owner: v as TriageOwner })
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-7 w-[140px] text-xs"
+                          aria-label={tr("Właściciel")}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {OWNERS.map((o) => (
+                            <SelectItem key={o} value={o}>
+                              {OWNER_LABELS[o]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => void saveCorrection()}
+                      >
+                        {tr("Zapisz ocenę")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setCorrecting(null)}
+                      >
+                        {tr("Anuluj")}
+                      </Button>
                     </div>
                   )}
                 </div>

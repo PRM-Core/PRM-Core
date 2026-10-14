@@ -237,11 +237,21 @@ asks a person only about _what it may start doing_:
   clinic's own visits; its skill against the base rate is a signal with
   yesterday's value beside it (`model.no_show_skill`), and the brief reports
   it. Signals, thresholds and lists follow the data with no training at all.
-- **It learns from decisions.** The final text of every approved draft is
-  kept as an example (`agent_examples`); with the "learn from approvals"
-  direction enabled, the model sees the latest ones when it writes the next
-  draft — the house style, not a constraint. Examples never leave the
-  database.
+- **It learns from decisions.** Three kinds, all kept in `agent_examples`
+  and used only with the "learn from the team's decisions" direction
+  enabled (since 2.3.0):
+  - the final text of every approved draft — the model sees the latest
+    ones when it writes the next draft: the house style, not a constraint;
+  - a triage the front desk corrected in the inbox — the message,
+    pseudonymised before it is stored, with the team's verdict
+    (urgency/topic/owner); the model sees the latest ones when it triages:
+    "this is how we sort". The verdict stands on the thread until the
+    patient writes again;
+  - a dismissed recommendation — the numbers it was dismissed at become the
+    bar: the same finding returns only when a count is half as large again
+    or a rate has risen by another 5 pp, and then as new. Without the
+    direction a dismissal stays final, as before.
+    Examples never leave the database.
 - **It proposes directions.** When the state gives grounds — a model in
   reach, a first approval, a data gap such as a fifth of contacts without a
   phone — the agent proposes a direction (`agent_directions`, `directions.ts`):

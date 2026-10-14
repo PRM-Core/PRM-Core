@@ -1620,7 +1620,10 @@ export const inboxThreads = sqliteTable(
     triageTopic: text("triage_topic").notNull().default("").$type<TriageTopic | "">(),
     triageOwner: text("triage_owner").notNull().default("").$type<TriageOwner | "">(),
     triageReason: text("triage_reason").notNull().default(""),
-    triageSource: text("triage_source").notNull().default("").$type<"rules" | "model" | "">(),
+    triageSource: text("triage_source")
+      .notNull()
+      .default("")
+      .$type<"rules" | "model" | "person" | "">(),
     triageAt: integer("triage_at"),
     createdAt: integer("created_at").notNull(),
   },
@@ -1985,9 +1988,11 @@ export const agentDirections = sqliteTable("agent_directions", {
 export type AgentDirectionRow = typeof agentDirections.$inferSelect;
 
 /**
- * What the team approved, kept as examples: the final text of an approved
- * draft. With the "learn from approvals" direction enabled, the model sees
- * the latest ones when it writes the next draft — "this is how we write".
+ * What the team decided, kept as examples: the final text of an approved
+ * draft (kind "draft"), or a message the front desk re-triaged with the
+ * verdict it gave (kind "triage", the message already pseudonymised). With
+ * the "learn from decisions" direction enabled, the model sees the latest
+ * ones — "this is how we write", "this is how we sort".
  */
 export const agentExamples = sqliteTable(
   "agent_examples",
@@ -1997,6 +2002,8 @@ export const agentExamples = sqliteTable(
     channel: text("channel").notNull(),
     audienceSignal: text("audience_signal").notNull().default(""),
     text: text("text").notNull(),
+    /** For a triage example: the team's verdict, "urgency/topic/owner". */
+    label: text("label").notNull().default(""),
     decidedBy: text("decided_by").notNull().default(""),
     createdAt: integer("created_at").notNull(),
   },

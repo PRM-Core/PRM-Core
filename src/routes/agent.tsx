@@ -62,6 +62,7 @@ import {
 import type { AgentListRow, ListKey } from "@/lib/agent/drafts.server";
 import { factorLabel } from "@/lib/agent/factor-labels";
 import { isReadOnlyRole } from "@/lib/auth/roles";
+import { updateInsightStatus } from "@/lib/api/engine.functions";
 import { intlLocale, localized, t } from "@/lib/i18n";
 
 /**
@@ -198,7 +199,7 @@ function AgentPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="recommendations" className="mt-4">
-          <RecommendationsTab />
+          <RecommendationsTab readOnly={readOnly} />
         </TabsContent>
         <TabsContent value="drafts" className="mt-4">
           <DraftsTab readOnly={readOnly} />
@@ -226,13 +227,31 @@ function AgentPage() {
 
 // ── recommendations ─────────────────────────────────────────────────────────
 
-function RecommendationsTab() {
+function RecommendationsTab({ readOnly }: { readOnly: boolean }) {
   const [rows, setRows] = useState<AgentRecommendationView[] | null>(null);
+  const load = useCallback(
+    () =>
+      getAgentRecommendations()
+        .then(setRows)
+        .catch(() => setRows([])),
+    [],
+  );
   useEffect(() => {
-    getAgentRecommendations()
-      .then(setRows)
-      .catch(() => setRows([]));
-  }, []);
+    void load();
+  }, [load]);
+  const dismiss = async (id: string) => {
+    try {
+      await updateInsightStatus({ data: { id, status: "dismissed" } });
+      toast.success(
+        t(
+          "Odrzucone. Z włączoną nauką agent wróci z tym dopiero, gdy liczby będą wyraźnie gorsze.",
+        ),
+      );
+      await load();
+    } catch (err) {
+      toast.error(t("Nie udało się zapisać decyzji"), { description: String(err) });
+    }
+  };
 
   if (!rows) return <Loading />;
   if (rows.length === 0)
@@ -277,9 +296,21 @@ function RecommendationsTab() {
                     ))}
                 </div>
               )}
-              <p className="text-[11px] text-muted-foreground">
-                {t("Zauważone {when}", { when: when(r.updatedAt, true) })}
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Zauważone {when}", { when: when(r.updatedAt, true) })}
+                </p>
+                {!readOnly && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 gap-1 px-2 text-xs"
+                    onClick={() => void dismiss(r.id)}
+                  >
+                    <X className="h-3.5 w-3.5" /> {t("Odrzuć")}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         );

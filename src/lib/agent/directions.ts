@@ -42,11 +42,13 @@ export const DIRECTIONS: Record<DirectionKey, DirectionInfo> = localized(() => (
     why: t("Serwer modelu w sieci placówki jest skonfigurowany i odpowiada."),
   },
   learn_from_approvals: {
-    title: t("Uczenie się z zatwierdzonych draftów"),
+    title: t("Uczenie się z decyzji zespołu"),
     what: t(
-      "Teksty draftów, które zespół zatwierdził, stają się przykładami „tak piszemy u nas” dla kolejnych draftów. Przykłady nie opuszczają bazy instalacji.",
+      "Zatwierdzone teksty draftów stają się przykładami „tak piszemy u nas”; poprawione przez rejestrację oceny wiadomości — przykładami „tak sortujemy”; odrzucona rekomendacja podnosi próg, przy którym wróci. Przykłady nie opuszczają bazy instalacji.",
     ),
-    why: t("Zespół zatwierdził co najmniej jeden draft."),
+    why: t(
+      "Zespół podjął co najmniej jedną decyzję: zatwierdził draft, poprawił ocenę wiadomości albo odrzucił rekomendację.",
+    ),
   },
   collect_phones: {
     title: t("Uzupełnianie brakujących telefonów"),
@@ -69,7 +71,7 @@ export const DIRECTION_KEYS: DirectionKey[] = [
 export interface DevelopmentState {
   /** A model endpoint inside the perimeter is configured and allowed. */
   localModel: boolean;
-  /** Drafts approved or handed off so far. */
+  /** Decisions the team has taken: drafts approved, triages corrected, recommendations dismissed. */
   approvals: number;
   contacts: number;
   withoutPhone: number;

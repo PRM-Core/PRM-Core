@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { deriveRecommendations, type SignalLike } from "./recommend";
+import { applyDismissals, deriveRecommendations, type SignalLike } from "./recommend";
 import { buildBrief } from "./brief";
 
 const sig = (
@@ -71,6 +71,34 @@ describe("deriveRecommendations", () => {
         0,
       ),
     ).toHaveLength(0);
+  });
+});
+
+describe("applyDismissals", () => {
+  const recall = (n: number) => deriveRecommendations([sig("recall_due", n)], 0)[0];
+  const rise = (now: number) =>
+    deriveRecommendations([sig("no_show_rate", now, 0.1, 40)], 0).find((r) =>
+      r.signature.startsWith("agent:no-show-rise"),
+    )!;
+
+  test("the same finding at the same level stays away; half as many again brings it back", () => {
+    const dismissed = [{ signature: "agent:recall-due", evidence: { patients: "20" } }];
+    expect(applyDismissals([recall(25)], dismissed).kept).toHaveLength(0);
+    expect(applyDismissals([recall(29)], dismissed).suppressed).toHaveLength(1);
+    expect(applyDismissals([recall(30)], dismissed).kept).toHaveLength(1);
+  });
+
+  test("a rise comes back after another 5 pp, not before", () => {
+    const dismissed = [
+      { signature: "agent:no-show-rise:all", evidence: { now: "18%", visits: "40" } },
+    ];
+    expect(applyDismissals([rise(0.21)], dismissed).kept).toHaveLength(0);
+    expect(applyDismissals([rise(0.23)], dismissed).kept).toHaveLength(1);
+  });
+
+  test("what was never dismissed passes untouched", () => {
+    const r = recall(12);
+    expect(applyDismissals([r], [])).toEqual({ kept: [r], suppressed: [] });
   });
 });
 

@@ -190,6 +190,28 @@ export const updateInsightStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     await setInsightStatus(data.id, data.status);
+    // A dismissed PRM_Agent recommendation is a decision the agent learns
+    // from: the numbers it was dismissed at become the bar it must clear.
+    if (data.status === "dismissed") {
+      const { getDb } = await import("../db/client.server");
+      const { agentInsights } = await import("../db/schema");
+      const { eq } = await import("drizzle-orm");
+      const row = await getDb()
+        .select()
+        .from(agentInsights)
+        .where(eq(agentInsights.id, data.id))
+        .get();
+      if (row?.signature.startsWith("agent:")) {
+        const { getSessionUser } = await import("../auth/session.server");
+        const { rememberDismissal } = await import("../agent/directions.server");
+        const user = await getSessionUser();
+        await rememberDismissal({
+          signature: row.signature,
+          evidence: row.evidence ?? {},
+          decidedBy: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "",
+        });
+      }
+    }
     return { ok: true };
   });
 

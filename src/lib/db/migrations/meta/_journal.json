@@ -526,6 +526,13 @@
       "when": 1791974492797,
       "tag": "0074_visit_location",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "6",
+      "when": 1791978499046,
+      "tag": "0075_example_label",
+      "breakpoints": true
     }
   ]
 }

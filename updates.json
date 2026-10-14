@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.2.0",
+    "version": "2.3.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.2.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.3.0",
     "notes": {
-      "en": "Visits carry a site: the booking webhook accepts placowka/location, and PRM_Agent reports the no-show rate per site beside per doctor and per specialisation.",
-      "pl": "Wizyta ma placówkę: webhook rezerwacji przyjmuje placowka/location, a PRM_Agent liczy nieobecności per placówka obok per lekarz i per specjalizacja."
+      "en": "PRM_Agent learns from the team's decisions: front-desk triage corrections become pseudonymised examples, and a dismissed recommendation returns only when its numbers are clearly worse.",
+      "pl": "PRM_Agent uczy się z decyzji zespołu: korekty triażu z rejestracji stają się spseudonimizowanymi przykładami, a odrzucona rekomendacja wraca dopiero przy wyraźnie gorszych liczbach."
     }
   },
   "messages": []

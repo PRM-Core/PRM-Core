@@ -17,9 +17,15 @@ import { ensureLabelSegment } from "../segments/segments.server";
 import { createCampaign } from "../campaigns/campaigns.server";
 import { getSnapshot } from "../engine/snapshots.server";
 import { logStep } from "../engine/log.server";
-import { deriveRecommendations, type Recommendation } from "./recommend";
+import { applyDismissals, deriveRecommendations, type Recommendation } from "./recommend";
 import { writeDraftText } from "./language.server";
-import { recommendationsFromDirections, rememberExample } from "./directions.server";
+import {
+  forgetDismissal,
+  isEnabled,
+  listDismissals,
+  recommendationsFromDirections,
+  rememberExample,
+} from "./directions.server";
 import { t } from "@/lib/i18n";
 
 /**
@@ -49,10 +55,21 @@ export async function recommendFromSignals(
     .select({ id: agentScores.id })
     .from(agentScores)
     .where(and(eq(agentScores.kind, "no-show"), gte(agentScores.score, HIGH_RISK)));
-  const recs = [
+  let recs = [
     ...deriveRecommendations(rows, high.length),
     ...(await recommendationsFromDirections()),
   ];
+  // With learning on, a dismissed recommendation comes back only when its
+  // numbers are clearly worse than when the team said "not this".
+  const learning = await isEnabled("learn_from_approvals");
+  const dismissals = learning ? await listDismissals() : [];
+  const returning = new Set<string>();
+  if (learning) {
+    const { kept } = applyDismissals(recs, dismissals);
+    const dismissedSigs = new Set(dismissals.map((d) => d.signature));
+    for (const r of kept) if (dismissedSigs.has(r.signature)) returning.add(r.signature);
+    recs = kept;
+  }
 
   const insights: InsightDraft[] = recs.map((r) => ({
     signature: r.signature,
@@ -66,6 +83,20 @@ export async function recommendFromSignals(
     fromAi: false,
   }));
   await saveInsights(insights);
+  for (const signature of returning) {
+    await db
+      .update(agentInsights)
+      .set({ status: "new", updatedAt: now })
+      .where(eq(agentInsights.signature, signature));
+    await forgetDismissal(signature);
+    await logStep({
+      kind: "agent",
+      message: t("Rekomendacja wraca mimo odrzucenia — liczby są wyraźnie gorsze: {sig}.", {
+        sig: signature,
+      }),
+      detail: { source: "agent-learning", signature },
+    });
+  }
   await resolveGone(new Set(recs.map((r) => r.signature)), now);
 
   for (const r of recs) if (r.draft) await proposeDraft(r, rows, now);

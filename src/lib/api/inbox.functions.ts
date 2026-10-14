@@ -62,7 +62,7 @@ export interface InboxThreadSummary {
     topic: TriageTopic | "";
     owner: TriageOwner | "";
     reason: string;
-    source: "rules" | "model" | "";
+    source: "rules" | "model" | "person" | "";
   };
 }
 
@@ -71,7 +71,7 @@ function triageOf(r: {
   triageTopic: TriageTopic | "";
   triageOwner: TriageOwner | "";
   triageReason: string;
-  triageSource: "rules" | "model" | "";
+  triageSource: "rules" | "model" | "person" | "";
 }): InboxThreadSummary["triage"] {
   return {
     urgency: r.triageUrgency,
@@ -537,6 +537,40 @@ export const triageInboxThread = createServerFn({ method: "POST" })
     const { triageThread } = await import("../agent/triage.server");
     const r = await triageThread(data.threadId);
     return { ok: !!r, triage: r };
+  });
+
+/** The front desk's own verdict — kept on the thread and, pseudonymised, as an example for the agent. */
+export const correctInboxTriage = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(
+    z.object({
+      threadId: z.string().max(80),
+      urgency: z.enum(["high", "normal", "low"]),
+      topic: z.enum([
+        "appointment",
+        "cancellation",
+        "results",
+        "prescription",
+        "complaint",
+        "billing",
+        "other",
+      ]),
+      owner: z.enum(["reception", "doctor", "billing", "manager"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const { isReadOnlyRole } = await import("../auth/roles");
+    const user = await getSessionUser();
+    if (!user || isReadOnlyRole(user.role))
+      throw new Error(tr("Ocenę rozmowy poprawia osoba z prawem do zmian."));
+    const { correctTriage } = await import("../agent/triage.server");
+    const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
+    return correctTriage({
+      threadId: data.threadId,
+      triage: { urgency: data.urgency, topic: data.topic, owner: data.owner },
+      decidedBy: who,
+    });
   });
 
 export const listInboxAssignees = createServerFn({ method: "GET" })

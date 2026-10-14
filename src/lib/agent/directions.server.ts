@@ -27,11 +27,16 @@ import { t } from "@/lib/i18n";
 export async function developmentState(): Promise<DevelopmentState> {
   const db = getDb();
   const e = localEndpoint();
-  const [approvals, people] = await Promise.all([
+  const [approvals, otherDecisions, people] = await Promise.all([
     db
       .select({ n: sql<number>`count(*)` })
       .from(agentDrafts)
       .where(inArray(agentDrafts.status, ["approved", "handed_off"]))
+      .get(),
+    db
+      .select({ n: sql<number>`count(*)` })
+      .from(agentExamples)
+      .where(inArray(agentExamples.kind, ["triage", "dismissal"]))
       .get(),
     db
       .select({
@@ -45,7 +50,7 @@ export async function developmentState(): Promise<DevelopmentState> {
   return {
     localModel: aiMode() === "local" && !!e.url && !!e.model && e.hostClass !== "public",
     evaluation: evaluation ? { passed: evaluation.passed, total: evaluation.total } : null,
-    approvals: approvals?.n ?? 0,
+    approvals: (approvals?.n ?? 0) + (otherDecisions?.n ?? 0),
     contacts: people?.n ?? 0,
     withoutPhone: people?.withoutPhone ?? 0,
   };
@@ -211,6 +216,95 @@ export async function examplesFor(
     .limit(limit * 2);
   const seen = new Set(same.map((e) => e.id));
   return [...same, ...others.filter((e) => !seen.has(e.id))].slice(0, limit);
+}
+
+/**
+ * The front desk re-triaged a message: keep the message — pseudonymised
+ * before it is stored — with the team's verdict, "urgency/topic/owner".
+ */
+export async function rememberTriage(input: {
+  text: string;
+  label: string;
+  decidedBy: string;
+  now?: number;
+}): Promise<void> {
+  const text = input.text.trim();
+  if (!text) return;
+  await getDb()
+    .insert(agentExamples)
+    .values({
+      id: randomUUID(),
+      kind: "triage",
+      channel: "",
+      audienceSignal: "",
+      text: text.slice(0, 1000),
+      label: input.label,
+      decidedBy: input.decidedBy,
+      createdAt: input.now ?? Date.now(),
+    });
+}
+
+/** The latest re-triaged messages with the team's verdicts. Empty unless the direction is enabled. */
+export async function triageExamples(limit = 5): Promise<{ text: string; label: string }[]> {
+  if (!(await isEnabled("learn_from_approvals"))) return [];
+  const rows = await getDb()
+    .select({ text: agentExamples.text, label: agentExamples.label })
+    .from(agentExamples)
+    .where(eq(agentExamples.kind, "triage"))
+    .orderBy(desc(agentExamples.createdAt))
+    .limit(limit);
+  return rows;
+}
+
+/**
+ * The team dismissed a recommendation: keep the numbers it was dismissed at.
+ * One row per signature — a later dismissal replaces the earlier baseline.
+ */
+export async function rememberDismissal(input: {
+  signature: string;
+  evidence: Record<string, string>;
+  decidedBy: string;
+  now?: number;
+}): Promise<void> {
+  const db = getDb();
+  await db
+    .delete(agentExamples)
+    .where(
+      and(eq(agentExamples.kind, "dismissal"), eq(agentExamples.audienceSignal, input.signature)),
+    );
+  await db.insert(agentExamples).values({
+    id: randomUUID(),
+    kind: "dismissal",
+    channel: "",
+    audienceSignal: input.signature,
+    text: JSON.stringify(input.evidence ?? {}),
+    decidedBy: input.decidedBy,
+    createdAt: input.now ?? Date.now(),
+  });
+}
+
+export async function listDismissals(): Promise<
+  { signature: string; evidence: Record<string, string> }[]
+> {
+  const rows = await getDb()
+    .select({ signature: agentExamples.audienceSignal, text: agentExamples.text })
+    .from(agentExamples)
+    .where(eq(agentExamples.kind, "dismissal"));
+  return rows.map((r) => {
+    let evidence: Record<string, string> = {};
+    try {
+      evidence = JSON.parse(r.text) as Record<string, string>;
+    } catch {
+      // A row that does not parse is a baseline of nothing: the next number wins.
+    }
+    return { signature: r.signature, evidence };
+  });
+}
+
+export async function forgetDismissal(signature: string): Promise<void> {
+  await getDb()
+    .delete(agentExamples)
+    .where(and(eq(agentExamples.kind, "dismissal"), eq(agentExamples.audienceSignal, signature)));
 }
 
 export async function countExamples(): Promise<number> {

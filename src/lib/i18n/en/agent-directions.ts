@@ -6,7 +6,6 @@ export const agentDirections: Record<string, string> = {
     "- Directions of development awaiting the administrator's decision: {n} (PRM_Agent → Directions).",
   "- Model nieobecności: o {v} lepszy niż sama częstość bazowa{prev}.":
     "- No-show model: {v} better than the base rate alone{prev}.",
-  "- Przykładów zatwierdzonych przez zespół: {n}.": "- Examples approved by the team: {n}.",
   "- Włączone kierunki rozwoju: {n}; nic nie czeka na decyzję.":
     "- Directions enabled: {n}; nothing awaits a decision.",
   "Agent nie ma jeszcze propozycji. Pojawią się, gdy będzie miał podstawy — np. serwer modelu w sieci placówki, pierwszy zatwierdzony draft albo lukę w danych.":
@@ -66,15 +65,11 @@ export const agentDirections: Record<string, string> = {
     "The front desk asks for the number at the next contact — the list is in PRM_Agent → Lists → No phone.",
   "Serwer modelu w sieci placówki jest skonfigurowany i odpowiada.":
     "A model server inside the clinic's network is configured and responds.",
-  "Teksty draftów, które zespół zatwierdził, stają się przykładami „tak piszemy u nas” dla kolejnych draftów. Przykłady nie opuszczają bazy instalacji.":
-    "The texts of drafts the team approved become “this is how we write” examples for the next drafts. The examples never leave the installation's database.",
   "Treść draftów pisana przez model": "Draft texts written by the model",
   "Triaż wiadomości przez model": "Message triage by the model",
-  "Uczenie się z zatwierdzonych draftów": "Learning from approved drafts",
   "Uzupełnianie brakujących telefonów": "Collecting missing phone numbers",
   Włączony: "Enabled",
   "Zaproponowany {when}": "Proposed {when}",
-  "Zespół zatwierdził co najmniej jeden draft.": "The team has approved at least one draft.",
   "model językowy wyłączony (PRM_AI_MODE=off) — żadne zapytanie do modelu nie wychodzi":
     "language model off (PRM_AI_MODE=off) — no request to a model goes out",
   "model w sieci placówki: {host} ({klasa}), model {model}":
@@ -88,4 +83,29 @@ export const agentDirections: Record<string, string> = {
   "{n} pacjentów bez numeru telefonu": "{n} patients without a phone number",
   "Żadne zapytanie do modelu nie wychodzi z serwera. Sygnały, przewidywania, rekomendacje, listy, drafty z szablonu i brief działają bez modelu. Aby włączyć warstwę językową, wskaż w .env serwer modelu w sieci placówki: PRM_AI_LOCAL_URL i PRM_AI_LOCAL_MODEL.":
     "No request to a model leaves the server. Signals, predictions, recommendations, lists, template drafts and the brief work without a model. To enable the language layer, point .env to a model server inside the clinic's network: PRM_AI_LOCAL_URL and PRM_AI_LOCAL_MODEL.",
+  "- Decyzji zespołu zapamiętanych do nauki: {n}.": "- Team decisions kept for learning: {n}.",
+  "Nie ma takiej rozmowy.": "No such conversation.",
+  "Nie udało się zapisać oceny": "Could not save the assessment",
+  "Ocena poprawiona przez: {who}.": "Assessment corrected by: {who}.",
+  "Ocena zapisana — agent uczy się z tej decyzji.":
+    "Assessment saved — the agent learns from this decision.",
+  "Ocenę rozmowy poprawia osoba z prawem do zmian.":
+    "Only someone with change rights can correct a conversation's assessment.",
+  "Odrzucone. Z włączoną nauką agent wróci z tym dopiero, gdy liczby będą wyraźnie gorsze.":
+    "Dismissed. With learning enabled, the agent brings it back only when the numbers are clearly worse.",
+  Pilność: "Urgency",
+  "Popraw ocenę": "Correct the assessment",
+  "Przykłady ocen zespołu (wiadomość → pilność/temat/właściciel):":
+    "The team's assessments as examples (message → urgency/topic/owner):",
+  "Rekomendacja wraca mimo odrzucenia — liczby są wyraźnie gorsze: {sig}.":
+    "A recommendation returns despite its dismissal — the numbers are clearly worse: {sig}.",
+  "Triaż poprawiony przez {who}: {label}.": "Triage corrected by {who}: {label}.",
+  "Uczenie się z decyzji zespołu": "Learning from the team's decisions",
+  Właściciel: "Owner",
+  "Zapisz ocenę": "Save the assessment",
+  "Zatwierdzone teksty draftów stają się przykładami „tak piszemy u nas”; poprawione przez rejestrację oceny wiadomości — przykładami „tak sortujemy”; odrzucona rekomendacja podnosi próg, przy którym wróci. Przykłady nie opuszczają bazy instalacji.":
+    "Approved draft texts become “this is how we write” examples; message assessments corrected by the front desk become “this is how we sort” examples; a dismissed recommendation raises the bar it must clear to return. The examples never leave the installation's database.",
+  "Zespół podjął co najmniej jedną decyzję: zatwierdził draft, poprawił ocenę wiadomości albo odrzucił rekomendację.":
+    "The team has taken at least one decision: approved a draft, corrected a message assessment or dismissed a recommendation.",
+  "Temat sprawy": "Topic",
 };

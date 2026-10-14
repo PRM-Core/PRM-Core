@@ -39,6 +39,49 @@ function dimLabel(dimension: string): string {
   return "";
 }
 
+/**
+ * A recommendation the team dismissed is not repeated at the same level:
+ * the same signature comes back only when the number behind it is clearly
+ * worse than when it was dismissed — a count by half again, a rise by
+ * another 5 pp. The team's "not this" is a threshold the agent learns.
+ */
+export interface Dismissal {
+  signature: string;
+  evidence: Record<string, string>;
+}
+
+const num = (s: string | undefined) => {
+  const n = parseFloat((s ?? "").replace("%", "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
+
+export function applyDismissals(
+  recs: Recommendation[],
+  dismissed: Dismissal[],
+): { kept: Recommendation[]; suppressed: Recommendation[] } {
+  const bySig = new Map(dismissed.map((d) => [d.signature, d.evidence]));
+  const kept: Recommendation[] = [];
+  const suppressed: Recommendation[] = [];
+  for (const r of recs) {
+    const was = bySig.get(r.signature);
+    if (!was) {
+      kept.push(r);
+      continue;
+    }
+    let worse = false;
+    for (const key of ["patients", "visits", "sends"]) {
+      const a = num(r.evidence[key]);
+      const b = num(was[key]);
+      if (a !== null && b !== null && a >= b * 1.5) worse = true;
+    }
+    const riseNow = num(r.evidence.now);
+    const riseWas = num(was.now);
+    if (riseNow !== null && riseWas !== null && riseNow - riseWas >= NO_SHOW_RISE_PP) worse = true;
+    (worse ? kept : suppressed).push(r);
+  }
+  return { kept, suppressed };
+}
+
 export const NO_SHOW_RISE_PP = 5;
 export const OPEN_RATE_DROP_PP = 10;
 export const RECALL_MIN = 10;

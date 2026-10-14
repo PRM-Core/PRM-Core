@@ -8,6 +8,30 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.3.0] — PRM_Agent uczy się z decyzji zespołu
+
+Kierunek „Uczenie się z zatwierdzonych draftów” obejmuje teraz wszystkie
+decyzje zespołu i nazywa się **„Uczenie się z decyzji zespołu”**. Działa
+tylko po włączeniu przez administratora (PRM_Agent → Kierunki).
+
+- **Korekta triażu w skrzynce.** Przy ocenie rozmowy „Popraw ocenę”:
+  pilność, temat, właściciel. Ocena rejestracji zostaje na rozmowie do
+  następnej wiadomości pacjenta (silnik jej nie nadpisuje), a wiadomość —
+  **spseudonimizowana przed zapisem** — z werdyktem staje się przykładem
+  „tak sortujemy”, który model widzi przy kolejnych ocenach.
+- **Odrzucona rekomendacja podnosi próg.** Przycisk „Odrzuć” przy
+  rekomendacji na ekranie PRM_Agent (i każde odrzucenie rekomendacji agenta
+  w panelu Supervisora) zapamiętuje liczby, przy których odrzucono. Ta sama
+  rekomendacja wraca dopiero, gdy liczba pacjentów lub wysyłek wzrośnie
+  o połowę albo wskaźnik o kolejne 5 pp — i wtedy jako nowa, z wpisem
+  w dzienniku. Do tego czasu nie powstaje też draft. Bez włączonego
+  kierunku odrzucenie działa jak dotąd (ostateczne, chyba że sprawa stanie
+  się krytyczna).
+- **Agent liczy te decyzje** jako podstawę do zaproponowania kierunku
+  (nie tylko zatwierdzone drafty); brief podaje „decyzji zespołu
+  zapamiętanych do nauki”.
+- Migracja 0075: kolumna `label` w `agent_examples`.
+
 ## [2.2.0] — PRM_Agent: placówka jako wymiar
 
 - **Wizyta ma placówkę** (`contact_visits.location`): webhook rezerwacji

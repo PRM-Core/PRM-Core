@@ -153,7 +153,7 @@ export function buildBrief(input: BriefInput): string {
     }
     lines.push(
       d.examples > 0
-        ? t("- Przykładów zatwierdzonych przez zespół: {n}.", { n: d.examples })
+        ? t("- Decyzji zespołu zapamiętanych do nauki: {n}.", { n: d.examples })
         : t("- Agent nie ma jeszcze zatwierdzonych przykładów do nauki."),
     );
     lines.push(

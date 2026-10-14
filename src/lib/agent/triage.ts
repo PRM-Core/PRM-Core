@@ -187,6 +187,23 @@ export function parseModelTriage(raw: string): Triage | null {
   return { urgency, topic, owner, reason };
 }
 
+/** The message as the model sees it, with the team's own verdicts as examples when there are any. */
+export function triageUserPrompt(
+  channel: string,
+  text: string,
+  examples: { text: string; label: string }[] = [],
+): string {
+  const lines = [t("Kanał: {channel}\n\n{text}", { channel, text })];
+  if (examples.length > 0) {
+    lines.push("");
+    lines.push(t("Przykłady ocen zespołu (wiadomość → pilność/temat/właściciel):"));
+    examples.forEach((e, i) =>
+      lines.push(`${i + 1}. ${e.text.replace(/\s+/g, " ").slice(0, 200)} → ${e.label}`),
+    );
+  }
+  return lines.join("\n");
+}
+
 export function triageSystemPrompt(): string {
   return [
     t(
