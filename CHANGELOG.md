@@ -8,6 +8,29 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.4.0] — Nowa automatyzacja na okresie próbnym
+
+„Nic nowego nie wychodzi bez Ciebie” obejmuje teraz także automatyzacje.
+
+- **Pierwsze wiadomości nowej automatyzacji czekają na zatwierdzenie.**
+  Domyślnie 5 (w edytorze automatyzacji: „Zatwierdzaj pierwsze” 0 / 3 / 5 /
+  10 / 20). Krok wysyłki (e-mail, newsletter, SMS) zostaje wstrzymany,
+  a w PRM_Agent → Drafty pojawia się wiadomość z dokładną treścią, jaką
+  dostałby pacjent, pogrupowana per automatyzacja.
+- **Zatwierdzona** wychodzi przy najbliższym przebiegu silnika zwykłym kodem
+  wysyłki — ze sprawdzeniem zgód i wpisem w historii. **Odrzucona** — krok
+  jest pomijany, przebieg idzie dalej. „Zatwierdź wszystkie” dla jednej
+  automatyzacji naraz.
+- Po N zatwierdzeniach automatyzacja wysyła sama (wpis w dzienniku).
+  Wiadomość, która i tak by nie wyszła (brak zgody, adresu, szablonu), nie
+  jest wstrzymywana — krok loguje powód jak dotąd.
+- Wstrzymane zadanie nie jest liczone jako zawieszone (przebieg ma status
+  „oczekuje”). Wyłączenie automatyzacji zatrzymuje przebiegi jak dotąd.
+- **Istniejące automatyzacje** (sprzed 2.4.0) nie mają okresu próbnego
+  i wysyłają bez zmian; kopia automatyzacji dostaje okres próbny jak nowa.
+- Migracja 0076: kolumny `review_first`, `reviewed` w `automations`,
+  `review` w `engine_jobs`; nowy stan zadania `held`.
+
 ## [2.3.0] — PRM_Agent uczy się z decyzji zespołu
 
 Kierunek „Uczenie się z zatwierdzonych draftów” obejmuje teraz wszystkie

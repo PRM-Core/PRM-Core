@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/table";
 import {
   decideAgentDirection,
+  approveAutomationMessages,
   decideAgentDraft,
   getAgentBrief,
   getAgentDirections,
@@ -341,17 +342,37 @@ function DraftsTab({ readOnly }: { readOnly: boolean }) {
   }, [load]);
 
   if (!data) return <Loading />;
-  const open = data.drafts.filter((d) => d.status === "proposed");
+  const open = data.drafts.filter(
+    (d) => d.status === "proposed" && d.kind !== "automation_message",
+  );
+  const held = data.drafts.filter(
+    (d) => d.status === "proposed" && d.kind === "automation_message",
+  );
   const decided = data.drafts.filter((d) => d.status !== "proposed");
+  // Held messages grouped by automation: the team decides per automation, not per patient.
+  const byAutomation = new Map<string, AgentDraftView[]>();
+  for (const d of held) {
+    const key = d.evidence.automationId ?? "";
+    byAutomation.set(key, [...(byAutomation.get(key) ?? []), d]);
+  }
   return (
     <div className="space-y-6">
-      {open.length === 0 ? (
+      {[...byAutomation.entries()].map(([automationId, items]) => (
+        <HeldMessages
+          key={automationId}
+          automationId={automationId}
+          items={items}
+          readOnly={readOnly}
+          onDecided={load}
+        />
+      ))}
+      {open.length === 0 && held.length === 0 ? (
         <Empty>
           {t(
             "Żaden draft nie czeka na decyzję. Agent proponuje kampanię, gdy za sygnałem stoi wystarczająco dużo pacjentów — np. recall dla 10 i więcej osób.",
           )}
         </Empty>
-      ) : (
+      ) : open.length === 0 ? null : (
         <div className="grid gap-4 lg:grid-cols-2">
           {open.map((d) => (
             <DraftCard
@@ -398,7 +419,15 @@ function DraftsTab({ readOnly }: { readOnly: boolean }) {
                         {d.note ? ` · ${d.note}` : ""}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {d.campaignId ? (
+                        {d.kind === "automation_message" ? (
+                          d.status === "approved" ? (
+                            t("Wysłane przez automatyzację — {who}", {
+                              who: d.contact?.name ?? "—",
+                            })
+                          ) : (
+                            t("Krok pominięty — {who}", { who: d.contact?.name ?? "—" })
+                          )
+                        ) : d.campaignId ? (
                           <Link to="/campaigns" className="text-primary hover:underline">
                             {t("Kampania w Wysyłkach")}
                           </Link>
@@ -417,6 +446,132 @@ function DraftsTab({ readOnly }: { readOnly: boolean }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** The held messages of one automation on trial: each one to approve or reject, or all at once. */
+function HeldMessages({
+  automationId,
+  items,
+  readOnly,
+  onDecided,
+}: {
+  automationId: string;
+  items: AgentDraftView[];
+  readOnly: boolean;
+  onDecided: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const name = items[0]?.evidence.automationName ?? "";
+  const decide = async (id: string, decision: "approve" | "reject") => {
+    setBusy(id);
+    try {
+      const r = await decideAgentDraft({ data: { id, decision } });
+      if (!r.ok) toast.error(t("Nie udało się zapisać decyzji"), { description: r.error });
+      else
+        toast.success(
+          decision === "approve"
+            ? t("Zatwierdzone — wiadomość wyjdzie przy najbliższym przebiegu silnika.")
+            : t("Odrzucone — automatyzacja pominie ten krok i pójdzie dalej."),
+        );
+      await onDecided();
+    } finally {
+      setBusy(null);
+    }
+  };
+  const approveAll = async () => {
+    setBusy("all");
+    try {
+      const r = await approveAutomationMessages({ data: { automationId } });
+      toast.success(t("Zatwierdzono {n} wiadomości.", { n: r.approved }));
+      await onDecided();
+    } catch (err) {
+      toast.error(t("Nie udało się zapisać decyzji"), { description: String(err) });
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <Card className="border-primary/30">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+        <div>
+          <CardTitle className="text-base">
+            {t("Automatyzacja „{name}” w okresie próbnym", { name })}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t(
+              "{n} wiadomości czeka. Zatwierdzona wychodzi zwykłą drogą — ze sprawdzeniem zgód; odrzucona jest pomijana, a przebieg idzie dalej.",
+              { n: items.length },
+            )}
+          </p>
+        </div>
+        {!readOnly && items.length > 1 && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 shrink-0"
+            disabled={!!busy}
+            onClick={() => void approveAll()}
+          >
+            {busy === "all" ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
+            {t("Zatwierdź wszystkie ({n})", { n: items.length })}
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {items.map((d) => (
+          <div key={d.id} className="rounded-md border border-border p-3 text-sm space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="font-medium">
+                <ChannelIcon channel={d.channel} />
+                {d.contact ? (
+                  <Link
+                    to="/contacts/$id"
+                    params={{ id: d.contact.id }}
+                    className="text-primary hover:underline"
+                  >
+                    {d.contact.name}
+                  </Link>
+                ) : (
+                  "—"
+                )}
+                <span className="text-muted-foreground font-normal">
+                  {" "}
+                  · {d.evidence.template}
+                  {d.evidence.subject ? ` · ${d.evidence.subject}` : ""}
+                </span>
+              </div>
+              {!readOnly && (
+                <div className="flex gap-1.5">
+                  <Button
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs"
+                    disabled={!!busy}
+                    onClick={() => void decide(d.id, "approve")}
+                  >
+                    <Check className="h-3.5 w-3.5" /> {t("Zatwierdź")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2 text-xs"
+                    disabled={!!busy}
+                    onClick={() => void decide(d.id, "reject")}
+                  >
+                    <X className="h-3.5 w-3.5" /> {t("Odrzuć")}
+                  </Button>
+                </div>
+              )}
+            </div>
+            <p className="whitespace-pre-wrap text-muted-foreground line-clamp-4">{d.message}</p>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 

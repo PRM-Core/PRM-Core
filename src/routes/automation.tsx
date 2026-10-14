@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -25,6 +25,7 @@ import {
   Pencil,
   Check,
   AlertTriangle,
+  ShieldCheck,
   Loader2,
   History,
   PlayCircle,
@@ -108,6 +109,60 @@ export const Route = createFileRoute("/automation")({
   },
   component: AutomationPage,
 });
+
+const TRIAL_OPTIONS = [0, 3, 5, 10, 20];
+
+/**
+ * The automation's trial: how many of its first messages wait for a person
+ * in PRM_Agent → Drafty, and how many have been approved.
+ */
+function TrialStrip({
+  record,
+  onChange,
+}: {
+  record: AutomationRecord;
+  onChange: (n: number) => void;
+}) {
+  const first = record.reviewFirst ?? 0;
+  const done = record.reviewed ?? 0;
+  const over = first > 0 && done >= first;
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
+      <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="flex-1 min-w-[240px]">
+        {first === 0
+          ? tr("Bez okresu próbnego — wiadomości tej automatyzacji wychodzą od razu.")
+          : over
+            ? tr("Okres próbny zakończony: zatwierdzono {n} wiadomości, kolejne wychodzą same.", {
+                n: done,
+              })
+            : tr(
+                "Okres próbny: zatwierdzono {done} z {all} pierwszych wiadomości — kolejne czekają w PRM_Agent → Drafty.",
+                { done, all: first },
+              )}
+      </span>
+      <label className="flex items-center gap-1.5">
+        {tr("Zatwierdzaj pierwsze")}
+        <select
+          className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground"
+          value={String(first)}
+          onChange={(e) => onChange(Number(e.target.value))}
+        >
+          {[...new Set([...TRIAL_OPTIONS, first])]
+            .sort((a, b) => a - b)
+            .map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? tr("nie zatwierdzaj") : n}
+              </option>
+            ))}
+        </select>
+      </label>
+      <Link to="/agent" search={{ tab: "drafts" }} className="text-primary hover:underline">
+        {tr("Drafty")}
+      </Link>
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: AutomationStatus }) {
   if (status === "active") {
@@ -342,6 +397,9 @@ function AutomationPage() {
       // A copy always starts switched off: duplicating a live automation must
       // not silently double every message its original sends.
       status: "draft",
+      // …and on its own trial: the server gives a new automation the default.
+      reviewFirst: undefined,
+      reviewed: 0,
       // Deep copy so editing the duplicate's graph cannot reach into the original.
       flow: record.flow ? structuredClone(record.flow) : null,
     };
@@ -645,6 +703,11 @@ function AutomationPage() {
                   </div>
                 </div>
               </div>
+
+              <TrialStrip
+                record={currentRecord}
+                onChange={(n) => updateRecord(currentRecord.id, { reviewFirst: n })}
+              />
 
               {currentRecord.status === "active" && (
                 <div className="flex flex-wrap items-center gap-3 border-b border-border bg-warning/10 px-4 py-2.5 text-xs text-warning-foreground">

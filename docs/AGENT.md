@@ -99,6 +99,13 @@ first thing to change, before any new capability.
 - Everything the agent **proposes** — a campaign, a message text, a cadence
   change, a call list — is a **draft** with a status: proposed → approved /
   rejected → sent. Approval is one click and is logged with who and when.
+- **A new automation starts on trial** (since 2.4.0): its first N messages
+  (5 by default, set per automation in the editor, 0 = no trial) are held
+  in the same drafts queue, each with the exact text the patient would get.
+  Approved, the message goes out through the ordinary send code, consent
+  gate included; rejected, the step is skipped and the run goes on. After
+  N approvals the automation sends on its own. Automations created before
+  2.4.0 have no trial and send as they did.
 - The consent check stays in the sending code, not in any prompt. A model
   talked into ignoring an instruction still cannot message someone who opted
   out. This exists today and does not change.

@@ -746,6 +746,15 @@ export const automations = sqliteTable("automations", {
   // the row, because a copy that nothing keeps in sync becomes a lie.
   status: text("status").notNull().default("draft").$type<AutomationStatus>(),
   flow: text("flow", { mode: "json" }).$type<AutomationGraph | null>(),
+  /**
+   * How many of this automation's first messages wait for a person's
+   * approval (PRM_Agent → Drafty) before it sends on its own. A new
+   * automation gets the default from the editor; one created before 2.4.0
+   * has 0 and sends as it always did.
+   */
+  reviewFirst: integer("review_first").notNull().default(0),
+  /** Messages approved so far — when it reaches `reviewFirst`, the trial is over. */
+  reviewed: integer("reviewed").notNull().default(0),
   updatedAt: text("updated_at").notNull(),
 });
 
@@ -1373,7 +1382,9 @@ export const automationRuns = sqliteTable(
 // executes, so a server dying mid-send leaves a visibly stuck "processing" job
 // (reported by the M4 supervisor) instead of a pending one that would re-send
 // the same email after restart. At-most-once for sends, on purpose.
-export type EngineJobStatus = "pending" | "processing" | "done" | "failed";
+// "held" is a message step of an automation still in its trial: it waits,
+// out of the tick's reach, for a person to approve or reject the draft.
+export type EngineJobStatus = "pending" | "processing" | "done" | "failed" | "held";
 
 // The durable work queue. A "wait 2 days" node is simply a job with a dueAt in
 // the future, which is why delays survive a server restart. `idempotencyKey`
@@ -1389,6 +1400,8 @@ export const engineJobs = sqliteTable(
     status: text("status").notNull().default("pending").$type<EngineJobStatus>(),
     attempts: integer("attempts").notNull().default(0),
     idempotencyKey: text("idempotency_key").notNull().unique(),
+    /** A person's decision on a held message: "approved" sends it, "rejected" skips the step. */
+    review: text("review").notNull().default("").$type<"" | "approved" | "rejected">(),
     lastError: text("last_error"),
     createdAt: integer("created_at").notNull(),
   },

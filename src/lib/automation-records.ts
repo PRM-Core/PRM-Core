@@ -12,6 +12,10 @@ export interface AutomationRecord {
   name: string;
   status: AutomationStatus;
   flow: AutomationGraph | null;
+  /** How many first messages wait for approval (PRM_Agent → Drafty); 0 = none. Set on the server for a new one. */
+  reviewFirst?: number;
+  /** Messages approved so far — read-only, counted by the server. */
+  reviewed?: number;
 }
 
 export function createInitialRecords(): AutomationRecord[] {

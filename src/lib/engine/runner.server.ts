@@ -5,7 +5,7 @@ import { automations, automationRuns, engineJobs } from "../db/schema";
 import type { EngineEventRow, EngineEventType, AutomationRunRow } from "../db/schema";
 import { pickSplitVariant } from "../automation-flow";
 import type { AutomationGraph, AutomationNode, DelayUnit } from "../automation-flow";
-import { executeAction, evaluateCondition, evaluatePath } from "./actions.server";
+import { executeAction, evaluateCondition, evaluatePath, isMessageAction } from "./actions.server";
 import { runAgentNode } from "./agent.server";
 import { logStep } from "./log.server";
 import { takeUnprocessedEvents, markEventProcessed } from "./events.server";
@@ -379,6 +379,43 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
     }
 
     case "action": {
+      // A message step of an automation still in its trial waits for a person.
+      if (isMessageAction(node) && job.review === "rejected") {
+        await logStep({
+          ...base,
+          kind: "skipped",
+          message: t(
+            "Wiadomość odrzucona przy zatwierdzaniu — krok pominięty, przebieg idzie dalej.",
+          ),
+          detail: { action: node.key ?? "", review: "rejected" },
+        });
+        break;
+      }
+      if (
+        isMessageAction(node) &&
+        job.review !== "approved" &&
+        automation.reviewed < automation.reviewFirst
+      ) {
+        const { holdForReview } = await import("../agent/automation-review.server");
+        const held = await holdForReview({ automation, run, jobId: job.id, node });
+        if (held) {
+          await db.update(engineJobs).set({ status: "held" }).where(eq(engineJobs.id, job.id));
+          await db
+            .update(automationRuns)
+            .set({ status: "waiting", currentNodeId: node.id })
+            .where(eq(automationRuns.id, run.id));
+          await logStep({
+            ...base,
+            kind: "agent",
+            message: t(
+              "Wiadomość czeka na zatwierdzenie — automatyzacja w okresie próbnym ({done} z {all} zatwierdzonych).",
+              { done: automation.reviewed, all: automation.reviewFirst },
+            ),
+            detail: { action: node.key ?? "", draftId: held },
+          });
+          return;
+        }
+      }
       const result = await executeAction(node, run.contactId, {
         runId: run.id,
         automationId: run.automationId,

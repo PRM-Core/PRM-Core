@@ -211,6 +211,10 @@ export interface AgentDraftView {
   templateMessage: string;
   textSource: "template" | "model";
   updatedAt: number;
+  /** "campaign" — the agent's proposal; "automation_message" — a held message of an automation on trial. */
+  kind: string;
+  /** For a held automation message: who it is for. */
+  contact: { id: string; name: string } | null;
 }
 
 export const getAgentDrafts = createServerFn({ method: "GET" })
@@ -224,6 +228,20 @@ export const getAgentDrafts = createServerFn({ method: "GET" })
       const { listDrafts } = await import("../agent/drafts.server");
       const { listSnapshots } = await import("../engine/snapshots.server");
       const [rows, snapshots] = await Promise.all([listDrafts(), listSnapshots()]);
+      const { getDb } = await import("../db/client.server");
+      const { contacts } = await import("../db/schema");
+      const personIds = [
+        ...new Set(
+          rows.filter((r) => r.kind === "automation_message").map((r) => r.audienceIds[0] ?? ""),
+        ),
+      ].filter(Boolean);
+      const people = personIds.length
+        ? await getDb()
+            .select({ id: contacts.id, firstName: contacts.firstName, lastName: contacts.lastName })
+            .from(contacts)
+            .where(inArray(contacts.id, personIds))
+        : [];
+      const nameOf = new Map(people.map((p) => [p.id, `${p.firstName} ${p.lastName}`.trim()]));
       const templates: Record<"sms" | "email", string[]> = { sms: [], email: [] };
       for (const s of snapshots) {
         if (s.kind === "sms" && s.smsBody) templates.sms.push(s.name);
@@ -248,6 +266,11 @@ export const getAgentDrafts = createServerFn({ method: "GET" })
           templateMessage: r.templateMessage,
           textSource: r.textSource,
           updatedAt: r.updatedAt,
+          kind: r.kind,
+          contact:
+            r.kind === "automation_message" && r.audienceIds[0]
+              ? { id: r.audienceIds[0], name: nameOf.get(r.audienceIds[0]) ?? "—" }
+              : null,
         })),
         templates,
         language: await languageState("drafts_by_model"),
@@ -485,4 +508,32 @@ export const runAgentEvaluation = createServerFn({ method: "POST" })
     const { proposeDirections } = await import("../agent/directions.server");
     await proposeDirections();
     return { ok: true as const, result: evaluationView(r.row) };
+  });
+
+// ── automations on trial ────────────────────────────────────────────────────
+
+/** Approve every held message of one automation — the team trusts it now. */
+export const approveAutomationMessages = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(z.object({ automationId: z.string().max(80) }))
+  .handler(async ({ data }) => {
+    const who = await requireEditor();
+    const { getDb } = await import("../db/client.server");
+    const { agentDrafts } = await import("../db/schema");
+    const { and, eq } = await import("drizzle-orm");
+    const { decideDraft } = await import("../agent/drafts.server");
+    const held = await getDb()
+      .select({ id: agentDrafts.id })
+      .from(agentDrafts)
+      .where(
+        and(
+          eq(agentDrafts.kind, "automation_message"),
+          eq(agentDrafts.status, "proposed"),
+          eq(agentDrafts.audienceSignal, `automation:${data.automationId}`),
+        ),
+      );
+    let approved = 0;
+    for (const d of held)
+      if ((await decideDraft({ id: d.id, decision: "approve", decidedBy: who })).ok) approved += 1;
+    return { ok: true as const, approved };
   });

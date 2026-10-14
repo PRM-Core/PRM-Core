@@ -34,6 +34,7 @@ import { agentLanguage } from "./agent-language";
 import { agentPage } from "./agent-page";
 import { agentSignals } from "./agent-signals";
 import { agentTriage } from "./agent-triage";
+import { automationTrial } from "./automation-trial";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -66,6 +67,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   agentPage,
   agentSignals,
   agentTriage,
+  automationTrial,
 };
 
 /**

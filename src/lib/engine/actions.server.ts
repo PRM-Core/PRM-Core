@@ -670,6 +670,60 @@ async function updateField(node: AutomationNode, contact: ContactRow): Promise<A
   };
 }
 
+// ── preview of a message step ────────────────────────────────────────────────
+
+/** The action keys that put a message in front of a patient. */
+export const MESSAGE_ACTIONS = ["send_email", "send_newsletter", "send_sms"] as const;
+
+export function isMessageAction(node: AutomationNode): boolean {
+  return (MESSAGE_ACTIONS as readonly string[]).includes(node.key ?? "");
+}
+
+export type MessagePreview =
+  | { ok: true; channel: "email" | "sms"; template: string; subject: string; text: string }
+  | { ok: false };
+
+/**
+ * What a message step would send to this contact, as text a person reads
+ * before approving. `ok: false` when the step would not send anyway — no
+ * template, no address, no consent: there is nothing to approve then, and
+ * the step runs as usual and logs why it skipped.
+ */
+export async function previewMessage(
+  node: AutomationNode,
+  contactId: string,
+): Promise<MessagePreview> {
+  const contact = await loadContact(contactId);
+  const key = node.key ?? "";
+  const template = cfg(node, "template");
+  if (!contact || !template) return { ok: false };
+  const sample = sampleFromContact(contact);
+  if (key === "send_sms") {
+    const snapshot = await getSnapshot("sms", template);
+    if (!snapshot?.smsBody || !contact.phone) return { ok: false };
+    if (!checkConsent(contact, "sms", sendMode(node)).allowed) return { ok: false };
+    return {
+      ok: true,
+      channel: "sms",
+      template,
+      subject: "",
+      text: resolvePersonalizationInText(snapshot.smsBody, sample),
+    };
+  }
+  const kind = key === "send_newsletter" ? "newsletter" : "email";
+  const snapshot = await getSnapshot(kind, template);
+  if (!snapshot?.html || !contact.email) return { ok: false };
+  if (!checkConsent(contact, "email", sendMode(node)).allowed) return { ok: false };
+  const { htmlToText } = await import("../inbox/inbox.server");
+  return {
+    ok: true,
+    channel: "email",
+    template,
+    subject: cfg(node, "subject") || snapshot.subject || snapshot.name,
+    text: htmlToText(resolveMergeTagsInHtml(snapshot.html, sample)).slice(0, 4000),
+  };
+}
+
 // ── dispatcher ──────────────────────────────────────────────────────────────
 
 /**

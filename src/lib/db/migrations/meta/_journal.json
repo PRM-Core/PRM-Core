@@ -533,6 +533,13 @@
       "when": 1791978499046,
       "tag": "0075_example_label",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "6",
+      "when": 1791984792664,
+      "tag": "0076_automation_review",
+      "breakpoints": true
     }
   ]
 }

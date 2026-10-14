@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.3.0",
+    "version": "2.4.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.3.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.4.0",
     "notes": {
-      "en": "PRM_Agent learns from the team's decisions: front-desk triage corrections become pseudonymised examples, and a dismissed recommendation returns only when its numbers are clearly worse.",
-      "pl": "PRM_Agent uczy się z decyzji zespołu: korekty triażu z rejestracji stają się spseudonimizowanymi przykładami, a odrzucona rekomendacja wraca dopiero przy wyraźnie gorszych liczbach."
+      "en": "A new automation starts on trial: its first messages wait in PRM_Agent → Drafts with the exact text; approved ones go out through the ordinary send code, rejected ones skip the step.",
+      "pl": "Nowa automatyzacja startuje na okresie próbnym: jej pierwsze wiadomości czekają w PRM_Agent → Drafty z dokładną treścią; zatwierdzone wychodzą zwykłą drogą, odrzucone pomijają krok."
     }
   },
   "messages": []

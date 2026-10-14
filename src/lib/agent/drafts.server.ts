@@ -19,6 +19,7 @@ import { getSnapshot } from "../engine/snapshots.server";
 import { logStep } from "../engine/log.server";
 import { applyDismissals, deriveRecommendations, type Recommendation } from "./recommend";
 import { writeDraftText } from "./language.server";
+import { AUTOMATION_MESSAGE, decideAutomationMessage } from "./automation-review.server";
 import {
   forgetDismissal,
   isEnabled,
@@ -200,6 +201,7 @@ export async function rewriteDraftText(
   if (!draft) return { ok: false, error: t("Nie ma takiego draftu.") };
   if (draft.status !== "proposed")
     return { ok: false, error: t("Ten draft został już rozstrzygnięty.") };
+
   const written = await writeDraftText({
     title: draft.title,
     channel: draft.channel,
@@ -225,7 +227,7 @@ export async function rewriteDraftText(
 }
 
 export async function listDrafts(): Promise<AgentDraftRow[]> {
-  return getDb().select().from(agentDrafts).orderBy(desc(agentDrafts.updatedAt)).limit(50);
+  return getDb().select().from(agentDrafts).orderBy(desc(agentDrafts.updatedAt)).limit(100);
 }
 
 export interface DecideInput {
@@ -249,6 +251,20 @@ export async function decideDraft(
   if (!draft) return { ok: false, error: t("Nie ma takiego draftu.") };
   if (draft.status !== "proposed")
     return { ok: false, error: t("Ten draft został już rozstrzygnięty.") };
+
+  // A held message of an automation in its trial: release it, nothing else.
+  if (draft.kind === AUTOMATION_MESSAGE) {
+    const r = await decideAutomationMessage({
+      draft,
+      decision: input.decision,
+      decidedBy: input.decidedBy,
+      note: input.note,
+      now,
+    });
+    if (!r.ok) return r;
+    const updated = await db.select().from(agentDrafts).where(eq(agentDrafts.id, draft.id)).get();
+    return { ok: true, draft: updated! };
+  }
 
   if (input.decision === "reject") {
     await db

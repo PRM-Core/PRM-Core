@@ -67,6 +67,8 @@ export const getAllAutomations = createServerFn({ method: "GET" })
       name: r.name,
       status: r.status,
       flow: r.flow,
+      reviewFirst: r.reviewFirst,
+      reviewed: r.reviewed,
     }));
   });
 
@@ -78,17 +80,27 @@ export const saveAutomation = createServerFn({ method: "POST" })
       name: z.string(),
       status: z.enum(["draft", "active", "inactive"]),
       flow: automationGraphSchema.nullable(),
+      reviewFirst: z.number().int().min(0).max(50).optional(),
     }),
   )
   .handler(async ({ data }) => {
     const db = getDb();
     const now = new Date().toISOString();
     const existing = await db.select().from(automations).where(eq(automations.id, data.id)).get();
-    const values = { ...data, updatedAt: now };
+    // `reviewed` is never taken from the client: only an approval counts.
+    const { reviewFirst, ...rest } = data;
+    const values = { ...rest, updatedAt: now };
     if (existing) {
-      await db.update(automations).set(values).where(eq(automations.id, data.id));
+      await db
+        .update(automations)
+        .set(reviewFirst === undefined ? values : { ...values, reviewFirst })
+        .where(eq(automations.id, data.id));
     } else {
-      await db.insert(automations).values(values);
+      // A new automation starts on trial: its first messages wait for a person.
+      const { DEFAULT_REVIEW_FIRST } = await import("../agent/automation-review.server");
+      await db
+        .insert(automations)
+        .values({ ...values, reviewFirst: reviewFirst ?? DEFAULT_REVIEW_FIRST, reviewed: 0 });
     }
     return { ok: true };
   });
