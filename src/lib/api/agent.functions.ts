@@ -537,3 +537,21 @@ export const approveAutomationMessages = createServerFn({ method: "POST" })
       if ((await decideDraft({ id: d.id, decision: "approve", decidedBy: who })).ok) approved += 1;
     return { ok: true as const, approved };
   });
+
+// ── why: a patient, and the log ─────────────────────────────────────────────
+
+export const getAgentForContact = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .inputValidator(z.object({ contactId: z.string().max(80) }))
+  .handler(async ({ data }) => {
+    const { explainContact } = await import("../agent/explain.server");
+    return explainContact(data.contactId);
+  });
+
+export const getAgentLog = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .inputValidator(z.object({ actor: z.enum(["all", "person", "agent", "model"]).optional() }))
+  .handler(async ({ data }) => {
+    const { agentLog } = await import("../agent/explain.server");
+    return agentLog({ actor: data.actor ?? "all", limit: 200 });
+  });

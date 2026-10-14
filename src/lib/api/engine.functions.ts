@@ -205,10 +205,17 @@ export const updateInsightStatus = createServerFn({ method: "POST" })
         const { getSessionUser } = await import("../auth/session.server");
         const { rememberDismissal } = await import("../agent/directions.server");
         const user = await getSessionUser();
+        const who = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "";
         await rememberDismissal({
           signature: row.signature,
           evidence: row.evidence ?? {},
-          decidedBy: user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "",
+          decidedBy: who,
+        });
+        const { logStep } = await import("../engine/log.server");
+        await logStep({
+          kind: "agent",
+          message: t("Rekomendacja odrzucona: {title} ({who}).", { title: row.title, who }),
+          detail: { source: "agent-learning", signature: row.signature, decision: "dismiss" },
         });
       }
     }

@@ -8,6 +8,24 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.5.0] — PRM_Agent: dlaczego — dziennik decyzji czytelny dla człowieka
+
+- **Dziennik** (PRM_Agent → Dziennik): wszystkie decyzje wokół agenta,
+  najnowsze na górze, z tym, **kto działał** — osoba (z nazwiskiem), agent
+  według swoich reguł albo model w sieci placówki — i odnośnikiem, gdzie
+  szukać dalej: pacjent, automatyzacja, draft, kierunek, rozmowa. Filtry:
+  wszystko / decyzje ludzi / agent / model.
+- **„Dlaczego” przy każdym wierszu list** dla rejestracji (także w CSV):
+  „Ostatnia wizyta 01.09.2025 — ponad rok temu; nic umówionego”, „Ryzyko
+  nieobecności 34% na wizycie 22.10.2026: wcześniejsze nieobecności,
+  wczesna pora” itd.
+- **Karta pacjenta → PRM_Agent: „Co agent wie o tym pacjencie — i dlaczego”**:
+  listy, na których jest dziś, z powodem; ryzyko nieobecności z czynnikami;
+  wiadomości i drafty, które go dotyczą, z decyzją; ocena jego rozmów;
+  ostatnie wpisy agenta. Z liczb instalacji, bez modelu.
+- Odrzucenie rekomendacji i korekta triażu zapisują się w dzienniku jako
+  decyzje osoby.
+
 ## [2.4.0] — Nowa automatyzacja na okresie próbnym
 
 „Nic nowego nie wychodzi bez Ciebie” obejmuje teraz także automatyzacje.

@@ -192,8 +192,12 @@ ship a model; it documents what works:
   → Kierunki before enabling a direction, or `bun run agent:eval` before a
   prompt or a model changes (exit code 1 on any failure, for CI). The last
   score is the evidence on every model direction and a line in the brief.
-- **Decision log**: every recommendation, draft and routing decision is a
-  row in the engine log with its evidence, readable by a person.
+- **Decision log** (since 2.5.0): every recommendation, draft, direction,
+  triage and trial decision is a row in the engine log with its evidence.
+  PRM_Agent → Dziennik reads them with who acted — a person (by name), the
+  agent's own rules, or a model — and where to look next. Every list row
+  says why the patient is on it; the patient's card says what the agent
+  holds about them and why (`explain.ts`, `explain.server.ts`).
 - **Security report**: states the mode and the endpoint host class
   (loopback / private / allowlisted), and flags a leftover provider key or
   `hosted` setting in `.env`.

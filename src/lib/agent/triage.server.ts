@@ -171,7 +171,7 @@ export async function correctTriage(input: {
       who: input.decidedBy,
       label: `${urgency}/${topic}/${owner}`,
     }),
-    detail: { source: "agent-learning", threadId: input.threadId },
+    detail: { source: "agent-learning", threadId: input.threadId, decision: "correct" },
   });
   return { ok: true };
 }

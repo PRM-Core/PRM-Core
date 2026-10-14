@@ -48,6 +48,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { ComponentType } from "react";
+import { AgentWhyCard } from "@/components/contact/AgentWhyCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1663,6 +1664,7 @@ function ContactDetail() {
 
         {/* AI RESUME */}
         <TabsContent value="ai-resume" className="mt-6 space-y-4">
+          <AgentWhyCard contactId={contact.id} />
           <Card className="border-border/60 shadow-sm">
             <CardHeader className="flex flex-row items-start justify-between gap-3">
               <div>

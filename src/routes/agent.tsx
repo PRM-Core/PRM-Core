@@ -8,6 +8,8 @@ import {
   ClipboardCopy,
   Compass,
   Download,
+  History,
+  User,
   FlaskConical,
   FileText,
   Lightbulb,
@@ -46,6 +48,7 @@ import {
   decideAgentDraft,
   getAgentBrief,
   getAgentDirections,
+  getAgentLog,
   getAgentEvaluation,
   runAgentEvaluation,
   type AgentDirectionView,
@@ -61,7 +64,7 @@ import {
   type LanguageState,
 } from "@/lib/api/agent.functions";
 import type { AgentListRow, ListKey } from "@/lib/agent/drafts.server";
-import { factorLabel } from "@/lib/agent/factor-labels";
+import { listReason } from "@/lib/agent/explain";
 import { isReadOnlyRole } from "@/lib/auth/roles";
 import { updateInsightStatus } from "@/lib/api/engine.functions";
 import { intlLocale, localized, t } from "@/lib/i18n";
@@ -75,8 +78,8 @@ import { intlLocale, localized, t } from "@/lib/i18n";
  * has its own throttle, quiet hours and consent gate.
  */
 
-type Tab = "recommendations" | "drafts" | "lists" | "brief" | "directions";
-const TABS: Tab[] = ["recommendations", "drafts", "lists", "brief", "directions"];
+type Tab = "recommendations" | "drafts" | "lists" | "brief" | "directions" | "log";
+const TABS: Tab[] = ["recommendations", "drafts", "lists", "brief", "directions", "log"];
 const LIST_KEYS: ListKey[] = [
   "recall_due",
   "first_visit_no_followup",
@@ -190,6 +193,9 @@ function AgentPage() {
           <TabsTrigger value="brief" className="gap-1.5">
             <FileText className="h-3.5 w-3.5" /> {t("Brief")}
           </TabsTrigger>
+          <TabsTrigger value="log" className="gap-1.5">
+            <History className="h-3.5 w-3.5" /> {t("Dziennik")}
+          </TabsTrigger>
           <TabsTrigger value="directions" className="gap-1.5">
             <Compass className="h-3.5 w-3.5" /> {t("Kierunki")}
             {pending > 0 && (
@@ -213,6 +219,9 @@ function AgentPage() {
         </TabsContent>
         <TabsContent value="brief" className="mt-4">
           <BriefTab readOnly={readOnly} />
+        </TabsContent>
+        <TabsContent value="log" className="mt-4">
+          <LogTab />
         </TabsContent>
         <TabsContent value="directions" className="mt-4">
           <DirectionsTab
@@ -838,7 +847,8 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
       t("Ostatnia wizyta"),
       t("Następna wizyta"),
     ];
-    if (risk) head.push(t("Ryzyko"), t("Czynniki"), t("Wizyta"), t("Lekarz"));
+    if (risk) head.push(t("Ryzyko"), t("Wizyta"), t("Lekarz"));
+    head.push(t("Dlaczego"));
     const esc = (v: string | number | null | undefined) =>
       `"${String(v ?? "").replace(/"/g, '""')}"`;
     const lines = rows.map((r) => {
@@ -851,12 +861,8 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
         when(r.nextVisitAt, true),
       ];
       if (risk)
-        cells.push(
-          r.probability !== undefined ? pct(r.probability) : "",
-          factorsText(r),
-          r.visitTitle,
-          r.doctor,
-        );
+        cells.push(r.probability !== undefined ? pct(r.probability) : "", r.visitTitle, r.doctor);
+      cells.push(listReason(listKey, r));
       return cells.map(esc).join(";");
     });
     const blob = new Blob(["﻿" + [head.map(esc).join(";"), ...lines].join("\r\n")], {
@@ -911,7 +917,6 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
                   <>
                     <TableHead>{t("Wizyta")}</TableHead>
                     <TableHead>{t("Ryzyko")}</TableHead>
-                    <TableHead>{t("Czynniki")}</TableHead>
                   </>
                 ) : (
                   <>
@@ -919,6 +924,7 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
                     <TableHead>{t("Następna wizyta")}</TableHead>
                   </>
                 )}
+                <TableHead>{t("Dlaczego")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -947,9 +953,6 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
                       <TableCell className="font-semibold">
                         {r.probability !== undefined ? pct(r.probability) : "—"}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {factorsText(r)}
-                      </TableCell>
                     </>
                   ) : (
                     <>
@@ -957,6 +960,9 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
                       <TableCell>{when(r.nextVisitAt, true)}</TableCell>
                     </>
                   )}
+                  <TableCell className="text-muted-foreground text-xs max-w-[320px]">
+                    {listReason(listKey, r)}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -965,10 +971,6 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
       )}
     </div>
   );
-}
-
-function factorsText(r: AgentListRow): string {
-  return (r.factors ?? []).map((f) => factorLabel(f.feature, f.contribution > 0)).join(", ");
 }
 
 // ── brief ───────────────────────────────────────────────────────────────────
@@ -1324,6 +1326,123 @@ function EvaluationCard({ isAdmin, onRan }: { isAdmin: boolean; onRan: () => Pro
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ── the log ─────────────────────────────────────────────────────────────────
+
+type Actor = "person" | "agent" | "model";
+type LogRow = Awaited<ReturnType<typeof getAgentLog>>[number];
+
+const ACTOR: Record<Actor, { label: string; className: string }> = localized(() => ({
+  person: { label: t("Osoba"), className: "bg-success/10 text-success" },
+  agent: { label: t("Agent"), className: "bg-primary/10 text-primary" },
+  model: { label: t("Model"), className: "bg-muted text-muted-foreground" },
+}));
+
+/**
+ * Every decision about the agent's work, newest first: what the agent did on
+ * its own rules, what a person decided, what a model was asked. Each line
+ * says where to look next.
+ */
+function LogTab() {
+  const [actor, setActor] = useState<Actor | "all">("all");
+  const [rows, setRows] = useState<LogRow[] | null>(null);
+  useEffect(() => {
+    setRows(null);
+    getAgentLog({ data: { actor } })
+      .then(setRows)
+      .catch(() => setRows([]));
+  }, [actor]);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        {t(
+          "Każda decyzja wokół agenta: co zrobił sam według reguł, co zdecydowała osoba (z nazwiskiem), o co zapytano model w sieci placówki. Ostatnie 200 wpisów.",
+        )}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {(["all", "person", "agent", "model"] as const).map((a) => (
+          <Button
+            key={a}
+            size="sm"
+            variant={a === actor ? "default" : "outline"}
+            onClick={() => setActor(a)}
+          >
+            {a === "all" ? t("Wszystko") : a === "person" ? t("Decyzje ludzi") : ACTOR[a].label}
+          </Button>
+        ))}
+      </div>
+      {!rows ? (
+        <Loading />
+      ) : rows.length === 0 ? (
+        <Empty>{t("Brak wpisów.")}</Empty>
+      ) : (
+        <ul className="divide-y divide-border rounded-lg border border-border">
+          {rows.map((r) => (
+            <li key={r.id} className="flex flex-wrap items-start gap-x-3 gap-y-1 px-3 py-2 text-sm">
+              <span className="w-32 shrink-0 text-[11px] text-muted-foreground pt-0.5">
+                {when(r.createdAt, true)}
+              </span>
+              <Badge
+                variant="secondary"
+                className={`shrink-0 font-normal ${ACTOR[r.actor].className}`}
+              >
+                {r.actor === "person" && <User className="h-3 w-3 mr-1" />}
+                {ACTOR[r.actor].label}
+              </Badge>
+              <span className="flex-1 min-w-[240px]">
+                {r.message}
+                <span className="ml-2 inline-flex flex-wrap gap-x-2 text-xs">
+                  {r.contactId && r.contactName && (
+                    <Link
+                      to="/contacts/$id"
+                      params={{ id: r.contactId }}
+                      className="text-primary hover:underline"
+                    >
+                      {r.contactName}
+                    </Link>
+                  )}
+                  {r.automationName && (
+                    <Link to="/automation" className="text-primary hover:underline">
+                      {r.automationName}
+                    </Link>
+                  )}
+                  {r.draftId && (
+                    <Link
+                      to="/agent"
+                      search={{ tab: "drafts" }}
+                      className="text-primary hover:underline"
+                    >
+                      {t("Drafty")}
+                    </Link>
+                  )}
+                  {r.directionKey && (
+                    <Link
+                      to="/agent"
+                      search={{ tab: "directions" }}
+                      className="text-primary hover:underline"
+                    >
+                      {t("Kierunki")}
+                    </Link>
+                  )}
+                  {r.threadId && (
+                    <Link
+                      to="/inbox"
+                      search={{ thread: r.threadId }}
+                      className="text-primary hover:underline"
+                    >
+                      {t("Rozmowa")}
+                    </Link>
+                  )}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
