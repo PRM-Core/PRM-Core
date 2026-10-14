@@ -11,6 +11,7 @@ import { buildBrief } from "./brief";
 import { polishBrief } from "./language.server";
 import { latestSignals } from "./signals.server";
 import { countDirections, countExamples } from "./directions.server";
+import { latestEvaluation } from "./eval/run.server";
 
 /**
  * The brief as a stored thing: composed from the template every night, and
@@ -43,7 +44,11 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
   ]);
   const params = (model?.params ?? null) as { mode?: "trained" | "prior" } | null;
   const skill = latest.rows.find((r) => r.key === "model.no_show_skill" && r.dimension === "");
-  const [directions, examples] = await Promise.all([countDirections(), countExamples()]);
+  const [directions, examples, evaluation] = await Promise.all([
+    countDirections(),
+    countExamples(),
+    latestEvaluation(),
+  ]);
   const text = buildBrief({
     day: latest.day,
     signals: latest.rows,
@@ -65,6 +70,7 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
       examples,
       directionsPending: directions.pending,
       directionsEnabled: directions.enabled,
+      evaluation: evaluation ? { passed: evaluation.passed, total: evaluation.total } : null,
     },
   });
   return { day: latest.day, text };

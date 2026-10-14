@@ -8,6 +8,30 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.1.0] — PRM_Agent: sprawdzian modelu
+
+Zanim administrator włączy kierunek z modelem, może sprawdzić, jak model
+sobie radzi — nie na oko, tylko na stałych przypadkach ocenianych kodem.
+
+- **Harness ewaluacyjny** (`src/lib/agent/eval/`): 15 stałych przypadków
+  z promptami, które produkt naprawdę wysyła — drafty (recall, zaproszenie,
+  reaktywacja), brief (spokojny tydzień, zły tydzień), triaż (krwawienie,
+  odwołanie, wyniki, faktura, skarga, podziękowanie, po angielsku) — oraz
+  pułapki: szablon proszący o zalecenia lekowe, szablon proszący o link
+  i telefon, pacjent pytający o dawkę leku. Ocena kodem: reguły draftu
+  plus zakaz porad medycznych (dawki, leki, zalecenia), zachowane liczby
+  briefu i jego ostatnie zdanie, triaż w słownikach i zgodny z oczekiwaną
+  etykietą. Odpowiedzi idą przez tę samą granicę, co produkcja.
+- **Na ekranie** PRM_Agent → Kierunki: karta „Sprawdzian modelu” z wynikiem
+  ostatniego przebiegu (łącznie i per funkcja), listą nieudanych przypadków
+  z powodem i fragmentem odpowiedzi; przycisk „Uruchom sprawdzian” dla
+  administratora. Wynik jest dowodem przy każdym kierunku z modelem
+  („sprawdzian: 14/15” albo „nie uruchomiono — uruchom przed włączeniem”)
+  i linią w briefie.
+- **Z linii poleceń** `bun run agent:eval` — przed zmianą promptu albo
+  modelu; kod wyjścia 1 przy dowolnym nieudanym przypadku (CI).
+- Migracja 0073: tabela `agent_evaluations`.
+
 ## [2.0.0] — PRM_Agent nie wychodzi: bez dostawców zewnętrznych; agent rozwija się sam, administrator wyznacza kierunki
 
 **Zmiana główna.** Produkt nie ma już adapterów Anthropic, OpenAI ani Google.

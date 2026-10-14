@@ -2003,6 +2003,28 @@ export const agentExamples = sqliteTable(
 
 export type AgentExampleRow = typeof agentExamples.$inferSelect;
 
+/**
+ * One run of the evaluation harness: the fixed cases of `agent/eval/cases.ts`
+ * put to the model in reach, each checked by code. The report is what the
+ * administrator reads before enabling a direction, and what a developer
+ * runs before a prompt or a model changes.
+ */
+export const agentEvaluations = sqliteTable("agent_evaluations", {
+  id: text("id").primaryKey(),
+  runAt: integer("run_at").notNull(),
+  model: text("model").notNull(),
+  total: integer("total").notNull(),
+  passed: integer("passed").notNull(),
+  report: text("report", { mode: "json" })
+    .notNull()
+    .$type<
+      { id: string; feature: string; title: string; ok: boolean; reason: string; output: string }[]
+    >(),
+  startedBy: text("started_by").notNull().default(""),
+});
+
+export type AgentEvaluationRow = typeof agentEvaluations.$inferSelect;
+
 export type AgentSignalRow = typeof agentSignals.$inferSelect;
 export type AgentScoreRow = typeof agentScores.$inferSelect;
 

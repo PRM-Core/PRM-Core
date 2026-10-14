@@ -250,7 +250,9 @@ first: names, e-mail addresses, phone numbers and national IDs are replaced
 by placeholders before anything leaves the process, and the model refers to a
 patient by a short pseudonym. Any server that speaks the OpenAI Chat
 Completions protocol works as the local model (Ollama, vLLM, LM Studio,
-llama.cpp). The daily security report states the mode and the endpoint's
+llama.cpp). Before trusting one, run the evaluation harness —
+`bun run agent:eval`, or the button on PRM_Agent → Directions — and read
+the report. The daily security report states the mode and the endpoint's
 host class. Design and what comes next: [docs/AGENT.md](docs/AGENT.md).
 
 ### Update notices

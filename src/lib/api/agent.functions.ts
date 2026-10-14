@@ -412,3 +412,77 @@ export const decideAgentDirection = createServerFn({ method: "POST" })
     const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
     return decideDirection({ ...data, decidedBy: who });
   });
+
+// ── the evaluation harness ──────────────────────────────────────────────────
+
+export interface AgentEvaluationView {
+  runAt: number;
+  model: string;
+  total: number;
+  passed: number;
+  startedBy: string;
+  byFeature: Record<string, { total: number; passed: number }>;
+  failed: { id: string; feature: string; title: string; reason: string; output: string }[];
+}
+
+function evaluationView(row: import("../db/schema").AgentEvaluationRow): AgentEvaluationView {
+  const byFeature: Record<string, { total: number; passed: number }> = {};
+  for (const r of row.report) {
+    byFeature[r.feature] ??= { total: 0, passed: 0 };
+    byFeature[r.feature].total += 1;
+    if (r.ok) byFeature[r.feature].passed += 1;
+  }
+  return {
+    runAt: row.runAt,
+    model: row.model,
+    total: row.total,
+    passed: row.passed,
+    startedBy: row.startedBy,
+    byFeature,
+    failed: row.report
+      .filter((r) => !r.ok)
+      .map((r) => ({
+        id: r.id,
+        feature: r.feature,
+        title: r.title,
+        reason: r.reason,
+        output: r.output,
+      })),
+  };
+}
+
+export const getAgentEvaluation = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(
+    async (): Promise<{
+      last: AgentEvaluationView | null;
+      cases: number;
+      language: LanguageState;
+    }> => {
+      const { latestEvaluation } = await import("../agent/eval/run.server");
+      const { EVAL_CASES } = await import("../agent/eval/cases");
+      const last = await latestEvaluation();
+      return {
+        last: last ? evaluationView(last) : null,
+        cases: EVAL_CASES.length,
+        language: await languageState(),
+      };
+    },
+  );
+
+export const runAgentEvaluation = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .handler(async () => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const user = await getSessionUser();
+    if (!user || user.role !== "admin")
+      throw new Error(t("Sprawdzian modelu uruchamia administrator."));
+    const { runEvaluation } = await import("../agent/eval/run.server");
+    const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
+    const r = await runEvaluation({ startedBy: who });
+    if (!r.ok) return { ok: false as const, error: r.error };
+    // The score is the evidence on every model direction — refresh it now, not tonight.
+    const { proposeDirections } = await import("../agent/directions.server");
+    await proposeDirections();
+    return { ok: true as const, result: evaluationView(r.row) };
+  });

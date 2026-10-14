@@ -8,6 +8,7 @@ import {
   ClipboardCopy,
   Compass,
   Download,
+  FlaskConical,
   FileText,
   Lightbulb,
   ListChecks,
@@ -44,7 +45,10 @@ import {
   decideAgentDraft,
   getAgentBrief,
   getAgentDirections,
+  getAgentEvaluation,
+  runAgentEvaluation,
   type AgentDirectionView,
+  type AgentEvaluationView,
   getAgentDrafts,
   getAgentList,
   getAgentRecommendations,
@@ -928,6 +932,7 @@ function DirectionsTab({
           "Agent rozwija się sam: co noc uczy model nieobecności na historii tej placówki, zapamiętuje, co zespół zatwierdził, i proponuje, co mógłby robić dalej. Każdy nowy kierunek czeka tu na decyzję administratora — nic nie rusza samo.",
         )}
       </p>
+      <EvaluationCard isAdmin={isAdmin} onRan={onChange} />
       {directions.length === 0 ? (
         <Empty>
           {t(
@@ -1001,6 +1006,138 @@ function DirectionsTab({
         </div>
       )}
     </div>
+  );
+}
+
+const FEATURE_LABELS: Record<string, string> = localized(() => ({
+  draft: t("Drafty"),
+  brief: t("Brief"),
+  triage: t("Triaż"),
+}));
+
+/** The evaluation harness: the last run, and the button that runs it against the model in reach. */
+function EvaluationCard({ isAdmin, onRan }: { isAdmin: boolean; onRan: () => Promise<void> }) {
+  const [data, setData] = useState<Awaited<ReturnType<typeof getAgentEvaluation>> | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(
+    () =>
+      getAgentEvaluation()
+        .then(setData)
+        .catch(() => setData(null)),
+    [],
+  );
+  useEffect(() => {
+    void load();
+  }, [load]);
+  if (!data) return null;
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const r = await runAgentEvaluation();
+      if (!r.ok) {
+        toast.error(t("Sprawdzian nie został uruchomiony"), { description: r.error });
+        return;
+      }
+      toast.success(
+        t("Sprawdzian zakończony: {passed} z {total} przypadków.", {
+          passed: r.result.passed,
+          total: r.result.total,
+        }),
+      );
+      await load();
+      await onRan();
+    } catch (err) {
+      toast.error(t("Sprawdzian nie został uruchomiony"), { description: String(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const last: AgentEvaluationView | null = data.last;
+  return (
+    <Card className="border-border/60">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 pb-2">
+        <div>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FlaskConical className="h-4 w-4 text-primary" />
+            {t("Sprawdzian modelu")}
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t(
+              "{n} stałych przypadków — drafty, brief, triaż, w tym pułapki (porada medyczna, wymyślony link, zmieniona liczba). Model w sieci placówki odpowiada, kod ocenia. Uruchom przed włączeniem kierunku i po zmianie modelu.",
+              { n: data.cases },
+            )}
+          </p>
+        </div>
+        {isAdmin && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 shrink-0"
+            disabled={busy || !data.language.available}
+            title={data.language.available ? "" : data.language.reason}
+            onClick={() => void run()}
+          >
+            {busy ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <FlaskConical className="h-3.5 w-3.5" />
+            )}
+            {t("Uruchom sprawdzian")}
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        {!last ? (
+          <p className="text-muted-foreground">
+            {data.language.available
+              ? t("Jeszcze nie uruchomiono.")
+              : t("Potrzebny model w sieci placówki: {reason}", { reason: data.language.reason })}
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-2xl font-semibold">
+                {last.passed}/{last.total}
+              </span>
+              {Object.entries(last.byFeature).map(([f, v]) => (
+                <Badge key={f} variant="secondary" className="font-normal">
+                  {FEATURE_LABELS[f] ?? f}: {v.passed}/{v.total}
+                </Badge>
+              ))}
+              <span className="text-[11px] text-muted-foreground">
+                {t("{model} · {when} · {who}", {
+                  model: last.model,
+                  when: when(last.runAt, true),
+                  who: last.startedBy,
+                })}
+              </span>
+            </div>
+            {last.failed.length > 0 && (
+              <ul className="space-y-1.5">
+                {last.failed.map((f) => (
+                  <li
+                    key={f.id}
+                    className="rounded-md border border-destructive/30 bg-destructive/5 p-2"
+                  >
+                    <div className="font-medium">
+                      {f.title}{" "}
+                      <span className="text-muted-foreground font-normal">· {f.reason}</span>
+                    </div>
+                    {f.output && (
+                      <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                        {f.output}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

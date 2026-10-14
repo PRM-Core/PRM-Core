@@ -146,6 +146,8 @@ src/lib/agent/
   language.server.ts     brief polish and draft text through the provider, budget and log
   triage.ts              urgency / topic / owner by rules; the model's answer parsed and checked
   triage.server.ts       triage of inbound threads on the engine clock, model optional
+  eval/cases.ts          the fixed cases of the evaluation harness, with their checks
+  eval/run.server.ts     a run against the model in reach, stored whole
 ```
 
 Existing modules move onto the same foundation without changing what they
@@ -176,9 +178,13 @@ ship a model; it documents what works:
   fake `fetch`; any request to a public host fails the test suite.
 - **Redaction test**: a contact with known identifiers goes through every
   prompt builder; the outgoing text is asserted to contain none of them.
-- **Evaluation harness**: a fixed set of cases — consent traps, requests for
-  medical advice, Polish and English, a rude patient reply — run against the
-  prompts and the chosen local model before a prompt or a model changes.
+- **Evaluation harness** (`src/lib/agent/eval/`, since 2.1.0): a fixed set
+  of cases — the product's own prompts for drafts, the brief and triage, with
+  traps for medical advice, an invented link or phone number and a changed
+  number — put to the model in reach and judged by code. Run from PRM_Agent
+  → Kierunki before enabling a direction, or `bun run agent:eval` before a
+  prompt or a model changes (exit code 1 on any failure, for CI). The last
+  score is the evidence on every model direction and a line in the brief.
 - **Decision log**: every recommendation, draft and routing decision is a
   row in the engine log with its evidence, readable by a person.
 - **Security report**: states the mode and the endpoint host class

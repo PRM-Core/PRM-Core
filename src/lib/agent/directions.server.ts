@@ -13,6 +13,7 @@ import {
 import { localEndpoint, aiMode } from "../ai/boundary.server";
 import { logStep } from "../engine/log.server";
 import { deriveDirections, DIRECTIONS, type DevelopmentState } from "./directions";
+import { latestEvaluation } from "./eval/run.server";
 import type { Recommendation } from "./recommend";
 import { t } from "@/lib/i18n";
 
@@ -40,8 +41,10 @@ export async function developmentState(): Promise<DevelopmentState> {
       .from(contacts)
       .get(),
   ]);
+  const evaluation = await latestEvaluation();
   return {
     localModel: aiMode() === "local" && !!e.url && !!e.model && e.hostClass !== "public",
+    evaluation: evaluation ? { passed: evaluation.passed, total: evaluation.total } : null,
     approvals: approvals?.n ?? 0,
     contacts: people?.n ?? 0,
     withoutPhone: people?.withoutPhone ?? 0,

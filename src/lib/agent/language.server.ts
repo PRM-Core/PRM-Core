@@ -105,6 +105,29 @@ async function ask(
   }
 }
 
+/**
+ * One question to the model in reach, for the evaluation harness: the same
+ * provider, boundary and log as every other call, but no direction gate —
+ * the harness is how an administrator decides whether to open one.
+ */
+export async function askModel(
+  system: string,
+  user: string,
+  maxTokens: number,
+  feature: string,
+): Promise<Rewrite> {
+  const gate = await modelGate();
+  if (!gate.ok) return gate;
+  return ask(
+    gate.config,
+    system,
+    user,
+    maxTokens,
+    feature,
+    t("PRM_Agent: sprawdzian modelu ({feature}).", { feature }),
+  );
+}
+
 /** The brief in plain language — accepted only when every number survived and none appeared. */
 export async function polishBrief(text: string): Promise<Rewrite> {
   const gate = await modelGate("brief_by_model");

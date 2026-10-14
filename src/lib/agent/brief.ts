@@ -23,6 +23,8 @@ export interface BriefInput {
     examples: number;
     directionsPending: number;
     directionsEnabled: number;
+    /** The last run of the evaluation harness, if any. */
+    evaluation?: { passed: number; total: number } | null;
   };
 }
 
@@ -158,6 +160,13 @@ export function buildBrief(input: BriefInput): string {
             n: d.directionsEnabled,
           }),
     );
+    if (d.evaluation)
+      lines.push(
+        t("- Ostatni sprawdzian modelu: {passed} z {total} przypadków.", {
+          passed: d.evaluation.passed,
+          total: d.evaluation.total,
+        }),
+      );
   }
   lines.push("");
   lines.push(

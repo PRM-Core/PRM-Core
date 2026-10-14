@@ -102,6 +102,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Directions** — the agent trains itself nightly, keeps approved drafts as
   examples, and proposes what it could start doing (model capabilities, data
   gaps) with the evidence; the administrator enables or declines.
+- **Evaluation harness** — fixed cases for drafts, the brief and triage,
+  traps included, put to the model in reach and judged by code; from the
+  screen before enabling a direction, or `bun run agent:eval` in CI.
 
 ### Next
 
@@ -109,11 +112,9 @@ The order is what stands between the agent and "ready": first proof that
 it writes well, then the dimensions and inputs the website promises, then
 the rest.
 
-1. **Evaluation harness and a real local model** — everything above is
-   verified against a fake model. A fixed set of cases (consent traps,
-   requests for medical advice, a rude reply, Polish and English, numbers
-   that must survive) run against Bielik / Qwen on Ollama before a prompt
-   or a model changes; results in the brief. _(help wanted)_
+1. **A real local model through the harness** — the harness exists (below);
+   what remains is running it against Bielik / Qwen on Ollama on a real
+   installation and fixing what fails. _(help wanted)_
 2. **Location as a dimension** — no-show rate and its trend per site, next
    to per doctor and per specialisation, where visits carry one.
 3. **Learning from more decisions** — a receptionist's correction of a

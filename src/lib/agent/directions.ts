@@ -73,6 +73,8 @@ export interface DevelopmentState {
   approvals: number;
   contacts: number;
   withoutPhone: number;
+  /** The last run of the evaluation harness against the model in reach. */
+  evaluation?: { passed: number; total: number } | null;
 }
 
 export const PHONE_GAP_SHARE = 0.2;
@@ -84,7 +86,10 @@ export function deriveDirections(
 ): { key: DirectionKey; evidence: Record<string, string> }[] {
   const out: { key: DirectionKey; evidence: Record<string, string> }[] = [];
   if (s.localModel) {
-    const evidence = { model: t("w sieci placówki, skonfigurowany") };
+    const evidence: Record<string, string> = { model: t("w sieci placówki, skonfigurowany") };
+    evidence.sprawdzian = s.evaluation
+      ? `${s.evaluation.passed}/${s.evaluation.total}`
+      : t("nie uruchomiono — uruchom przed włączeniem");
     out.push({ key: "drafts_by_model", evidence });
     out.push({ key: "brief_by_model", evidence });
     out.push({ key: "triage_by_model", evidence });

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.0.0",
+    "version": "2.1.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.0.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.1.0",
     "notes": {
-      "en": "PRM Core 2.0: no external AI providers — the agent's language layer runs only inside your network. The agent trains itself nightly, learns from approvals and proposes directions; the administrator enables them. Installs on PRM_AI_MODE=hosted fall to off: remove the old keys.",
-      "pl": "PRM Core 2.0: bez zewnętrznych dostawców AI — warstwa językowa agenta działa tylko w sieci placówki. Agent uczy się co noc, zapamiętuje zatwierdzone drafty i proponuje kierunki; administrator je włącza. Instalacje z PRM_AI_MODE=hosted przechodzą na off: usuń stare klucze."
+      "en": "PRM_Agent model evaluation: fixed cases for drafts, the brief and triage, traps included, judged by code — from the screen before enabling a direction, or bun run agent:eval in CI.",
+      "pl": "Sprawdzian modelu PRM_Agenta: stałe przypadki dla draftów, briefu i triażu, z pułapkami, oceniane kodem — z ekranu przed włączeniem kierunku albo bun run agent:eval w CI."
     }
   },
   "messages": []
