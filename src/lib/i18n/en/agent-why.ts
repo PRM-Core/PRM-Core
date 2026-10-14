@@ -1,8 +1,8 @@
 /** PRM_Agent — why: the reasons behind lists, the patient's explanation and the decision log. */
 export const agentWhy: Record<string, string> = {
   Agent: "Agent",
-  "Agent nie ma dziś nic do powiedzenia o tym pacjencie.":
-    "The agent has nothing to say about this patient today.",
+  "Poza tym nic: pacjent nie jest dziś na żadnej liście, nie ma ryzyk ani draftów.":
+    "Nothing else: the patient is on no list today, with no risks or drafts.",
   "Brak wpisów.": "No entries.",
   "Co agent wie o tym pacjencie — i dlaczego": "What the agent knows about this patient — and why",
   "Decyzje ludzi": "People's decisions",

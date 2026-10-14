@@ -8,6 +8,22 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.8.0] — Pacjent w trzech zdaniach, przed telefonem
+
+- **Trzy zdania o pacjencie** dla osoby, która zaraz zadzwoni albo
+  odpisze: wizyty (od kiedy, ile odbytych, ostatnia z lekarzem,
+  nieobecności), co przed pacjentem (umówiona wizyta, a przy ryzyku
+  nieobecności od 30% — „warto przypomnieć”), gdzie stoi korespondencja
+  (wiadomość czekająca na odpowiedź z oceną pilności i tematem, albo
+  ostatnia wiadomość od placówki i czy ją otwarto). Wyłącznie z wizyt
+  i korespondencji, bez notatek i bez modelu — każde słowo da się sprawdzić
+  w kartotece.
+- **Gdzie:** w listach dla rejestracji przycisk „Przed telefonem” przy
+  każdym pacjencie; w skrzynce pod nazwiskiem w nagłówku rozmowy; na
+  karcie pacjenta → PRM_Agent („W trzech zdaniach”).
+- Sformułowania neutralne co do rodzaju („Ostatnia wiadomość od
+  pacjenta”, „Wizyta umówiona na…”).
+
 ## [2.7.0] — Baza wiedzy jako jedyne źródło faktów — sprawdzane w kodzie
 
 Prośba w prompcie „używaj tylko bazy wiedzy” jest teraz regułą w kodzie.

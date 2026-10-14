@@ -52,6 +52,7 @@ import {
   URGENCY_LABELS,
 } from "@/lib/agent/triage";
 import { isReadOnlyRole } from "@/lib/auth/roles";
+import { PatientSummary } from "@/components/contact/PatientSummary";
 import type { TriageOwner, TriageTopic, TriageUrgency } from "@/lib/db/schema";
 import type { InboxChannel } from "@/lib/db/schema";
 import { t as tr, localized } from "@/lib/i18n";
@@ -458,6 +459,9 @@ function InboxPage() {
                     {detail.contact?.email ? ` · ${detail.contact.email}` : ""}
                     {detail.contact?.phone ? ` · ${detail.contact.phone}` : ""}
                   </div>
+                  {detail.contact && (
+                    <PatientSummary contactId={detail.contact.id} className="mt-1.5 max-w-xl" />
+                  )}
                   {detail.thread.triage.urgency && !correcting && (
                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                       <TriageBadges triage={detail.thread.triage} />

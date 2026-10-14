@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouteContext } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -65,6 +65,7 @@ import {
 } from "@/lib/api/agent.functions";
 import type { AgentListRow, ListKey } from "@/lib/agent/drafts.server";
 import { listReason } from "@/lib/agent/explain";
+import { PatientSummary } from "@/components/contact/PatientSummary";
 import { isReadOnlyRole } from "@/lib/auth/roles";
 import { updateInsightStatus } from "@/lib/api/engine.functions";
 import { intlLocale, localized, t } from "@/lib/i18n";
@@ -829,6 +830,8 @@ function DraftCard({
 
 function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListKey) => void }) {
   const [rows, setRows] = useState<AgentListRow[] | null>(null);
+  /** The row whose three-sentence summary is open — read before the call. */
+  const [open, setOpen] = useState<string | null>(null);
   useEffect(() => {
     setRows(null);
     getAgentList({ data: { key: listKey } })
@@ -929,41 +932,60 @@ function ListsTab({ listKey, onChange }: { listKey: ListKey; onChange: (k: ListK
             </TableHeader>
             <TableBody>
               {rows.map((r, i) => (
-                <TableRow key={`${r.contactId}-${i}`}>
-                  <TableCell>
-                    <Link
-                      to="/contacts/$id"
-                      params={{ id: r.contactId }}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {r.patient}
-                    </Link>
-                    <div className="text-[11px] text-muted-foreground">{r.prmId}</div>
-                  </TableCell>
-                  <TableCell>{r.phone || "—"}</TableCell>
-                  <TableCell>{r.email || "—"}</TableCell>
-                  {risk ? (
-                    <>
-                      <TableCell>
-                        {when(r.nextVisitAt, true)}
-                        <div className="text-[11px] text-muted-foreground">
-                          {[r.visitTitle, r.doctor].filter(Boolean).join(" · ")}
-                        </div>
+                <Fragment key={`${r.contactId}-${i}`}>
+                  <TableRow>
+                    <TableCell>
+                      <Link
+                        to="/contacts/$id"
+                        params={{ id: r.contactId }}
+                        className="font-medium text-primary hover:underline"
+                      >
+                        {r.patient}
+                      </Link>
+                      <div className="text-[11px] text-muted-foreground">{r.prmId}</div>
+                      <button
+                        type="button"
+                        className="text-[11px] text-primary hover:underline"
+                        aria-expanded={open === `${r.contactId}-${i}`}
+                        onClick={() =>
+                          setOpen(open === `${r.contactId}-${i}` ? null : `${r.contactId}-${i}`)
+                        }
+                      >
+                        {open === `${r.contactId}-${i}` ? t("Zwiń") : t("Przed telefonem")}
+                      </button>
+                    </TableCell>
+                    <TableCell>{r.phone || "—"}</TableCell>
+                    <TableCell>{r.email || "—"}</TableCell>
+                    {risk ? (
+                      <>
+                        <TableCell>
+                          {when(r.nextVisitAt, true)}
+                          <div className="text-[11px] text-muted-foreground">
+                            {[r.visitTitle, r.doctor].filter(Boolean).join(" · ")}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {r.probability !== undefined ? pct(r.probability) : "—"}
+                        </TableCell>
+                      </>
+                    ) : (
+                      <>
+                        <TableCell>{when(r.lastVisitAt)}</TableCell>
+                        <TableCell>{when(r.nextVisitAt, true)}</TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-muted-foreground text-xs max-w-[320px]">
+                      {listReason(listKey, r)}
+                    </TableCell>
+                  </TableRow>
+                  {open === `${r.contactId}-${i}` && (
+                    <TableRow className="bg-muted/30 hover:bg-muted/30">
+                      <TableCell colSpan={6}>
+                        <PatientSummary contactId={r.contactId} className="max-w-3xl" />
                       </TableCell>
-                      <TableCell className="font-semibold">
-                        {r.probability !== undefined ? pct(r.probability) : "—"}
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>{when(r.lastVisitAt)}</TableCell>
-                      <TableCell>{when(r.nextVisitAt, true)}</TableCell>
-                    </>
+                    </TableRow>
                   )}
-                  <TableCell className="text-muted-foreground text-xs max-w-[320px]">
-                    {listReason(listKey, r)}
-                  </TableCell>
-                </TableRow>
+                </Fragment>
               ))}
             </TableBody>
           </Table>

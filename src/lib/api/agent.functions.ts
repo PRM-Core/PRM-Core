@@ -555,3 +555,13 @@ export const getAgentLog = createServerFn({ method: "GET" })
     const { agentLog } = await import("../agent/explain.server");
     return agentLog({ actor: data.actor ?? "all", limit: 200 });
   });
+
+// ── the patient in three sentences ─────────────────────────────────────────
+
+export const getPatientSummary = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .inputValidator(z.object({ contactId: z.string().max(80) }))
+  .handler(async ({ data }): Promise<string[] | null> => {
+    const { patientSummary } = await import("../agent/summary.server");
+    return patientSummary(data.contactId);
+  });

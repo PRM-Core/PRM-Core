@@ -4,6 +4,7 @@ import { Compass, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getAgentForContact } from "@/lib/api/agent.functions";
+import { PatientSummary } from "@/components/contact/PatientSummary";
 import { OWNER_LABELS, TOPIC_LABELS, URGENCY_LABELS } from "@/lib/agent/triage";
 import type { TriageOwner, TriageTopic, TriageUrgency } from "@/lib/db/schema";
 import { intlLocale, localized, t } from "@/lib/i18n";
@@ -84,13 +85,18 @@ export function AgentWhyCard({ contactId }: { contactId: string }) {
         </p>
       </CardHeader>
       <CardContent className="space-y-4 text-sm">
+        <Section title={t("W trzech zdaniach")}>
+          <li>
+            <PatientSummary contactId={contactId} className="text-sm" />
+          </li>
+        </Section>
         {!data ? (
           <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" /> {t("Wczytywanie…")}
           </div>
         ) : empty ? (
           <p className="text-muted-foreground">
-            {t("Agent nie ma dziś nic do powiedzenia o tym pacjencie.")}
+            {t("Poza tym nic: pacjent nie jest dziś na żadnej liście, nie ma ryzyk ani draftów.")}
           </p>
         ) : (
           <>
