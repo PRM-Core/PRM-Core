@@ -105,19 +105,34 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 
 ### Next
 
-1. **Drafts for automations** — the first N messages of every new automation
+The order is what stands between the agent and "ready": first proof that
+it writes well, then the dimensions and inputs the website promises, then
+the rest.
+
+1. **Evaluation harness and a real local model** — everything above is
+   verified against a fake model. A fixed set of cases (consent traps,
+   requests for medical advice, a rude reply, Polish and English, numbers
+   that must survive) run against Bielik / Qwen on Ollama before a prompt
+   or a model changes; results in the brief. _(help wanted)_
+2. **Location as a dimension** — no-show rate and its trend per site, next
+   to per doctor and per specialisation, where visits carry one.
+3. **Learning from more decisions** — a receptionist's correction of a
+   triage (owner, urgency) and a dismissed recommendation become examples
+   and threshold signals, as approved drafts already do.
+4. **Drafts for automations** — the first N messages of every new automation
    go through the same approval queue.
-2. **Decision log a human can read** — why the agent routed this patient this
-   way, kept next to the run in the engine log, not only as tokens spent.
-3. **Knowledge base as the single source of facts** — services, prices,
+5. **Decision log a human can read** — why this patient is on this list,
+   why this draft, why this routing: one view over the agent's log entries,
+   next to the run.
+6. **Role views** — CFO (volumes and cost per channel) and Marketing
+   (campaign performance, A/B) over the same signals; the website promises
+   them for every decision-maker.
+7. **Knowledge base as the single source of facts** — services, prices,
    preparation instructions and opening hours, with the answer refusing to
    invent what the base does not contain.
-4. **Evaluation harness for prompts** — a set of cases (consent traps,
-   medical-advice traps, Polish and English) run against a prompt change
-   before it ships. Today a prompt edit is unverified.
-5. **Patient history summary for reception** — three sentences before the
+8. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-6. **Per-automation budgets and a hard stop** — one flow must not consume the
+9. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
 
 ## Security
