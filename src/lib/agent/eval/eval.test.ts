@@ -43,6 +43,13 @@ const GOOD = (system: string, user: string): string => {
       return '{"urgency":"normal","topic":"prescription","owner":"doctor","reason":"Pytanie o leki — dla lekarza."}';
     return '{"urgency":"normal","topic":"other","owner":"reception","reason":"Zwykła wiadomość."}';
   }
+  if (/asystentem recepcji|front desk/i.test(system)) {
+    if (/kosztuje/.test(user))
+      return "Dzień dobry, konsultacja ortopedyczna kosztuje 250 zł. Zapraszamy!";
+    if (/sobot/.test(user))
+      return "Dzień dobry, recepcja potwierdzi godziny w sobotę.\nBRAK W BAZIE: godziny otwarcia w sobotę";
+    return "Dzień dobry, w sprawie leków prosimy o kontakt z lekarzem prowadzącym — recepcja chętnie umówi konsultację.";
+  }
   // brief: keep every number by echoing the text with a human opening
   return "Szanowni Państwo,\n" + user;
 };

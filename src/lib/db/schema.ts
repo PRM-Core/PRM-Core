@@ -1577,6 +1577,31 @@ export const knowledgeEntries = sqliteTable("knowledge_entries", {
   updatedAt: integer("updated_at").notNull(),
 });
 
+/**
+ * Questions the knowledge base could not answer: the model marked one
+ * ("BRAK W BAZIE: …") while drafting a reply or writing to a patient. One
+ * row per question (by `key`), counted each time it comes back, until an
+ * entry answers it (resolved) or someone decides it never will (dismissed).
+ */
+export const knowledgeGaps = sqliteTable(
+  "knowledge_gaps",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull().unique(),
+    question: text("question").notNull(),
+    /** "inbox" — a reply suggestion; "agent" — an automation's agent node. */
+    source: text("source").notNull().default("inbox"),
+    threadId: text("thread_id"),
+    count: integer("count").notNull().default(1),
+    status: text("status").notNull().default("open").$type<"open" | "resolved" | "dismissed">(),
+    firstAt: integer("first_at").notNull(),
+    lastAt: integer("last_at").notNull(),
+  },
+  (t) => [index("idx_knowledge_gaps_status").on(t.status, t.lastAt)],
+);
+
+export type KnowledgeGapRow = typeof knowledgeGaps.$inferSelect;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Omnichannel inbox — conversations with patients
 // ─────────────────────────────────────────────────────────────────────────────

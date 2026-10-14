@@ -144,6 +144,8 @@ function InboxPage() {
   const [replyChannel, setReplyChannel] = useState<"email" | "sms">("email");
   const [sending, setSending] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  /** What the last suggestion stated without the knowledge base behind it, and what the base lacked. */
+  const [check, setCheck] = useState<{ unverified: string[]; missing: string[] } | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const refreshThreads = useCallback(async () => {
@@ -171,6 +173,7 @@ function InboxPage() {
 
   const openThread = useCallback(async (threadId: string) => {
     setCorrecting(null);
+    setCheck(null);
     setActiveId(threadId);
     const loaded = await getInboxThread({ data: { threadId } });
     setDetail(loaded);
@@ -235,6 +238,7 @@ function InboxPage() {
       return;
     }
     setReply(result.text);
+    setCheck({ unverified: result.unverified ?? [], missing: result.missing ?? [] });
     toast.success(tr("Sugestia gotowa — przeczytaj i popraw przed wysłaniem."));
   };
 
@@ -667,6 +671,26 @@ function InboxPage() {
                     </span>
                   )}
                 </div>
+                {check && (check.unverified.length > 0 || check.missing.length > 0) && (
+                  <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs space-y-1">
+                    {check.unverified.length > 0 && (
+                      <p>
+                        <b>{tr("Bez pokrycia w bazie wiedzy:")}</b> {check.unverified.join(", ")}.{" "}
+                        {tr("Sprawdź przed wysłaniem albo zastąp zdaniem, że recepcja potwierdzi.")}
+                      </p>
+                    )}
+                    {check.missing.length > 0 && (
+                      <p className="text-muted-foreground">
+                        {tr(
+                          "Baza wiedzy nie odpowiada na: {q} — dopisano do listy w Ustawienia → PRM_Agent.",
+                          {
+                            q: check.missing.join("; "),
+                          },
+                        )}
+                      </p>
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <Textarea
                     value={reply}

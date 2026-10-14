@@ -92,6 +92,20 @@ Today this layer does not exist: `contact-agent`, `inbox-assist` and the
 Copilot put the patient's name, e-mail and phone into the prompt. That is the
 first thing to change, before any new capability.
 
+## 3a. The knowledge base is the only source of facts (since 2.7.0)
+
+A prompt asking a model to use only the knowledge base is a request; the
+code makes it a rule (`grounding.ts`). Every checkable fact a model writes —
+a price, an hour, a date, a phone number, a duration, a percentage, a link
+or an address — must appear in what the model was given: the knowledge
+base in full, the conversation, the patient's own data. An automation's
+agent node sends nothing with an unbacked fact and is told why; an inbox
+suggestion shows the unbacked facts above the reply box. When the base has
+no answer, the model writes a line "BRAK W BAZIE: …" that never reaches
+the patient and becomes an open question in Ustawienia → PRM_Agent → Baza
+wiedzy; answering it closes it, and three or more open ones are a
+recommendation. The evaluation harness has reply cases for both.
+
 ## 4. Nothing new goes out without a person
 
 - Routine flows (reminders, confirmations, follow-ups) run on the engine's

@@ -252,3 +252,35 @@ export function deriveRecommendations(
 
   return out;
 }
+
+export const KNOWLEDGE_GAPS_MIN = 3;
+
+/**
+ * Questions patients asked that the knowledge base could not answer. The
+ * agent did not guess; it said the front desk would confirm. Three or more
+ * open ones are worth an hour with the base.
+ */
+export function knowledgeGapRecommendation(
+  gaps: { question: string; count: number }[],
+): Recommendation | null {
+  if (gaps.length < KNOWLEDGE_GAPS_MIN) return null;
+  const asked = gaps.reduce((n, g) => n + g.count, 0);
+  const top = [...gaps]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+    .map((g) => `„${g.question}”`)
+    .join(", ");
+  return {
+    signature: "agent:knowledge-gaps",
+    severity: "info",
+    title: t("Baza wiedzy nie odpowiada na {n} pytań pacjentów", { n: gaps.length }),
+    detail: t(
+      "Zadane łącznie {asked} razy. Agent nie zgadywał — pisał, że recepcja potwierdzi. Najczęstsze: {top}.",
+      { asked, top },
+    ),
+    proposedAction: t(
+      "Dopisz odpowiedzi w Ustawienia → PRM_Agent → Baza wiedzy; następnym razem agent poda je sam.",
+    ),
+    evidence: { questions: String(gaps.length), asked: String(asked) },
+  };
+}

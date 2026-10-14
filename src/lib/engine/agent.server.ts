@@ -19,7 +19,9 @@ import { getBaseUrl } from "./settings.server";
 import { recordOutboundMessage } from "../inbox/inbox.server";
 import { resolveReplySmsSender } from "../sms/senders.server";
 import { checkConsent } from "../consent/consent.server";
-import { knowledgeForPrompt } from "../ai/knowledge.server";
+import { knowledgeForPrompt, knowledgeSources, recordGap } from "../ai/knowledge.server";
+import { splitMissing, ungrounded } from "../agent/grounding";
+import { logStep } from "./log.server";
 import { getAiConfig, isOverDailyLimit } from "../ai/settings.server";
 import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "../ai/provider.server";
 import { intlLocale, t } from "@/lib/i18n";
@@ -367,6 +369,8 @@ async function runTool(
    * utworzy nowy.
    */
   segments: { known: string[]; assignable: string[] },
+  /** What a message may state as fact: the knowledge base in full and the patient context the model was given. */
+  facts: string[] = [],
 ): Promise<string> {
   switch (name) {
     case "add_tags": {
@@ -382,7 +386,27 @@ async function runTool(
       return t("Usunięto tagi: {v0}", { v0: tags.join(", ") });
     }
     case "send_message": {
-      const result = await sendAgentMessage(input, contact);
+      // The knowledge base is the only source of facts — checked in code
+      // before anything leaves, not trusted to the prompt.
+      const { text, missing } = splitMissing(String(input.text ?? ""));
+      for (const question of missing) await recordGap({ question, source: "agent" });
+      const unverified = ungrounded(text, facts).map((c) => c.text);
+      if (unverified.length > 0) {
+        await logStep({
+          contactId: contact.id,
+          kind: "agent",
+          message: t(
+            "Wiadomość agenta zatrzymana — fakty bez pokrycia w bazie wiedzy ani w danych pacjenta: {list}.",
+            { list: unverified.join(", ") },
+          ),
+          detail: { source: "agent-grounding", unverified: unverified.join(", ") },
+        });
+        return t(
+          "Odmowa: w treści są fakty bez pokrycia w bazie wiedzy ani w danych pacjenta: {list}. Nie wysłano nic. Usuń je albo napisz, że recepcja potwierdzi szczegóły.",
+          { list: unverified.join(", ") },
+        );
+      }
+      const result = await sendAgentMessage({ ...input, text }, contact);
       applied.push(t("wiadomość ({v0})", { v0: String(input.channel ?? "email") }));
       return result;
     }
@@ -564,6 +588,9 @@ export async function runAgentNode(
           t(
             "- Nie podawaj cen, terminów ani rokowań, których nie masz w materiałach — zamiast tego zaproponuj kontakt z rejestracją.",
           ),
+          t(
+            "- Każda cena, godzina, data, telefon, czas trwania i link w wiadomości są sprawdzane z bazą wiedzy i danymi pacjenta; wiadomość z faktem spoza nich nie zostanie wysłana. Gdy czegoś brakuje, dopisz na końcu treści osobną linię „BRAK W BAZIE: <czego brakuje>” — pacjent jej nie zobaczy.",
+          ),
           t("- Nie stawiaj diagnoz i nie odradzaj kontaktu z lekarzem."),
           t(
             "- Piszesz w imieniu placówki. Nie przedstawiaj się jako sztuczna inteligencja i nie obiecuj niczego w jej imieniu.",
@@ -594,11 +621,13 @@ export async function runAgentNode(
       : []),
   ].join("\n");
 
+  const context = await loadContext(contact, options);
+  const facts = canWrite ? [...(await knowledgeSources()), context] : [];
   const messages: AiMessage[] = [
     {
       role: "user",
       text: t("{v0}\n\nZdecyduj, którą ścieżką poprowadzić tego pacjenta.", {
-        v0: await loadContext(contact, options),
+        v0: context,
       }),
     },
   ];
@@ -693,10 +722,14 @@ export async function runAgentNode(
         toolResults: await Promise.all(
           completion.toolCalls.map(async (call) => ({
             toolUseId: call.id,
-            content: await runTool(call.name, call.input, contact, applied, {
-              known,
-              assignable,
-            }),
+            content: await runTool(
+              call.name,
+              call.input,
+              contact,
+              applied,
+              { known, assignable },
+              facts,
+            ),
           })),
         ),
       });

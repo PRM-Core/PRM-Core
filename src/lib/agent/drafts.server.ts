@@ -17,7 +17,13 @@ import { ensureLabelSegment } from "../segments/segments.server";
 import { createCampaign } from "../campaigns/campaigns.server";
 import { getSnapshot } from "../engine/snapshots.server";
 import { logStep } from "../engine/log.server";
-import { applyDismissals, deriveRecommendations, type Recommendation } from "./recommend";
+import {
+  applyDismissals,
+  deriveRecommendations,
+  knowledgeGapRecommendation,
+  type Recommendation,
+} from "./recommend";
+import { listOpenGaps } from "../ai/knowledge.server";
 import { writeDraftText } from "./language.server";
 import { AUTOMATION_MESSAGE, decideAutomationMessage } from "./automation-review.server";
 import {
@@ -59,6 +65,9 @@ export async function recommendFromSignals(
   let recs = [
     ...deriveRecommendations(rows, high.length),
     ...(await recommendationsFromDirections()),
+    ...[knowledgeGapRecommendation(await listOpenGaps())].filter(
+      (r): r is Recommendation => r !== null,
+    ),
   ];
   // With learning on, a dismissed recommendation comes back only when its
   // numbers are clearly worse than when the team said "not this".

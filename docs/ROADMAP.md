@@ -119,6 +119,12 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   rate, revenue from completed visits and the loss on no-shows) and
   Marketing (per campaign: opens, clicks, unsubscribes, recipients who
   booked within 14 days; split variants with a two-proportion test).
+- **Knowledge base as the single source of facts** — every price, hour,
+  date, phone number, duration, percentage and link a model writes is
+  checked in code against the base and the patient's data; the automation
+  agent sends nothing with an unbacked fact, the inbox suggestion flags it;
+  questions the base cannot answer become a list to fill, and a
+  recommendation when they pile up.
 - **Evaluation harness** — fixed cases for drafts, the brief and triage,
   traps included, put to the model in reach and judged by code; from the
   screen before enabling a direction, or `bun run agent:eval` in CI.
@@ -132,12 +138,9 @@ the rest.
 1. **A real local model through the harness** — the harness exists (below);
    what remains is running it against Bielik / Qwen on Ollama on a real
    installation and fixing what fails. _(help wanted)_
-2. **Knowledge base as the single source of facts** — services, prices,
-   preparation instructions and opening hours, with the answer refusing to
-   invent what the base does not contain.
-3. **Patient history summary for reception** — three sentences before the
+2. **Patient history summary for reception** — three sentences before the
    call, from visits and correspondence only.
-4. **Per-automation budgets and a hard stop** — one flow must not consume the
+3. **Per-automation budgets and a hard stop** — one flow must not consume the
    installation's whole daily limit.
 
 ## Security

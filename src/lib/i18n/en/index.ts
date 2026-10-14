@@ -37,6 +37,7 @@ import { agentTriage } from "./agent-triage";
 import { agentWhy } from "./agent-why";
 import { automationTrial } from "./automation-trial";
 import { roleViews } from "./role-views";
+import { knowledgeGrounding } from "./knowledge-grounding";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -72,6 +73,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   agentWhy,
   automationTrial,
   roleViews,
+  knowledgeGrounding,
 };
 
 /**

@@ -452,9 +452,19 @@ export const startInboxThread = createServerFn({ method: "POST" })
 export const suggestInboxReply = createServerFn({ method: "POST" })
   .middleware([requireUser])
   .inputValidator(z.object({ threadId: z.string() }))
-  .handler(async ({ data }): Promise<{ ok: boolean; text?: string; error?: string }> => {
-    return draftInboxReply(data.threadId);
-  });
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      ok: boolean;
+      text?: string;
+      error?: string;
+      unverified?: string[];
+      missing?: string[];
+    }> => {
+      return draftInboxReply(data.threadId);
+    },
+  );
 
 export interface ContactMessage {
   id: string;

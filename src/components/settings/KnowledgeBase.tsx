@@ -29,6 +29,9 @@ import {
   saveKnowledge,
   deleteKnowledge,
   type KnowledgeEntryView,
+  getKnowledgeGaps,
+  dismissKnowledgeGap,
+  type KnowledgeGapView,
 } from "@/lib/api/knowledge.functions";
 import { t } from "@/lib/i18n";
 
@@ -44,21 +47,40 @@ export function KnowledgeBase() {
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<KnowledgeEntryView | null>(null);
+  const [gaps, setGaps] = useState<KnowledgeGapView[]>([]);
+  /** The question the open form answers, when it was started from one. */
+  const [fromGap, setFromGap] = useState<KnowledgeGapView | null>(null);
 
-  const refresh = () => getKnowledge().then(setEntries);
+  const refresh = () =>
+    Promise.all([getKnowledge().then(setEntries), getKnowledgeGaps().then(setGaps)]);
   useEffect(() => {
     refresh();
   }, []);
 
   const startNew = () => {
     setEditing(null);
+    setFromGap(null);
     setTitle("");
     setContent("");
     setOpen(true);
   };
 
+  const answerGap = (gap: KnowledgeGapView) => {
+    setEditing(null);
+    setFromGap(gap);
+    setTitle(gap.question);
+    setContent("");
+    setOpen(true);
+  };
+
+  const dismissGap = async (gap: KnowledgeGapView) => {
+    await dismissKnowledgeGap({ data: { id: gap.id } });
+    await refresh();
+  };
+
   const startEdit = (entry: KnowledgeEntryView) => {
     setEditing(entry);
+    setFromGap(null);
     setTitle(entry.title);
     setContent(entry.content);
     setOpen(true);
@@ -68,7 +90,12 @@ export function KnowledgeBase() {
     setSaving(true);
     try {
       await saveKnowledge({
-        data: { id: editing?.id, title: title.trim(), content: content.trim() },
+        data: {
+          id: editing?.id,
+          title: title.trim(),
+          content: content.trim(),
+          gapId: fromGap?.id,
+        },
       });
       await refresh();
       setOpen(false);
@@ -107,7 +134,47 @@ export function KnowledgeBase() {
         </Button>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-4">
+        {gaps.length > 0 && (
+          <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 space-y-2">
+            <div className="text-sm font-medium">
+              {t("Pytania, na które baza nie odpowiada ({n})", { n: gaps.length })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Agent nie zgadywał — napisał pacjentowi, że recepcja potwierdzi, i zapisał pytanie tutaj. Dopisz odpowiedź, a następnym razem poda ją sam.",
+              )}
+            </p>
+            <ul className="space-y-1.5">
+              {gaps.slice(0, 10).map((g) => (
+                <li key={g.id} className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="flex-1 min-w-[200px]">
+                    {g.question}{" "}
+                    <span className="text-xs text-muted-foreground">
+                      × {g.count} · {g.source === "agent" ? t("automatyzacja") : t("skrzynka")}
+                    </span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => answerGap(g)}
+                  >
+                    {t("Dopisz odpowiedź")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => void dismissGap(g)}
+                  >
+                    {t("Pomiń")}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {entries === null ? (
           <div className="py-10 flex justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />

@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.7.0] — Baza wiedzy jako jedyne źródło faktów — sprawdzane w kodzie
+
+Prośba w prompcie „używaj tylko bazy wiedzy” jest teraz regułą w kodzie.
+
+- **Każdy sprawdzalny fakt w tekście modelu** — cena, godzina, data,
+  telefon, czas trwania, procent, link, adres e-mail — musi mieć pokrycie
+  w tym, co model dostał: w bazie wiedzy (w całości, nie tylko w skrócie
+  z promptu), w rozmowie z pacjentem albo w jego danych. Polska pisownia
+  się nie liczy („250 zł” = „250 PLN”, „8:00” = „8.00” = „8–18”, „20.10”
+  = „20 października” = „2026-10-20”).
+- **Węzeł Agent AI w automatyzacji nie wyśle** wiadomości z faktem bez
+  pokrycia — dostaje odmowę z powodem i może napisać ponownie; wpis
+  w dzienniku.
+- **Sugestia odpowiedzi w skrzynce** pokazuje nad polem odpowiedzi fakty
+  bez pokrycia („Bez pokrycia w bazie wiedzy: 14:00”) — do sprawdzenia
+  przed wysłaniem.
+- **Pytania, na które baza nie odpowiada.** Model dopisuje osobną linię
+  „BRAK W BAZIE: …”, której pacjent nigdy nie dostaje. Pytanie trafia na
+  listę w Ustawienia → PRM_Agent → Baza wiedzy (z licznikiem powtórzeń):
+  „Dopisz odpowiedź” otwiera wpis z pytaniem jako tytułem i zamyka pytanie
+  po zapisie; „Pomiń” — na stałe. Przy co najmniej 3 otwartych pytaniach
+  agent rekomenduje uzupełnienie bazy.
+- **Sprawdzian modelu**: 3 nowe przypadki odpowiedzi (cena z bazy, godziny
+  spoza bazy, pułapka z dawką leku) — razem 18.
+- Migracja 0077: tabela `knowledge_gaps`.
+
 ## [2.6.0] — Raporty dla każdej roli: finanse i marketing
 
 Raporty mają dwie nowe zakładki, z tych samych tabel, z których czyta

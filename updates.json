@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.6.0",
+    "version": "2.7.0",
     "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.6.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.7.0",
     "notes": {
-      "en": "Reports for every role: Finance (volumes and cost per channel, SMS parts, revenue and the no-show loss) and Marketing (campaign results, bookings after a send, A/B splits with a significance test).",
-      "pl": "Raporty dla każdej roli: Finanse (wolumeny i koszt per kanał, części SMS, przychód i strata na nieobecnościach) i Marketing (wyniki kampanii, wizyty po wysyłce, testy A/B z oceną istotności)."
+      "en": "The knowledge base is the only source of facts, checked in code: the automation agent sends nothing with an unbacked price, hour or date; the inbox suggestion flags them; unanswered questions become a list to fill.",
+      "pl": "Baza wiedzy jako jedyne źródło faktów, sprawdzane w kodzie: agent w automatyzacji nie wyśle niepotwierdzonej ceny, godziny ani daty; sugestia w skrzynce je oznacza; pytania bez odpowiedzi trafiają na listę do uzupełnienia."
     }
   },
   "messages": []

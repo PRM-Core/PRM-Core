@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { asc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { getDb } from "../db/client.server";
-import { knowledgeEntries } from "../db/schema";
-import type { KnowledgeEntryRow } from "../db/schema";
+import { knowledgeEntries, knowledgeGaps } from "../db/schema";
+import type { KnowledgeEntryRow, KnowledgeGapRow } from "../db/schema";
 import { t } from "@/lib/i18n";
 
 // The clinic's own knowledge base — what the PRM_Agent is allowed to state as
@@ -82,4 +82,63 @@ export async function knowledgeForPrompt(): Promise<string | null> {
   }
 
   return parts.join("\n\n");
+}
+
+/** Every entry in full, for checking a model's facts — not truncated like the prompt. */
+export async function knowledgeSources(): Promise<string[]> {
+  return (await listKnowledge()).map((e) => `### ${e.title}\n${e.content}`);
+}
+
+// ── questions the base could not answer ─────────────────────────────────────
+
+/** Record a question the model could not answer from the base; a repeat bumps the count. */
+export async function recordGap(input: {
+  question: string;
+  source: "inbox" | "agent";
+  threadId?: string | null;
+  now?: number;
+}): Promise<void> {
+  const { gapKey } = await import("../agent/grounding");
+  const question = input.question.trim().slice(0, 300);
+  const key = gapKey(question);
+  if (!key) return;
+  const now = input.now ?? Date.now();
+  const db = getDb();
+  const existing = await db.select().from(knowledgeGaps).where(eq(knowledgeGaps.key, key)).get();
+  if (existing) {
+    await db
+      .update(knowledgeGaps)
+      .set({
+        count: existing.count + 1,
+        lastAt: now,
+        // Answered once, asked again: the entry did not cover it after all.
+        status: existing.status === "dismissed" ? "dismissed" : "open",
+      })
+      .where(eq(knowledgeGaps.id, existing.id));
+    return;
+  }
+  await db.insert(knowledgeGaps).values({
+    id: randomUUID(),
+    key,
+    question,
+    source: input.source,
+    threadId: input.threadId ?? null,
+    count: 1,
+    status: "open",
+    firstAt: now,
+    lastAt: now,
+  });
+}
+
+export async function listOpenGaps(): Promise<KnowledgeGapRow[]> {
+  return getDb()
+    .select()
+    .from(knowledgeGaps)
+    .where(eq(knowledgeGaps.status, "open"))
+    .orderBy(desc(knowledgeGaps.count), desc(knowledgeGaps.lastAt))
+    .limit(100);
+}
+
+export async function setGapStatus(id: string, status: "resolved" | "dismissed"): Promise<void> {
+  await getDb().update(knowledgeGaps).set({ status }).where(eq(knowledgeGaps.id, id));
 }

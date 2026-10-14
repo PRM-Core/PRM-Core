@@ -1201,6 +1201,7 @@ const FEATURE_LABELS: Record<string, string> = localized(() => ({
   draft: t("Drafty"),
   brief: t("Brief"),
   triage: t("Triaż"),
+  reply: t("Odpowiedzi"),
 }));
 
 /** The evaluation harness: the last run, and the button that runs it against the model in reach. */
