@@ -447,6 +447,20 @@ export async function dryRun(input: {
         message: tr("Pacjent czekałby tutaj {v0} {unit}.", { v0: node.amount ?? 0, unit: unit }),
         outcome: "info",
       });
+    } else if (node.kind === "wait") {
+      // The preview cannot know whether the patient will act, so it follows
+      // the path for "nothing happened" — the one a person forgets to check.
+      handle = "timeout";
+      steps.push({
+        nodeId: node.id,
+        kind: node.kind,
+        title: nodeTitle(node),
+        message: tr(
+          "Pacjent czekałby tutaj na zdarzenie. W podglądzie idziemy ścieżką „czas minął”; gdy zdarzenie nastąpi wcześniej, pacjent pójdzie ścieżką „zdarzenie”.",
+        ),
+        outcome: "info",
+        branch: tr("czas minął"),
+      });
     } else if (node.kind === "condition") {
       const result = await evaluateCondition(node, contact.id);
       handle = result.matched ? "matched" : "unmatched";

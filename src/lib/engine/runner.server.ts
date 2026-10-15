@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, like, lte } from "drizzle-orm";
 import { getDb } from "../db/client.server";
-import { automations, automationRuns, engineJobs } from "../db/schema";
+import { automations, automationRuns, engineJobs, engineWaits } from "../db/schema";
 import type { EngineEventRow, EngineEventType, AutomationRunRow } from "../db/schema";
 import { pickSplitVariant } from "../automation-flow";
+import { triggerLabel } from "../automation-catalog";
 import type { AutomationGraph, AutomationNode, DelayUnit } from "../automation-flow";
 import { executeAction, evaluateCondition, evaluatePath, isMessageAction } from "./actions.server";
 import { runAgentNode } from "./agent.server";
@@ -158,6 +159,8 @@ async function scheduleJob(input: {
   nodeId: string;
   dueAt: number;
   stepIndex: number;
+  /** Tells apart a second job for the same step — the timeout of a wait. */
+  suffix?: string;
 }): Promise<boolean> {
   const db = getDb();
   try {
@@ -171,7 +174,7 @@ async function scheduleJob(input: {
       // Unique in the schema: two overlapping ticks can both try to schedule
       // the same step, and exactly one insert wins. This is what makes "an
       // email is never sent twice" a database guarantee rather than a hope.
-      idempotencyKey: `${input.runId}:${input.nodeId}:${input.stepIndex}`,
+      idempotencyKey: `${input.runId}:${input.nodeId}:${input.stepIndex}${input.suffix ?? ""}`,
       lastError: null,
       createdAt: Date.now(),
     });
@@ -287,6 +290,98 @@ async function processEvent(event: EngineEventRow, active: AutomationRow[]): Pro
   }
 
   return started;
+}
+
+// ── waiting for an event ────────────────────────────────────────────────────
+
+const TIMEOUT_SUFFIX = ":timeout";
+
+/** "Pacjent odpisał", "Wizyta zarezerwowana: kardio" — what a wait step waits for. */
+function waitLabel(node: AutomationNode): string {
+  return triggerLabel({ nodes: [{ ...node, kind: "trigger" }], edges: [] });
+}
+
+/**
+ * Closes every open wait this event answers: the patient's own event, of the
+ * kind waited for, matching its filters, after the wait began. The run goes
+ * on down the "event" path at once, and the timeout job is cancelled. Claimed
+ * with a conditional update, so an event and a deadline at the same moment
+ * close it exactly once.
+ */
+async function resolveWaits(event: EngineEventRow): Promise<number> {
+  if (!event.contactId) return 0;
+  const db = getDb();
+  const open = await db
+    .select()
+    .from(engineWaits)
+    .where(and(eq(engineWaits.contactId, event.contactId), isNull(engineWaits.resolvedAt)));
+  let resolved = 0;
+  for (const w of open) {
+    if (TRIGGER_EVENT_TYPES[w.eventKey] !== event.type || event.occurredAt < w.since) continue;
+    const probe: AutomationNode = {
+      id: w.nodeId,
+      kind: "trigger",
+      position: { x: 0, y: 0 },
+      key: w.eventKey,
+      config: w.config,
+    };
+    if (!triggerMatches(probe, event)) continue;
+    const claimed = await db
+      .update(engineWaits)
+      .set({ resolvedAt: Date.now(), outcome: "event" })
+      .where(and(eq(engineWaits.id, w.id), isNull(engineWaits.resolvedAt)))
+      .returning({ id: engineWaits.id });
+    if (claimed.length === 0) continue;
+    await db
+      .update(engineJobs)
+      .set({ status: "done" })
+      .where(
+        and(
+          eq(engineJobs.runId, w.runId),
+          eq(engineJobs.nodeId, w.nodeId),
+          eq(engineJobs.status, "pending"),
+          like(engineJobs.idempotencyKey, `%${TIMEOUT_SUFFIX}`),
+        ),
+      );
+
+    const run = await db.select().from(automationRuns).where(eq(automationRuns.id, w.runId)).get();
+    if (!run || run.status !== "waiting") continue;
+    const automation = await db
+      .select()
+      .from(automations)
+      .where(eq(automations.id, run.automationId))
+      .get();
+    if (!automation || automation.status !== "active" || !automation.flow) {
+      await endRun(run, "stopped", t("Automatyzacja została wyłączona — przebieg zatrzymany."));
+      continue;
+    }
+    const node = findNode(automation.flow, w.nodeId);
+    const path = [...(run.path ?? []), w.nodeId];
+    await logStep({
+      runId: run.id,
+      automationId: run.automationId,
+      contactId: run.contactId,
+      nodeId: w.nodeId,
+      kind: "condition",
+      message: t("Doczekano się „{label}” — ścieżka „zdarzenie”.", {
+        label: node ? waitLabel(node) : w.eventKey,
+      }),
+      detail: { event: w.eventKey, branch: "event", eventType: event.type },
+    });
+    const next = nextNodeId(automation.flow, w.nodeId, "event");
+    if (!next) {
+      await db.update(automationRuns).set({ path }).where(eq(automationRuns.id, run.id));
+      await endRun({ ...run, path }, "completed", t("Przebieg zakończony — koniec ścieżki."));
+      continue;
+    }
+    await db
+      .update(automationRuns)
+      .set({ path, currentNodeId: next, status: "running" })
+      .where(eq(automationRuns.id, run.id));
+    await scheduleJob({ runId: run.id, nodeId: next, dueAt: Date.now(), stepIndex: path.length });
+    resolved += 1;
+  }
+  return resolved;
 }
 
 // ── job → step ──────────────────────────────────────────────────────────────
@@ -523,6 +618,71 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
       break;
     }
 
+    case "wait": {
+      const label = waitLabel(node);
+      if (!job.idempotencyKey.endsWith(TIMEOUT_SUFFIX)) {
+        // Arrival: park the run and set the alarm for the deadline.
+        const since = Date.now();
+        const until = since + Math.max(1, node.amount ?? 1) * DELAY_MS[node.unit ?? "days"];
+        await db.insert(engineWaits).values({
+          id: randomUUID(),
+          runId: run.id,
+          nodeId: node.id,
+          contactId: run.contactId,
+          eventKey: node.key ?? "",
+          config: node.config ?? {},
+          since,
+          until,
+        });
+        await db.update(engineJobs).set({ status: "done" }).where(eq(engineJobs.id, job.id));
+        await db
+          .update(automationRuns)
+          .set({ status: "waiting", currentNodeId: node.id })
+          .where(eq(automationRuns.id, run.id));
+        await scheduleJob({
+          runId: run.id,
+          nodeId: node.id,
+          dueAt: until,
+          stepIndex: path.length - 1,
+          suffix: TIMEOUT_SUFFIX,
+        });
+        await logStep({
+          ...base,
+          kind: "delay",
+          message: t("Czeka na „{label}” najdłużej do {at}.", {
+            label,
+            at: formatActivityDate(until),
+          }),
+          detail: { event: node.key ?? "", until: new Date(until).toISOString() },
+        });
+        return;
+      }
+      // The deadline: the wait closes down "timeout", unless the event won.
+      const closed = await db
+        .update(engineWaits)
+        .set({ resolvedAt: Date.now(), outcome: "timeout" })
+        .where(
+          and(
+            eq(engineWaits.runId, run.id),
+            eq(engineWaits.nodeId, node.id),
+            isNull(engineWaits.resolvedAt),
+          ),
+        )
+        .returning({ id: engineWaits.id });
+      if (closed.length === 0) {
+        await db.update(engineJobs).set({ status: "done" }).where(eq(engineJobs.id, job.id));
+        return;
+      }
+      handle = "timeout";
+      await logStep({
+        ...base,
+        kind: "condition",
+        message: t("Nie doczekano się „{label}” — ścieżka „czas minął”.", { label }),
+        detail: { event: node.key ?? "", branch: "timeout" },
+      });
+      break;
+    }
+
     case "aiAgent": {
       // A failed agent call is deliberately NOT a failed run: it falls back to
       // the first path and says why. An LLM outage or a spent cost limit
@@ -610,6 +770,7 @@ export async function tick(): Promise<TickResult> {
       : [];
   for (const event of events) {
     try {
+      await resolveWaits(event);
       runsStarted += await processEvent(event, active);
     } catch (err) {
       await logStep({

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.13.0",
+    "version": "2.14.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.13.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.14.0",
     "notes": {
-      "en": "Time-based triggers: N months since the last visit (recall, preventive care, a year without a visit) and the patient's birthday from the PESEL — one journey per visit and one a year.",
-      "pl": "Wyzwalacze czasowe: N miesięcy od ostatniej wizyty (kontrola, profilaktyka, rok bez wizyty) i urodziny pacjenta z numeru PESEL — jeden przebieg na wizytę i jeden na rok."
+      "en": "A new step: wait for the patient's event — a reply, a booking, an opened e-mail — for at most a set time, then go on down \"event\" or \"time ran out\".",
+      "pl": "Nowy krok: czekaj na zdarzenie pacjenta — odpowiedź, rezerwację, otwarcie e-maila — najdłużej ustawiony czas, potem dalej ścieżką „zdarzenie” albo „czas minął”."
     }
   },
   "messages": []

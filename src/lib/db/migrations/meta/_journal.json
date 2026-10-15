@@ -568,6 +568,13 @@
       "when": 1792068773514,
       "tag": "0080_time_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "6",
+      "when": 1792070505978,
+      "tag": "0081_engine_waits",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { Clock, Bot, Split, Shuffle } from "lucide-react";
+import { Clock, Bot, Split, Shuffle, Hourglass } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -60,6 +60,16 @@ export function AddNodeDialog({
     id: nodeId("delay"),
     kind: "delay",
     amount: 1,
+    unit: "days",
+    position,
+  });
+
+  const makeWait = (): AutomationNode => ({
+    id: nodeId("wait"),
+    kind: "wait",
+    key: "chat_message",
+    config: {},
+    amount: 2,
     unit: "days",
     position,
   });
@@ -179,7 +189,7 @@ export function AddNodeDialog({
             </button>
           </TabsContent>
 
-          <TabsContent value="delay" className="mt-4">
+          <TabsContent value="delay" className="mt-4 space-y-2">
             <button
               type="button"
               onClick={() => pick(makeDelay())}
@@ -192,6 +202,23 @@ export function AddNodeDialog({
                 <div className="text-sm font-medium">{t("Poczekaj")}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {t("Wstrzymuje ścieżkę o określony czas przed kolejnym krokiem")}
+                </div>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => pick(makeWait())}
+              className="flex w-full items-start gap-3 rounded-lg border border-border p-3 text-left hover:border-primary/40 hover:bg-primary-soft/40 transition-colors cursor-pointer"
+            >
+              <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 bg-sky-100 text-sky-700">
+                <Hourglass className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-sm font-medium">{t("Czekaj na zdarzenie")}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {t(
+                    "Czeka, aż pacjent coś zrobi — odpisze, umówi wizytę, otworzy e-mail — najdłużej określony czas. Dwie ścieżki: „zdarzenie” i „czas minął”.",
+                  )}
                 </div>
               </div>
             </button>

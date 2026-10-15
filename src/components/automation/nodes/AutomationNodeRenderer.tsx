@@ -10,6 +10,7 @@ import {
   Users,
   Split,
   Shuffle,
+  Hourglass,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,6 +60,15 @@ function nodeVisual(node: AutomationNode) {
       kind: t("Opóźnienie"),
       title: nodeTitle(node),
       tone: "bg-amber-100 text-amber-700",
+      summary: undefined,
+    };
+  }
+  if (node.kind === "wait") {
+    return {
+      icon: Hourglass,
+      kind: t("Czekaj na zdarzenie"),
+      title: nodeTitle(node),
+      tone: "bg-sky-100 text-sky-700",
       summary: undefined,
     };
   }
@@ -124,6 +134,7 @@ function nodeVisual(node: AutomationNode) {
 function branchLabel(node: AutomationNode, handle: string): string {
   if (node.kind === "condition")
     return handle === "matched" ? t("Jeśli pasuje") : t("Jeśli nie pasuje");
+  if (node.kind === "wait") return handle === "event" ? t("Zdarzenie") : t("Czas minął");
   if (node.kind === "aiAgent") return node.paths?.find((p) => p.id === handle)?.label ?? handle;
   if (node.kind === "path") return node.branches?.find((b) => b.id === handle)?.label ?? handle;
   if (node.kind === "split") {
@@ -152,7 +163,8 @@ export function AutomationNodeRenderer({ id, data }: NodeProps) {
     node.kind === "condition" ||
     node.kind === "aiAgent" ||
     node.kind === "path" ||
-    node.kind === "split";
+    node.kind === "split" ||
+    node.kind === "wait";
   const deletable = node.kind !== "trigger";
   const connectedHandles = edges.filter((e) => e.source === id).map((e) => e.sourceHandle ?? "out");
   const stats = contactCounts[id];

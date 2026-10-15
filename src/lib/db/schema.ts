@@ -1389,6 +1389,34 @@ export const engineTimeFires = sqliteTable(
   (t) => [uniqueIndex("uq_engine_time_fires").on(t.automationId, t.contactId, t.occurrence)],
 );
 
+/**
+ * A run parked on a "wait for an event" step: which event it waits for (the
+ * trigger catalog's key and filters), from when, and until when. An event of
+ * the patient's that matches closes it down the "event" path; the timeout job
+ * at `until` closes it down the "timeout" path — whichever comes first, once.
+ */
+export const engineWaits = sqliteTable(
+  "engine_waits",
+  {
+    id: text("id").primaryKey(),
+    runId: text("run_id").notNull(),
+    nodeId: text("node_id").notNull(),
+    contactId: text("contact_id").notNull(),
+    /** The trigger catalog key waited for, e.g. "chat_message". */
+    eventKey: text("event_key").notNull(),
+    config: text("config", { mode: "json" }).notNull().$type<Record<string, string>>(),
+    /** Only events from this moment on count — not the one that started the run. */
+    since: integer("since").notNull(),
+    until: integer("until").notNull(),
+    resolvedAt: integer("resolved_at"),
+    outcome: text("outcome").notNull().default("").$type<"" | "event" | "timeout">(),
+  },
+  (t) => [
+    index("idx_engine_waits_open").on(t.contactId, t.resolvedAt),
+    index("idx_engine_waits_run").on(t.runId, t.nodeId),
+  ],
+);
+
 export type AutomationRunStatus = "running" | "waiting" | "completed" | "failed" | "stopped";
 
 /** One contact's journey through one automation. */

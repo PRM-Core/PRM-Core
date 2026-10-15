@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   triggerCatalog,
+  WAIT_EVENT_KEYS,
   conditionCatalog,
   actionCatalog,
   findCatalogItem,
@@ -590,6 +591,80 @@ export function NodeInspector({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </>
+          )}
+
+          {draft && draft.kind === "wait" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{tr("Czekaj na zdarzenie")}</SheetTitle>
+                <SheetDescription>
+                  {tr(
+                    "Ścieżka czeka, aż pacjent coś zrobi — najdłużej tyle, ile ustawisz. Potem idzie dalej jedną z dwóch dróg.",
+                  )}
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-4 flex-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{tr("Na co czekać")}</Label>
+                  <Select
+                    value={draft.key}
+                    onValueChange={(key) => setDraft({ ...draft, key, config: {} })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {triggerCatalog
+                        .filter((c) => (WAIT_EVENT_KEYS as readonly string[]).includes(c.key))
+                        .map((c) => (
+                          <SelectItem key={c.key} value={c.key}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <ConfigFields
+                  fields={findCatalogItem("trigger", draft.key ?? "")?.fields ?? []}
+                  config={draft.config ?? {}}
+                  onChange={(config) => setDraft({ ...draft, config })}
+                />
+                <div className="flex gap-3">
+                  <div className="space-y-1.5 flex-1">
+                    <Label className="text-xs">{tr("Najdłużej")}</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={draft.amount ?? 1}
+                      onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) || 1 })}
+                    />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <Label className="text-xs">{tr("Jednostka")}</Label>
+                    <Select
+                      value={draft.unit ?? "days"}
+                      onValueChange={(unit) =>
+                        setDraft({ ...draft, unit: unit as typeof draft.unit })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minutes">{tr("minut")}</SelectItem>
+                        <SelectItem value="hours">{tr("godzin")}</SelectItem>
+                        <SelectItem value="days">{tr("dni")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <EngineHint
+                  hint={tr(
+                    "Liczy się tylko zdarzenie tego pacjenta, które nastąpi po wejściu w ten krok — nie to, które uruchomiło automatyzację. Gdy nastąpi, pacjent od razu idzie ścieżką „zdarzenie”; gdy czas minie, ścieżką „czas minął”. Na potwierdzenie wizyty czekaj na „Wiadomość od pacjenta” (odpowiedź SMS-em lub e-mailem).",
+                  )}
+                />
               </div>
             </>
           )}

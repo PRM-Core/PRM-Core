@@ -387,6 +387,29 @@ export const triggerCatalog: CatalogItem[] = localized(() => [
   },
 ]);
 
+/**
+ * What a "wait for an event" step can wait for: the triggers whose event is
+ * the patient's own doing, after the run began. Not "new contact" (it already
+ * exists), not the time-based ones (the wait has its own deadline), not the
+ * ones with no event source yet.
+ */
+export const WAIT_EVENT_KEYS = [
+  "chat_message",
+  "visit_scheduled",
+  "visit_completed",
+  "visit_cancelled",
+  "visit_no_show",
+  "email_opened",
+  "email_clicked",
+  "form_submitted",
+  "survey_submitted",
+  "page_visited",
+  "tag_added",
+  "segment_joined",
+  "field_changed",
+  "stage_changed",
+] as const;
+
 export const conditionCatalog: CatalogItem[] = localized(() => [
   {
     key: "in_segment",
@@ -654,9 +677,9 @@ export function findCatalogItem(category: NodeCategory, key: string): CatalogIte
 }
 
 export function delayUnitLabel(unit?: DelayUnit): string {
-  if (unit === "minutes") return "minut";
-  if (unit === "hours") return "godzin";
-  return "dni";
+  if (unit === "minutes") return t("minut");
+  if (unit === "hours") return t("godzin");
+  return t("dni");
 }
 
 /**
@@ -703,7 +726,10 @@ export function triggerLabel(graph: AutomationGraph | null | undefined): string 
 export function nodeTitle(node: AutomationNode): string {
   switch (node.kind) {
     case "delay":
-      return `Poczekaj ${node.amount} ${delayUnitLabel(node.unit)}`;
+      return t("Poczekaj {amount} {unit}", {
+        amount: node.amount ?? 0,
+        unit: delayUnitLabel(node.unit),
+      });
     case "aiAgent":
       return node.goal || "Agent AI";
     case "trigger":
@@ -714,6 +740,12 @@ export function nodeTitle(node: AutomationNode): string {
       return node.config?.label || "Rozgałęzienie";
     case "split":
       return node.config?.label || "Split A/B";
+    case "wait":
+      return t("Czekaj na: {event} (najdłużej {amount} {unit})", {
+        event: triggerLabel({ nodes: [{ ...node, kind: "trigger" }], edges: [] }),
+        amount: node.amount ?? 1,
+        unit: delayUnitLabel(node.unit),
+      });
     default:
       return findCatalogItem("action", node.key ?? "")?.label ?? node.key ?? "Akcja";
   }

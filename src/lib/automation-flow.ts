@@ -1,7 +1,16 @@
 import { t as tr } from "@/lib/i18n";
 export type DelayUnit = "minutes" | "hours" | "days";
 
-export type NodeKind = "trigger" | "delay" | "action" | "condition" | "aiAgent" | "path" | "split";
+export type NodeKind =
+  | "trigger"
+  | "delay"
+  | "action"
+  | "condition"
+  | "aiAgent"
+  | "path"
+  | "split"
+  /** Wait for an event (key + config, as a trigger), at most `amount` `unit`. */
+  | "wait";
 
 export interface AiAgentPathDef {
   id: string;
@@ -86,6 +95,7 @@ export function outputHandles(node: AutomationNode): string[] {
   if (node.kind === "aiAgent") return (node.paths ?? []).map((p) => p.id);
   if (node.kind === "path") return (node.branches ?? []).map((b) => b.id);
   if (node.kind === "split") return (node.variants ?? []).map((v) => v.id);
+  if (node.kind === "wait") return ["event", "timeout"];
   if (node.kind === "action" && node.key === "end_process") return [];
   return ["out"];
 }
@@ -201,6 +211,12 @@ export function validateGraph(graph: AutomationGraph | null): { valid: boolean; 
       errors.push(
         tr("Krok „{v0}” nie jest połączony z resztą scenariusza.", { v0: node.key ?? node.kind }),
       );
+    }
+  }
+
+  for (const node of graph.nodes) {
+    if (node.kind === "wait" && !node.key) {
+      errors.push(tr("Krok „Czekaj na zdarzenie” nie ma wybranego zdarzenia."));
     }
   }
 

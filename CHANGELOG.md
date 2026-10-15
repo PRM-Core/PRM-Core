@@ -8,6 +8,31 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.14.0] — Czekaj na zdarzenie, z limitem czasu
+
+Dotąd były tylko stałe opóźnienia, więc każda gałąź musiała zgadywać, ile
+czekać: „po 48 godzinach sprawdź, czy pacjent odpisał” wysyłało
+przypomnienie także temu, kto odpisał po godzinie, i dopiero po dwóch
+dobach reagowało na odpowiedź.
+
+- **Nowy krok „Czekaj na zdarzenie”** (w dodawaniu kroku, zakładka
+  Opóźnienie). Czeka, aż pacjent coś zrobi — odpisze, umówi wizytę, otworzy
+  e-mail, wypełni formularz — najdłużej ustawiony czas. Dwie ścieżki:
+  „zdarzenie” (od razu, gdy nastąpi) i „czas minął”. Na co czekać wybiera
+  się z tych samych wyzwalaczy, z ich filtrami: „wizyta zarezerwowana,
+  usługa zawiera kardio” działa i tutaj.
+- Liczy się tylko zdarzenie tego pacjenta, które nastąpi po wejściu
+  w krok — nie to, które uruchomiło automatyzację. Zdarzenie i termin
+  w tej samej chwili zamykają oczekiwanie dokładnie raz.
+- Wyłączenie automatyzacji w trakcie czekania zatrzymuje przebieg przy
+  najbliższym zdarzeniu albo terminie. Test na kontakcie idzie ścieżką
+  „czas minął” i mówi, że zdarzenie poprowadziłoby inaczej.
+- Edytor nie aktywuje automatyzacji z krokiem bez wybranego zdarzenia ani
+  z niepodłączoną którąś z dwóch ścieżek.
+- Tytuły kroków z czasem („Poczekaj 2 dni”) są tłumaczone — po angielsku
+  pokazywały polskie jednostki.
+- Migracja 0081: tabela `engine_waits`.
+
 ## [2.13.0] — Wyzwalacze czasowe: N miesięcy od ostatniej wizyty, urodziny
 
 Każdy wyzwalacz reagował dotąd na zdarzenie, które właśnie zaszło. Opieka
