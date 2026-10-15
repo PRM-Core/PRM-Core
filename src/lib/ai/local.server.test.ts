@@ -69,6 +69,14 @@ describe("localProvider", () => {
     );
   });
 
+  test("an empty or cut-off answer is the model being unavailable, not a crash", async () => {
+    globalThis.fetch = (async () => new Response("", { status: 200 })) as unknown as typeof fetch;
+    await expect(localProvider.complete(input)).rejects.toBeInstanceOf(AiProviderError);
+    globalThis.fetch = (async () =>
+      new Response('{"choices":[{"mess', { status: 200 })) as unknown as typeof fetch;
+    await expect(localProvider.complete(input)).rejects.toThrow(/niepełną odpowiedź/);
+  });
+
   test("without an endpoint the error says what to set", async () => {
     delete process.env.PRM_AI_LOCAL_URL;
     await expect(localProvider.complete(input)).rejects.toThrow(/PRM_AI_LOCAL_URL/);

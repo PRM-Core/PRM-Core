@@ -28,4 +28,5 @@ export const agentBoundary: Record<string, string> = {
   "tryb local bez PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL — funkcje AI nie działają":
     "local mode without PRM_AI_LOCAL_URL / PRM_AI_LOCAL_MODEL — AI features are off",
   "{label} odrzucił zapytanie: {detail}": "{label} rejected the request: {detail}",
+  "{label} zwrócił niepełną odpowiedź: {detail}": "{label} returned an incomplete answer: {detail}",
 };

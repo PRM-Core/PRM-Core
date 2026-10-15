@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.10.0",
+    "version": "2.11.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.10.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.11.0",
     "notes": {
-      "en": "PRM_Agent measured on a real local model (Bielik 11B on Ollama): what a small model gets wrong now lives in code — no medical advice, no internal identifiers, triage owner from the topic — and {{firstName}} is filled in agent messages.",
-      "pl": "PRM_Agent sprawdzony na prawdziwym modelu lokalnym (Bielik 11B na Ollamie): to, co mały model myli, pilnuje teraz kod — bez porad medycznych, bez identyfikatorów wewnętrznych, właściciel w triażu z tematu — a {{firstName}} jest podstawiane w wiadomościach agenta."
+      "en": "Three local models measured with the same 18 cases (Bielik 11B, Qwen 2.5 14B, Gemma 3 12B), all usable; an empty or cut-off model answer now means the model is unavailable and the agent falls back on its rules.",
+      "pl": "Trzy modele lokalne przez ten sam sprawdzian 18 przypadków (Bielik 11B, Qwen 2.5 14B, Gemma 3 12B), wszystkie nadają się do pracy; pusta albo urwana odpowiedź modelu oznacza teraz niedostępny model i agent wraca do reguł."
     }
   },
   "messages": []

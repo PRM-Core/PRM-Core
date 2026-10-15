@@ -143,7 +143,30 @@ export async function chatCompletions(
     );
   }
 
-  const body = await response.json();
+  // A server under memory pressure can drop the connection mid-answer or
+  // send nothing at all: that is the model being unavailable, and callers
+  // fall back on their rules for an AiProviderError, not for a SyntaxError.
+  let body: {
+    choices?: {
+      message?: {
+        content?: string | null;
+        tool_calls?: { id: string; function: { name: string; arguments: string } }[];
+      };
+      finish_reason?: string;
+    }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number };
+  };
+  try {
+    body = await response.json();
+  } catch (err) {
+    throw new AiProviderError(
+      t("{label} zwrócił niepełną odpowiedź: {detail}", {
+        label: target.label,
+        detail: err instanceof Error ? err.message : String(err),
+      }),
+      target.providerId,
+    );
+  }
   const choice = body?.choices?.[0];
   const rawCalls = choice?.message?.tool_calls ?? [];
 

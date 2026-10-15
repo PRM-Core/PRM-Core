@@ -188,21 +188,36 @@ The local adapter speaks the OpenAI chat-completions protocol, so any of
 Ollama, vLLM, LM Studio or llama.cpp works unchanged. The product does not
 ship a model; it documents what works.
 
-**Measured (2.10.0):** Bielik 11B v2.3 Instruct, Q4_K_M (6.7 GB), on Ollama,
-on an Apple M2 with 16 GB RAM and no discrete GPU. The evaluation harness
-(section 8), all 18 cases:
+**Measured (2.11.0):** three open-weights models on Ollama, on an Apple M2
+with 16 GB of unified memory and no discrete GPU, one model in memory at a
+time. The evaluation harness (section 8), all 18 cases, the same code and
+prompts for each:
 
-|                           | first run | after tuning |
-| ------------------------- | --------- | ------------ |
-| Polish (`PRM_LOCALE=pl`)  | 11/18     | 17/18        |
-| English (`PRM_LOCALE=en`) | 8/18      | 18/18        |
+| Model (Ollama tag, 4-bit)                                      | Size   | Polish | English | Time PL / EN  |
+| -------------------------------------------------------------- | ------ | ------ | ------- | ------------- |
+| Bielik 11B v2.3 (`SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M`) | 6.7 GB | 17/18  | 17/18   | 7.7 / 3.9 min |
+| Qwen 2.5 14B (`qwen2.5:14b-instruct-q4_K_M`)                   | 9.0 GB | 18/18  | 18/18   | 5.0 / 4.0 min |
+| Gemma 3 12B (`gemma3:12b`)                                     | 8.1 GB | 18/18  | 18/18   | 7.4 / 3.9 min |
 
-The first English run predates any tuning; the first Polish run came after
-one round of fixes. The remaining Polish failure is a reply that invented
-two web addresses for the clinic — grounding caught both, so in the product
-the suggestion is flagged, not sent. The same case passed on the run
-before: at this size a model varies between runs, which is why the checks
-live in code.
+All three are usable. Bielik's misses were one case per language, and
+the checks in code caught both: a Polish draft with an invented number
+(refused, nothing sent) and an English brief opening with two percentages
+not in the data (dropped; the brief keeps the code's numbers). A miss at
+this size moves between cases from run to run — in 2.10.0 it was a reply
+with two invented web addresses — which is why the checks live in code.
+Bielik is the smallest and was trained for Polish; Qwen and Gemma had no
+miss in this round, Qwen was the fastest in Polish.
+
+**One model in memory at a time.** Ollama keeps a model loaded for five
+minutes after its last request. Two models of this size together fill
+16 GB: the first Gemma run, started while Qwen was still loaded, took
+3.4 hours instead of 7 minutes and lost five cases to timeouts and
+truncated answers. On a 16 GB server set `OLLAMA_MAX_LOADED_MODELS=1`,
+and since 2.11.0 an empty or cut-off answer is "model unavailable" — the
+agent falls back on its rules — rather than an error.
+
+Tuning history (Bielik, 2.10.0): the first English run scored 8/18 before
+any tuning, the first Polish run 11/18 after one round of fixes.
 
 What the first runs taught, and where it now lives in code rather than in
 a prompt: a small model greets the patient by the pseudonym it was shown
@@ -216,15 +231,15 @@ middle of a line (the parser accepts it). A brief is opened by the model in
 Setup used — the server listens on loopback only:
 
 ```bash
-OLLAMA_HOST=127.0.0.1:11434 ollama serve
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
 ollama pull SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M
 PRM_AI_MODE=local PRM_AI_LOCAL_URL=http://127.0.0.1:11434/v1 PRM_AI_LOCAL_MODEL=SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M PRM_LOCALE=pl bun run agent:eval
 ```
 
-- Other candidates worth the same run: Qwen 2.5 / 3 in the 7–14B range and
-  Gemma 3 12B. The harness decides, not a brand name.
-- Hardware: an 11B model at 4 bits answers a case in seconds on 16 GB of
-  unified memory; on a CPU-only server expect tens of seconds for a draft.
+- Swap the model by changing `PRM_AI_LOCAL_MODEL` and run the harness
+  again; it decides, not a brand name.
+- Hardware: an 11–14B model at 4 bits answers a case in about 13–26 seconds
+  on 16 GB of unified memory; a CPU-only server has not been measured yet.
   Signals and predictions need none of this.
 - Enterprise can supply and size the model host inside the clinic's
   perimeter; Community brings its own endpoint.

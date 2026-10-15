@@ -142,6 +142,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   with what failed moved into code (medical advice, internal identifiers,
   triage owner and urgency, the knowledge-base marker). Results and setup in
   `docs/AGENT.md`.
+- **Three models compared** — Bielik 11B, Qwen 2.5 14B and Gemma 3 12B
+  through the same 18 cases on a 16 GB machine, one model in memory at a
+  time; all three usable, results in `docs/AGENT.md`.
 
 ### Next
 
@@ -149,9 +152,10 @@ The order is what stands between the agent and "ready": first proof that
 it writes well, then the dimensions and inputs the website promises, then
 the rest.
 
-1. **More models through the harness** — Qwen and Gemma in the 7–14B
-   range, and a CPU-only server, so the documentation can name what each
-   hardware tier can run. _(help wanted)_
+1. **A CPU-only server through the harness** — the three models are
+   measured on 16 GB of unified memory; a clinic server without a GPU is
+   the next hardware tier to measure, so the documentation can say what
+   it runs and how fast. _(help wanted)_
 
 ## Security
 

@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.11.0] — Trzy modele lokalne przez sprawdzian: Bielik, Qwen, Gemma
+
+Ten sam sprawdzian 18 przypadków, ten sam kod i te same prompty, trzy
+modele na Ollamie (Apple M2, 16 GB, jeden model w pamięci naraz):
+
+| Model           | Polski | Angielski | Czas PL / EN  |
+| --------------- | ------ | --------- | ------------- |
+| Bielik 11B v2.3 | 17/18  | 17/18     | 7,7 / 3,9 min |
+| Qwen 2.5 14B    | 18/18  | 18/18     | 5,0 / 4,0 min |
+| Gemma 3 12B     | 18/18  | 18/18     | 7,4 / 3,9 min |
+
+Wszystkie trzy nadają się do pracy. Oba błędy Bielika złapał kod: draft
+z wymyśloną liczbą (odmowa, nic nie wysłano) i wstęp briefu z procentami
+spoza danych (pominięty, brief zostaje z liczbami z kodu). Szczegóły
+i konfiguracja w docs/AGENT.md, sekcja 7.
+
+- **Niepełna odpowiedź modelu to „model niedostępny”, nie błąd.** Serwer
+  pod presją pamięci potrafi zerwać połączenie w połowie odpowiedzi albo
+  nie wysłać nic. Wcześniej kończyło się to błędem składni JSON, którego
+  triaż i agent nie traktowały jak niedostępności modelu; teraz wracają do
+  reguł, jak przy każdej innej awarii modelu.
+- **Jeden model w pamięci naraz** na serwerze 16 GB
+  (`OLLAMA_MAX_LOADED_MODELS=1`): dwa modele tej wielkości razem
+  wypełniają pamięć — pierwszy przebieg Gemmy, uruchomiony, gdy Qwen był
+  jeszcze załadowany, trwał 3,4 godziny zamiast 7 minut.
+
 ## [2.10.0] — Prawdziwy model lokalny przez sprawdzian: Bielik 11B
 
 Pierwszy przebieg 18 przypadków sprawdzianu na prawdziwym modelu w sieci
