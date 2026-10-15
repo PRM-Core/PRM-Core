@@ -145,6 +145,9 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Three models compared** — Bielik 11B, Qwen 2.5 14B and Gemma 3 12B
   through the same 18 cases on a 16 GB machine, one model in memory at a
   time; all three usable, results in `docs/AGENT.md`.
+- **One model, chosen** — Bielik 11B as the starting point (smallest,
+  trained for Polish, every miss caught in code); measured without a GPU
+  too: the same quality at about twice the time.
 
 ### Next
 
@@ -152,10 +155,9 @@ The order is what stands between the agent and "ready": first proof that
 it writes well, then the dimensions and inputs the website promises, then
 the rest.
 
-1. **A CPU-only server through the harness** — the three models are
-   measured on 16 GB of unified memory; a clinic server without a GPU is
-   the next hardware tier to measure, so the documentation can say what
-   it runs and how fast. _(help wanted)_
+1. **A clinic server through the harness** — measured so far on a laptop
+   (with and without its GPU); a typical clinic server with DDR4 memory
+   is the number the documentation still estimates. _(help wanted)_
 
 ## Security
 

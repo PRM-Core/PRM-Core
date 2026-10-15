@@ -208,6 +208,30 @@ with two invented web addresses — which is why the checks live in code.
 Bielik is the smallest and was trained for Polish; Qwen and Gemma had no
 miss in this round, Qwen was the fastest in Polish.
 
+**Where to start: Bielik 11B.** One model is enough for every capability
+of the agent. Bielik is the smallest of the three (6.7 GB), so a 16 GB
+server keeps the most room for the database and the application — and
+memory was the only serious failure in these runs. It was trained for
+Polish, and the harness checks the rules, not how natural the Polish
+reads. Its misses differ from run to run and the code caught every one.
+Qwen 2.5 14B scored 18/18 and is the alternative where there is memory to
+spare; switching is one `ollama pull` and one line in `.env`.
+
+**Without a GPU.** The same Bielik, forced onto the processor alone
+(`PARAMETER num_gpu 0` in an Ollama Modelfile), on the same M2:
+
+| Bielik 11B, CPU only | Polish | English | Time PL / EN   | Speed                                     |
+| -------------------- | ------ | ------- | -------------- | ----------------------------------------- |
+| Apple M2, 8 cores    | 18/18  | 17/18   | 13.4 / 5.7 min | ~19 tokens/s reading, ~7 tokens/s writing |
+
+Quality does not depend on where the model runs; time does — about twice
+as long here, a draft in under a minute. The English miss was again a
+brief opening with a number not in the data, dropped by the code. The M2
+has unusually fast memory for a CPU; a typical clinic server with two
+channels of DDR4 writes at perhaps half that speed, which still suits
+drafts, the brief and triage, since none of them is waited on live. The
+local adapter allows a request five minutes for this reason.
+
 **One model in memory at a time.** Ollama keeps a model loaded for five
 minutes after its last request. Two models of this size together fill
 16 GB: the first Gemma run, started while Qwen was still loaded, took
@@ -231,7 +255,7 @@ middle of a line (the parser accepts it). A brief is opened by the model in
 Setup used — the server listens on loopback only:
 
 ```bash
-OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 ollama serve
 ollama pull SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M
 PRM_AI_MODE=local PRM_AI_LOCAL_URL=http://127.0.0.1:11434/v1 PRM_AI_LOCAL_MODEL=SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M PRM_LOCALE=pl bun run agent:eval
 ```
@@ -239,7 +263,8 @@ PRM_AI_MODE=local PRM_AI_LOCAL_URL=http://127.0.0.1:11434/v1 PRM_AI_LOCAL_MODEL=
 - Swap the model by changing `PRM_AI_LOCAL_MODEL` and run the harness
   again; it decides, not a brand name.
 - Hardware: an 11–14B model at 4 bits answers a case in about 13–26 seconds
-  on 16 GB of unified memory; a CPU-only server has not been measured yet.
+  on 16 GB of unified memory with its GPU, and in about 20–45 seconds on
+  the processor alone.
   Signals and predictions need none of this.
 - Enterprise can supply and size the model host inside the clinic's
   perimeter; Community brings its own endpoint.
