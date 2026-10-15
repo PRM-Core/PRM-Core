@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.9.0",
+    "version": "2.10.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.9.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.10.0",
     "notes": {
-      "en": "Model limits counted in runs a day, not money: one for the installation and one per automation; past them, model steps are skipped until midnight and agent nodes take the first path.",
-      "pl": "Limity modelu liczone w uruchomieniach na dobę, nie w pieniądzach: dla instalacji i per automatyzacja; po przekroczeniu kroki z modelem są pomijane do północy, a węzły agenta idą pierwszą ścieżką."
+      "en": "PRM_Agent measured on a real local model (Bielik 11B on Ollama): what a small model gets wrong now lives in code — no medical advice, no internal identifiers, triage owner from the topic — and {{firstName}} is filled in agent messages.",
+      "pl": "PRM_Agent sprawdzony na prawdziwym modelu lokalnym (Bielik 11B na Ollamie): to, co mały model myli, pilnuje teraz kod — bez porad medycznych, bez identyfikatorów wewnętrznych, właściciel w triażu z tematu — a {{firstName}} jest podstawiane w wiadomościach agenta."
     }
   },
   "messages": []

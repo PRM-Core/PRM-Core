@@ -186,15 +186,46 @@ layer.
 
 The local adapter speaks the OpenAI chat-completions protocol, so any of
 Ollama, vLLM, LM Studio or llama.cpp works unchanged. The product does not
-ship a model; it documents what works:
+ship a model; it documents what works.
 
-- Polish and English drafts: an open-weights model with good Polish —
-  candidates to evaluate include Bielik (Polish), Qwen 2.5 / 3 in the
-  7–14B range and Gemma 3 12B. The evaluation harness (section 8) decides,
-  not a brand name.
-- Hardware: a 7–8B model quantised to 4 bits drafts a message in a few
-  seconds on a CPU-only server with 16 GB RAM; a modest GPU brings it under
-  a second. Signals and predictions need none of this.
+**Measured (2.10.0):** Bielik 11B v2.3 Instruct, Q4_K_M (6.7 GB), on Ollama,
+on an Apple M2 with 16 GB RAM and no discrete GPU. The evaluation harness
+(section 8), all 18 cases:
+
+|                           | first run | after tuning |
+| ------------------------- | --------- | ------------ |
+| Polish (`PRM_LOCALE=pl`)  | 11/18     | 17/18        |
+| English (`PRM_LOCALE=en`) | 8/18      | 18/18        |
+
+The first English run predates any tuning; the first Polish run came after
+one round of fixes. The remaining Polish failure is a reply that invented
+two web addresses for the clinic — grounding caught both, so in the product
+the suggestion is flagged, not sent. The same case passed on the run
+before: at this size a model varies between runs, which is why the checks
+live in code.
+
+What the first runs taught, and where it now lives in code rather than in
+a prompt: a small model greets the patient by the pseudonym it was shown
+(identifiers are refused), writes doses when a template asks for them
+(medical advice is refused), invents a phone number and an e-mail address
+(grounding catches them), routes results to the front desk (the owner
+follows the topic), and puts the "not in the knowledge base" marker in the
+middle of a line (the parser accepts it). A brief is opened by the model in
+2–4 sentences; the numbers stay the code's.
+
+Setup used — the server listens on loopback only:
+
+```bash
+OLLAMA_HOST=127.0.0.1:11434 ollama serve
+ollama pull SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M
+PRM_AI_MODE=local PRM_AI_LOCAL_URL=http://127.0.0.1:11434/v1 PRM_AI_LOCAL_MODEL=SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M PRM_LOCALE=pl bun run agent:eval
+```
+
+- Other candidates worth the same run: Qwen 2.5 / 3 in the 7–14B range and
+  Gemma 3 12B. The harness decides, not a brand name.
+- Hardware: an 11B model at 4 bits answers a case in seconds on 16 GB of
+  unified memory; on a CPU-only server expect tens of seconds for a draft.
+  Signals and predictions need none of this.
 - Enterprise can supply and size the model host inside the clinic's
   perimeter; Community brings its own endpoint.
 

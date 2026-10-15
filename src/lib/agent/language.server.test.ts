@@ -97,7 +97,6 @@ describe("polishBrief", () => {
     expect(r.ok).toBe(false);
     const log = await getDb().select().from(engineLog);
     const agent = log.find((l) => l.kind === "agent");
-    expect(agent?.detail?.missing).toBe("12");
     expect(agent?.detail?.invented).toBe("21");
   });
 

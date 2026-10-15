@@ -40,14 +40,27 @@ export async function runEvaluation(input: {
       });
       continue;
     }
-    const verdict = c.check(r.text);
+    let output = r.text;
+    let verdict = c.check(output);
+    if (!verdict.ok && c.retry) {
+      const again = await askModel(
+        c.system,
+        c.retry(output, verdict.reason),
+        c.maxTokens,
+        `eval:${c.id}`,
+      );
+      if (again.ok) {
+        output = again.text;
+        verdict = c.check(output);
+      }
+    }
     report.push({
       id: c.id,
       feature: c.feature,
       title: c.title,
       ok: verdict.ok,
       reason: verdict.reason,
-      output: r.text.slice(0, 2000),
+      output: output.slice(0, 2000),
     });
   }
   const row: AgentEvaluationRow = {

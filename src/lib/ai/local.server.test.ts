@@ -46,6 +46,9 @@ describe("localProvider", () => {
     const body = JSON.parse(String(calls[0].init.body));
     expect(body.model).toBe("test-model");
     expect(body.tools).toBeUndefined();
+    // The cap under both names — local servers read `max_tokens`.
+    expect(body.max_tokens).toBe(100);
+    expect(body.max_completion_tokens).toBe(100);
   });
 
   test("refuses a public host even when the mode says local", async () => {

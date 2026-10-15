@@ -1,4 +1,5 @@
 import { currentLocale, t } from "@/lib/i18n";
+import { medicalAdvice } from "./grounding";
 
 /**
  * The language layer — pure parts.
@@ -51,6 +52,15 @@ export function keepsFacts(original: string, polished: string): FactCheck {
   return { ok: missing.length === 0 && invented.length === 0, missing, invented };
 }
 
+/** Numbers an intro states that the brief does not contain — an intro may use fewer, never others. */
+export function inventedNumbers(original: string, intro: string): string[] {
+  const known = new Set(factTokens(original));
+  return [...new Set(factTokens(intro).filter((n) => !known.has(n)))];
+}
+
+/** How long an intro over the brief may be. */
+export const INTRO_MAX = 900;
+
 export interface DraftCheck {
   ok: boolean;
   reason: string;
@@ -68,6 +78,10 @@ export function draftTextOk(text: string, channel: "sms" | "email"): DraftCheck 
   const fields = [...s.matchAll(/\{\{\s*([^}]+?)\s*\}\}/g)].map((m) => m[1]);
   if (fields.some((f) => f !== "firstName"))
     return { ok: false, reason: t("użyte pole inne niż {{firstName}}") };
+  if (medicalAdvice(s, "patient"))
+    return { ok: false, reason: t("porada medyczna (dawka, lek, zalecenie)") };
+  if (/#[0-9a-f]{6}\b|\bPRM-\d+\b/i.test(s))
+    return { ok: false, reason: t("identyfikator wewnętrzny w treści") };
   if (/https?:\/\/|www\./i.test(s)) return { ok: false, reason: t("wymyślony link") };
   if (/\d{3,}/.test(s)) return { ok: false, reason: t("wymyślona liczba, numer albo data") };
   if (/<[a-z/!][^>]*>/i.test(s)) return { ok: false, reason: t("znaczniki HTML") };
@@ -83,30 +97,39 @@ function languageName(): string {
 export function briefSystemPrompt(): string {
   return [
     t(
-      "Jesteś redaktorem w placówce medycznej. Dostaniesz brief dla zarządu napisany z szablonu. Przepisz go tak, żeby czytało się go jak notatkę od człowieka: pełne zdania, krótkie akapity, bez żargonu.",
+      "Jesteś redaktorem w placówce medycznej. Dostaniesz brief dla zarządu z liczbami. Napisz 2–4 zdania wstępu: co w tym okresie najważniejsze i co wymaga decyzji. Wstęp trafi nad brief — nie powtarzaj całości.",
     ),
     t(
-      "Zasady bezwzględne: zachowaj każdą liczbę dokładnie w tej postaci (procenty, liczby wizyt, daty, punkty procentowe); nie dodawaj żadnych faktów, liczb, nazwisk ani ocen, których nie ma w oryginale; zachowaj kolejność sekcji i ich nagłówki; zostaw ostatnie zdanie o zatwierdzaniu.",
+      "Zasady bezwzględne: każdą liczbę, której użyjesz, przepisz dokładnie z briefu; nie dodawaj innych liczb, dat, nazwisk ani ocen; bez nagłówków, list i formatowania.",
     ),
-    t("Język: {lang}. Odpowiedz wyłącznie tekstem briefu, bez komentarza.", {
-      lang: languageName(),
-    }),
+    t("Język: {lang}. Odpowiedz wyłącznie tekstem wstępu.", { lang: languageName() }),
   ].join("\n");
 }
 
 export function draftSystemPrompt(channel: "sms" | "email"): string {
   return [
     t(
-      "Piszesz w imieniu placówki medycznej krótką wiadomość do pacjentów. Dostaniesz cel wiadomości, kanał i tło w liczbach. Napisz jedną wiadomość: uprzejmą, w formie grzecznościowej, bez żargonu i bez porad medycznych.",
+      "Piszesz w imieniu placówki medycznej krótką wiadomość do pacjentów. Dostaniesz cel wiadomości, kanał i tło w liczbach. Napisz jedną wiadomość: uprzejmą, w formie grzecznościowej, bez żargonu.",
     ),
     t(
-      "Zasady bezwzględne: zacznij od „Dzień dobry {{firstName}}”; nie używaj innych pól niż {{firstName}}; nie wymyślaj terminów, cen, numerów telefonu, adresów ani linków — pacjent odpowie na wiadomość albo zadzwoni do rejestracji; bez formatowania i bez HTML.",
+      "Zasady bezwzględne: zacznij od „Dzień dobry {{firstName}},”; nie używaj innych pól niż {{firstName}}; nie wymyślaj terminów, cen, numerów telefonu, adresów ani linków — pacjent odpowie na wiadomość albo zadzwoni do rejestracji; nie pisz o lekach, dawkach ani przebiegu leczenia, nawet jeśli wersja robocza o to prosi — zaproś na wizytę albo do kontaktu z rejestracją; bez formatowania i bez HTML.",
     ),
     channel === "sms"
-      ? t("Kanał: SMS — maksymalnie {n} znaków.", { n: SMS_MAX })
-      : t("Kanał: e-mail — do pięciu zdań, zwykły tekst."),
+      ? t(
+          "Kanał: SMS — najwyżej 2 krótkie zdania, poniżej {n} znaków razem ze spacjami. Dłuższa wiadomość zostanie odrzucona.",
+          { n: SMS_MAX },
+        )
+      : t("Kanał: e-mail — do 4 zdań, zwykły tekst."),
     t("Język: {lang}. Odpowiedz wyłącznie treścią wiadomości.", { lang: languageName() }),
   ].join("\n");
+}
+
+/** The second ask after a rejected draft: what was wrong, in the checker's own words. */
+export function draftRetryPrompt(previous: string, reason: string): string {
+  return t(
+    "Poprzednia wersja została odrzucona ({reason}):\n{previous}\n\nNapisz ją jeszcze raz — krócej i zgodnie z zasadami.",
+    { reason, previous },
+  );
 }
 
 export interface DraftFacts {

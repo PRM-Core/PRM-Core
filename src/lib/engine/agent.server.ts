@@ -4,10 +4,10 @@ import { contacts, engineEvents, contactNotes } from "../db/schema";
 import type { ContactRow } from "../db/schema";
 import type { AutomationNode } from "../automation-flow";
 import { addNote } from "../notes/notes.server";
-import { applySegmentChange, applyTagChange, DNC_TAG } from "./actions.server";
+import { applySegmentChange, applyTagChange, DNC_TAG, sampleFromContact } from "./actions.server";
 import { ensureLabelSegment, listSegmentOptions } from "../segments/segments.server";
 import { emailSettings } from "../db/schema";
-import { escapeHtmlText } from "../content-builder";
+import { escapeHtmlText, resolvePersonalizationInText } from "../content-builder";
 import { sendEmail, SendGridError } from "../email/sendgrid.server";
 import { sendSms, TwilioError } from "../sms/twilio.server";
 import {
@@ -20,7 +20,7 @@ import { recordOutboundMessage } from "../inbox/inbox.server";
 import { resolveReplySmsSender } from "../sms/senders.server";
 import { checkConsent } from "../consent/consent.server";
 import { knowledgeForPrompt, knowledgeSources, recordGap } from "../ai/knowledge.server";
-import { splitMissing, ungrounded } from "../agent/grounding";
+import { leakedIdentifiers, medicalAdvice, splitMissing, ungrounded } from "../agent/grounding";
 import { logStep } from "./log.server";
 import { automationOverLimit, getAiConfig, isOverDailyLimit } from "../ai/settings.server";
 import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "../ai/provider.server";
@@ -408,7 +408,20 @@ async function runTool(
           { list: unverified.join(", ") },
         );
       }
-      const result = await sendAgentMessage({ ...input, text }, contact);
+      if (medicalAdvice(text, "patient"))
+        return t(
+          "Odmowa: treść wygląda na poradę medyczną (dawka, lek, zalecenie). Nie wysłano nic. Zaproponuj kontakt z lekarzem albo rejestracją.",
+        );
+      const leaked = leakedIdentifiers(text);
+      if (leaked.length > 0)
+        return t(
+          "Odmowa: treść zawiera identyfikator wewnętrzny ({list}), którego pacjent nie może dostać. Nie wysłano nic. Zwróć się do pacjenta przez {{firstName}} albo „Dzień dobry”.",
+          { list: leaked.join(", ") },
+        );
+      // The model writes {{firstName}} — it never sees the name — and the
+      // name goes in here, at the last moment, as in every template.
+      const personal = resolvePersonalizationInText(text, sampleFromContact(contact));
+      const result = await sendAgentMessage({ ...input, text: personal }, contact);
       applied.push(t("wiadomość ({v0})", { v0: String(input.channel ?? "email") }));
       return result;
     }

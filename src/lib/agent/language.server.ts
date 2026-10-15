@@ -11,10 +11,13 @@ import {
   draftSystemPrompt,
   draftTextOk,
   draftUserPrompt,
-  keepsFacts,
+  inventedNumbers,
+  INTRO_MAX,
+  draftRetryPrompt,
   type DraftFacts,
 } from "./language";
 import { DIRECTIONS } from "./directions";
+import { fitSentences } from "./grounding";
 import { examplesFor, isEnabled } from "./directions.server";
 import type { DirectionKey } from "../db/schema";
 import { t } from "@/lib/i18n";
@@ -30,7 +33,7 @@ import { t } from "@/lib/i18n";
  * engine log says why.
  */
 
-const BRIEF_TOKENS = 1500;
+const BRIEF_TOKENS = 400;
 const DRAFT_TOKENS = 400;
 
 export type Gate = { ok: true; config: ResolvedAiConfig } | { ok: false; reason: string };
@@ -125,7 +128,12 @@ export async function askModel(
   );
 }
 
-/** The brief in plain language — accepted only when every number survived and none appeared. */
+/**
+ * The brief with an opening in plain language. A small model cannot be
+ * trusted to rewrite a page of numbers faithfully, so it writes only the
+ * opening — what matters this week — and the template follows unchanged.
+ * Accepted when the opening uses no number the brief does not contain.
+ */
 export async function polishBrief(text: string): Promise<Rewrite> {
   const gate = await modelGate("brief_by_model");
   if (!gate.ok) return gate;
@@ -138,20 +146,26 @@ export async function polishBrief(text: string): Promise<Rewrite> {
     t("PRM_Agent: brief wygładzony przez model."),
   );
   if (!r.ok) return r;
-  const check = keepsFacts(text, r.text);
-  if (!check.ok) {
+  // A model asked for "2–4 sentences" often writes ten: keep the whole
+  // sentences that fit, never a cut one.
+  const intro = fitSentences(r.text, INTRO_MAX);
+  const invented = inventedNumbers(text, intro);
+  if (invented.length > 0 || !intro) {
     await logStep({
       kind: "agent",
       message: t("Model nie zachował liczb w briefie — zostaje wersja z szablonu."),
       detail: {
         feature: "agent-brief",
-        missing: check.missing.join(", "),
-        invented: check.invented.join(", "),
+        invented: invented.join(", "),
+        length: String(intro.length),
       },
     });
-    return { ok: false, reason: t("model zmienił liczby") };
+    return {
+      ok: false,
+      reason: invented.length > 0 ? t("model zmienił liczby") : t("pusty wstęp"),
+    };
   }
-  return r;
+  return { ...r, text: `${intro}\n\n${text}` };
 }
 
 /** A draft message from the facts behind a signal — accepted only when the draft checks pass. */
@@ -170,7 +184,24 @@ export async function writeDraftText(facts: DraftFacts): Promise<Rewrite> {
     t("PRM_Agent: treść draftu „{title}” napisana przez model.", { title: facts.title }),
   );
   if (!r.ok) return r;
-  const check = draftTextOk(r.text, facts.channel);
+  let text = r.text;
+  let check = draftTextOk(text, facts.channel);
+  // A local model often fixes what it is told was wrong: one more try with
+  // the checker's reason, then the template stands.
+  if (!check.ok) {
+    const again = await ask(
+      gate.config,
+      draftSystemPrompt(facts.channel),
+      `${draftUserPrompt(facts)}\n\n${draftRetryPrompt(text, check.reason)}`,
+      DRAFT_TOKENS,
+      "agent-draft",
+      t("PRM_Agent: treść draftu „{title}” — druga próba.", { title: facts.title }),
+    );
+    if (again.ok) {
+      text = again.text;
+      check = draftTextOk(text, facts.channel);
+    }
+  }
   if (!check.ok) {
     await logStep({
       kind: "agent",
@@ -182,5 +213,5 @@ export async function writeDraftText(facts: DraftFacts): Promise<Rewrite> {
     });
     return { ok: false, reason: check.reason };
   }
-  return r;
+  return { ...r, text };
 }

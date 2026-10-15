@@ -170,21 +170,43 @@ export function triageByRules(text: string): Triage {
 export function parseModelTriage(raw: string): Triage | null {
   const m = raw.match(/\{[\s\S]*\}/);
   if (!m) return null;
-  let obj: unknown;
-  try {
-    obj = JSON.parse(m[0]);
-  } catch {
-    return null;
+  let o: Record<string, unknown> | null = null;
+  // A small model's JSON is often almost JSON: escaped quotes, a comma for a
+  // colon. Strict first, then forgiving — but only the three fields, each
+  // checked against its vocabulary below, ever count.
+  for (const candidate of [m[0], m[0].replace(/\\"/g, '"')]) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object") {
+        o = parsed as Record<string, unknown>;
+        break;
+      }
+    } catch {
+      // try the next form
+    }
   }
-  if (!obj || typeof obj !== "object") return null;
-  const o = obj as Record<string, unknown>;
+  if (!o) {
+    const field = (name: string) =>
+      new RegExp(`"${name}"\\s*[:,]\\s*"([^"]*)"`, "i").exec(m[0].replace(/\\"/g, '"'))?.[1];
+    o = {
+      urgency: field("urgency"),
+      topic: field("topic"),
+      owner: field("owner"),
+      reason: field("reason"),
+    };
+  }
   const urgency = String(o.urgency ?? "").toLowerCase() as TriageUrgency;
   const topic = String(o.topic ?? "").toLowerCase() as TriageTopic;
   const owner = String(o.owner ?? "").toLowerCase() as TriageOwner;
-  if (!URGENCIES.includes(urgency) || !TOPICS.includes(topic) || !OWNERS.includes(owner))
-    return null;
+  if (!URGENCIES.includes(urgency) || !TOPICS.includes(topic)) return null;
+  // Who takes it follows from what it is about — a rule, so the code applies
+  // it; a model's owner counts only where the rule leaves a choice ("other").
+  const ruled = topic === "other" && OWNERS.includes(owner) ? owner : OWNER_OF[topic];
   const reason = typeof o.reason === "string" ? o.reason.trim().slice(0, 200) : "";
-  return { urgency, topic, owner, reason };
+  // "Low" means nothing to do; a message about a visit, a result, a bill or a
+  // complaint always has something to do, whatever the model said.
+  const floor = urgency === "low" && topic !== "other" ? "normal" : urgency;
+  return { urgency: floor, topic, owner: ruled, reason };
 }
 
 /** The message as the model sees it, with the team's own verdicts as examples when there are any. */
@@ -210,10 +232,16 @@ export function triageSystemPrompt(): string {
       "Pomagasz rejestracji placówki medycznej uporządkować wiadomości od pacjentów. Dostaniesz treść ostatnich wiadomości pacjenta (dane osobowe zastąpione symbolami). Oceń: jak pilna jest sprawa, czego dotyczy i kto powinien ją przejąć.",
     ),
     t(
-      "Pilność: high — zdrowie lub dzisiejszy termin wymaga reakcji teraz; normal — zwykła sprawa; low — podziękowanie albo nic do zrobienia. Temat: appointment, cancellation, results, prescription, complaint, billing, other. Właściciel: reception, doctor, billing, manager.",
+      "Pilność: high — zdrowie lub dzisiejszy termin wymaga reakcji teraz; normal — sprawa do załatwienia (każda prośba o termin, zmianę albo odwołanie wizyty, pytanie, skarga); low — tylko podziękowanie albo wiadomość, przy której nie ma nic do zrobienia.",
     ),
     t(
-      'Nie udzielasz porad medycznych i nie odpowiadasz pacjentowi. Odpowiedz wyłącznie JSON w jednej linii: {"urgency":"…","topic":"…","owner":"…","reason":"jedno zdanie dla rejestracji"}. Język zdania: {lang}.',
+      "Temat: appointment — umówienie nowej wizyty; cancellation — odwołanie, przełożenie albo zmiana terminu już umówionej wizyty; results — wyniki badań; prescription — recepta, leki, dawki; complaint — skarga, niezadowolenie; billing — płatności, faktury, ceny; other — pozostałe.",
+    ),
+    t(
+      "Właściciel wynika z tematu: results i prescription → doctor; complaint → manager; billing → billing; pozostałe → reception.",
+    ),
+    t(
+      'Nie udzielasz porad medycznych i nie odpowiadasz pacjentowi; w uzasadnieniu nie powtarzaj nazw leków ani dawek. Odpowiedz wyłącznie JSON w jednej linii: {"urgency":"…","topic":"…","owner":"…","reason":"jedno zdanie dla rejestracji"}. Język zdania: {lang}.',
       { lang: currentLocale() === "en" ? "English" : "polski" },
     ),
   ].join("\n");

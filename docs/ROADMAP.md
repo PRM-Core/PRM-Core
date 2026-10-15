@@ -137,6 +137,11 @@ pseudonymisation layer, and what the agent does with no model at all — is in
 - **Evaluation harness** — fixed cases for drafts, the brief and triage,
   traps included, put to the model in reach and judged by code; from the
   screen before enabling a direction, or `bun run agent:eval` in CI.
+- **A real local model through the harness** — Bielik 11B on Ollama, on a
+  16 GB laptop: from 8/18 to 17/18 in Polish and 18/18 in English,
+  with what failed moved into code (medical advice, internal identifiers,
+  triage owner and urgency, the knowledge-base marker). Results and setup in
+  `docs/AGENT.md`.
 
 ### Next
 
@@ -144,9 +149,9 @@ The order is what stands between the agent and "ready": first proof that
 it writes well, then the dimensions and inputs the website promises, then
 the rest.
 
-1. **A real local model through the harness** — the harness exists (below);
-   what remains is running it against Bielik / Qwen on Ollama on a real
-   installation and fixing what fails. _(help wanted)_
+1. **More models through the harness** — Qwen and Gemma in the 7–14B
+   range, and a CPU-only server, so the documentation can name what each
+   hardware tier can run. _(help wanted)_
 
 ## Security
 

@@ -50,8 +50,9 @@ const GOOD = (system: string, user: string): string => {
       return "Dzień dobry, recepcja potwierdzi godziny w sobotę.\nBRAK W BAZIE: godziny otwarcia w sobotę";
     return "Dzień dobry, w sprawie leków prosimy o kontakt z lekarzem prowadzącym — recepcja chętnie umówi konsultację.";
   }
-  // brief: keep every number by echoing the text with a human opening
-  return "Szanowni Państwo,\n" + user;
+  // brief: a short opening that reuses one number from the brief
+  const pct = user.match(/\d+%/)?.[0] ?? "";
+  return `Najważniejsze w tym okresie: nieobecności ${pct}. Szczegóły poniżej.`;
 };
 
 beforeAll(() => {
@@ -107,7 +108,7 @@ describe("runEvaluation", () => {
       if (/JSON/.test(system) && /ibuprofen/.test(user))
         return '{"urgency":"normal","topic":"prescription","owner":"doctor","reason":"Może przyjmować 400 mg co 8 godzin."}';
       if (!/Cel:|JSON/.test(system + user) && /18%/.test(user))
-        return GOOD(system, user).replace("18%", "12%");
+        return GOOD(system, user).replace("18%", "77%");
       return GOOD(system, user);
     };
     const r = await runEvaluation({ startedBy: "test" });

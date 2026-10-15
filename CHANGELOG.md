@@ -8,6 +8,57 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.10.0] — Prawdziwy model lokalny przez sprawdzian: Bielik 11B
+
+Pierwszy przebieg 18 przypadków sprawdzianu na prawdziwym modelu w sieci
+placówki — Bielik 11B v2.3 (Q4_K_M) na Ollamie, Apple M2 z 16 GB RAM, bez
+GPU w chmurze. Na start: **8/18**. Po poprawkach według raportu:
+**PL 17/18, EN 18/18**. Jedyny błąd po polsku to dwa wymyślone adresy
+stron w odpowiedzi — złapane przez sprawdzenie faktów, więc w produkcie
+sugestia zostałaby oznaczona, nie wysłana. Raport ujawnił trzy błędy produktu i kilka
+miejsc, w których mały model potrzebuje reguły w kodzie, a nie prośby
+w prompcie.
+
+**Błędy naprawione**
+
+- **Limit długości odpowiedzi nie działał na serwerach lokalnych.** Adapter
+  wysyłał tylko pole `max_completion_tokens`, które Ollama pomija — model
+  pisał, ile chciał, a jedno rozgadane zapytanie blokowało kolejne na
+  minuty. Teraz idzie też `max_tokens`, które czytają Ollama, llama.cpp
+  i LM Studio (sprawdzone: limit 8 → 8 tokenów zamiast 208).
+- **Węzeł agenta wysyłał `{{firstName}}` dosłownie.** Model nie zna imienia
+  (widzi pseudonim), pisze więc znacznik — a ten nie był podstawiany przed
+  wysyłką. Teraz imię trafia do treści w ostatniej chwili, jak w każdym
+  szablonie.
+- **Pseudonim i numer PRM w odpowiedziach.** Model witał pacjenta
+  „Panie #a1b2c3 (PRM-00001)”. Profil w promptcie skrzynki nie zawiera już
+  pseudonimu ani numeru; tekst z identyfikatorem wewnętrznym jest
+  odrzucany (agent) albo oznaczany (sugestia w skrzynce).
+
+**Reguły w kodzie zamiast próśb w promptcie**
+
+- **Porada medyczna** sprawdzana w kodzie dla pacjenta (dawki, leki,
+  „może Pani przyjąć”, „co 8 godzin”) i dla personelu (zalecenia, nie
+  wzmianki). Węzeł agenta jej nie wyśle; sugestia w skrzynce ją oznaczy.
+- **Triaż:** właściciel wynika z tematu (wyniki i recepty → lekarz, skarga
+  → kierownik, rozliczenia → płatności, reszta → rejestracja); model
+  wybiera go tylko przy temacie „inne”. Pilność „bez pośpiechu” tylko dla
+  wiadomości bez sprawy do załatwienia. Odpowiedź modelu w lekko
+  zepsutym JSON-ie jest czytana pole po polu.
+- **Brief:** model pisze 2–4 zdania wstępu, liczby zostają z kodu; wstęp
+  z liczbą spoza danych jest odrzucany, a brief zostaje bez wstępu.
+- **Drafty:** jedno ponowienie z powodem odrzucenia (za długi, porada,
+  identyfikator), potem odmowa — tak samo w produkcie i w sprawdzianie.
+- **„BRAK W BAZIE” w środku linii** jest rozpoznawany: tekst przed znacznikiem
+  zostaje, pytanie trafia na listę braków, reszta linii nie idzie do
+  pacjenta.
+- **Odpowiedź w skrzynce:** bez telefonów, e-maili i adresów spoza bazy
+  wiedzy; ani nie potwierdza, ani nie zaprzecza temu, czego baza nie mówi
+  (przykład w promptcie).
+
+Sprawdzian uruchamiany po polsku i po angielsku (`PRM_LOCALE=pl|en bun run
+agent:eval`); wyniki i konfiguracja w docs/AGENT.md, sekcja 7.
+
 ## [2.9.0] — Limity modelu: uruchomienia na dobę, dla instalacji i per automatyzacja
 
 Model w sieci placówki nie kosztuje nic za token, więc limit w dolarach

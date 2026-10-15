@@ -179,19 +179,50 @@ export function ungrounded(text: string, sources: string[]): Claim[] {
 /** The line a model writes when the base has no answer; never sent to a patient. */
 export const MISSING_MARKERS = ["BRAK W BAZIE:", "NOT IN KNOWLEDGE BASE:"];
 
-/** Split a model's text into what goes to the patient and the questions the base could not answer. */
+/**
+ * Split a model's text into what goes to the patient and the questions the
+ * base could not answer. The marker belongs on its own last line, but a small
+ * model also writes it mid-line ("…potwierdzi recepcja. BRAK W BAZIE: godziny
+ * w soboty.") — then what precedes it stays, the question runs to the end of
+ * its sentence, and whatever follows the marker is dropped: the marker was
+ * meant to be last, and nothing behind it was meant for the patient.
+ */
 export function splitMissing(text: string): { text: string; missing: string[] } {
   const missing: string[] = [];
   const kept: string[] = [];
+  let ended = false;
   for (const line of text.split("\n")) {
-    const trimmed = line.trim();
-    const marker = MISSING_MARKERS.find((m) => trimmed.toUpperCase().startsWith(m));
-    if (marker) {
-      const q = trimmed.slice(marker.length).trim();
+    if (ended) {
+      const q = markerQuestion(line.trim());
       if (q) missing.push(q);
-    } else kept.push(line);
+      continue;
+    }
+    const upper = line.toUpperCase();
+    const hits = MISSING_MARKERS.map((m) => ({ m, at: upper.indexOf(m) })).filter((h) => h.at >= 0);
+    if (hits.length === 0) {
+      kept.push(line);
+      continue;
+    }
+    const first = hits.reduce((a, b) => (b.at < a.at ? b : a));
+    const before = line.slice(0, first.at).trimEnd();
+    if (before) kept.push(before);
+    const q = markerQuestion(line.slice(first.at).trim());
+    if (q) missing.push(q);
+    // A marker on a line of its own may be followed by more marker lines;
+    // one inside a line ends what the patient gets.
+    if (before) ended = true;
   }
   return { text: kept.join("\n").trim(), missing };
+}
+
+/** The question after a marker, up to the end of its sentence; null when the text is no marker. */
+function markerQuestion(text: string): string | null {
+  const marker = MISSING_MARKERS.find((m) => text.toUpperCase().startsWith(m));
+  if (!marker) return null;
+  const rest = text.slice(marker.length).trim();
+  const end = rest.search(/[.!?](?:\s|$)/);
+  const q = (end >= 0 ? rest.slice(0, end + 1) : rest).replace(/\.$/, "").trim();
+  return q || null;
 }
 
 /** A question reduced to a key, so "Czy macie USG?" and "czy macie usg" are one gap. */
@@ -204,4 +235,44 @@ export function gapKey(question: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim()
     .slice(0, 120);
+}
+
+/**
+ * Internal identifiers that must never reach a patient: the pseudonym the
+ * model was shown instead of a name, and the record number. A small model
+ * likes to greet the patient with them.
+ */
+export function leakedIdentifiers(text: string): string[] {
+  return [...text.matchAll(/#[0-9a-f]{6}\b|\bPRM-\d+\b/gi)].map((m) => m[0]);
+}
+
+// A dose with its unit: "400 mg", "2 tabletki", "10 ml".
+const DOSE =
+  /\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|ml|g|tabl\w*|kaps\w*|kropl\w*|tablets?|capsules?|drops?)\b/iu;
+// Advice in its usual forms: permission to take, an instruction, a schedule.
+const ADVICE =
+  /\b(?:może|można|wolno|należy|proszę)\s+(?:\w+\s+){0,2}(?:przyjmować|przyjąć|brać|wziąć|zażywać|zażyć|odstawić|stosować)\b|\b(?:zażywaj|przyjmuj|bierz|odstaw)(?:cie)?\b|\bco\s+\d+\s*godz\w*|\b\d+\s*(?:razy|x)\s+(?:dziennie|na\s+dobę)\b|\b(?:you\s+(?:can|may|should)|(?<!\b(?:if|whether)\s)it\s+is\s+safe\s+to)\s+take\b|\bevery\s+\d+\s*hours?\b|\b\d+\s*times\s+(?:a|per)\s+day\b/iu;
+
+/**
+ * Whether a text gives medical advice. For a patient-facing text a dose with
+ * its unit is enough — a clinic's message has no business stating one; for
+ * an internal note (a triage reason) only advice in its usual forms counts,
+ * since quoting what the patient asked is not advising.
+ */
+export function medicalAdvice(text: string, audience: "patient" | "staff" = "patient"): boolean {
+  if (ADVICE.test(text)) return true;
+  return audience === "patient" && DOSE.test(text);
+}
+
+/** Cut a text to the whole sentences that fit; empty when not even the first does. */
+export function fitSentences(text: string, max: number): string {
+  const t = text.trim();
+  if (t.length <= max) return t;
+  const sentences = t.match(/[^.!?]+[.!?]+(?:\s+|$)/g) ?? [];
+  let out = "";
+  for (const s of sentences) {
+    if ((out + s).trim().length > max) break;
+    out += s;
+  }
+  return out.trim();
 }

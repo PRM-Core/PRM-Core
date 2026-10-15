@@ -5,10 +5,10 @@ import { getAiConfig, isOverDailyLimit, getKeyStatus } from "./settings.server";
 import { priceCall, AiProviderError } from "./provider.server";
 import { knowledgeForPrompt, knowledgeSources, recordGap } from "./knowledge.server";
 import { buildInboxSystemPrompt } from "./inbox-prompt";
-import { splitMissing, ungrounded } from "../agent/grounding";
+import { leakedIdentifiers, medicalAdvice, splitMissing, ungrounded } from "../agent/grounding";
 import { logStep } from "../engine/log.server";
 import { t } from "@/lib/i18n";
-import { identifiersOf, pseudonym } from "./redact";
+import { identifiersOf } from "./redact";
 
 // "Sugestia AI" in the inbox: drafts a reply for a human to read, edit and send.
 //
@@ -71,9 +71,9 @@ export async function draftInboxReply(threadId: string): Promise<InboxDraftResul
   const contact = await db.select().from(contacts).where(eq(contacts.id, thread.contactId)).get();
   const profile = contact
     ? [
-        // A pseudonym, not a name: the model drafts a reply, it does not need
-        // to know who the patient is.
-        `Pacjent: ${pseudonym(contact.id)} (${contact.prmId})`,
+        // Neither a name nor a pseudonym: the model drafts a reply to someone
+        // it addresses as "Dzień dobry", and an identifier it was shown is an
+        // identifier it may write back to the patient.
         `Status: ${contact.status}`,
         (contact.segments ?? []).length > 0
           ? `Segmenty: ${(contact.segments ?? []).join(", ")}`
@@ -138,7 +138,11 @@ export async function draftInboxReply(threadId: string): Promise<InboxDraftResul
     if (!text) return { ok: false, error: t("Model nie zwrócił treści — spróbuj ponownie.") };
     // The base is the only source of facts — checked here, not trusted to the prompt.
     const sources = [...(await knowledgeSources()), ...messages.map((m) => m.body), profile];
-    const unverified = ungrounded(text, sources).map((c) => c.text);
+    const unverified = [
+      ...ungrounded(text, sources).map((c) => c.text),
+      ...leakedIdentifiers(text),
+      ...(medicalAdvice(text, "patient") ? [t("możliwa porada medyczna")] : []),
+    ];
     for (const question of missing) await recordGap({ question, source: "inbox", threadId });
     return { ok: true, text, unverified, missing };
   } catch (err) {

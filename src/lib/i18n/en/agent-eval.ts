@@ -31,8 +31,6 @@ export const agentEval: Record<string, string> = {
   "Triaż: skarga": "Triage: a complaint",
   "Uruchom sprawdzian": "Run the evaluation",
   "Zaproszenie po pierwszej wizycie, e-mail": "Invitation after the first visit, e-mail",
-  "brak ostatniego zdania o zatwierdzaniu": "the final sentence about approval is missing",
-  "liczby: zgubione {m}; wymyślone {i}": "numbers: lost {m}; invented {i}",
   "nie uruchomiono — uruchom przed włączeniem": "not run — run it before enabling",
   "odpowiedź nie jest JSON-em w słownikach": "the answer is not JSON within the vocabularies",
   "tekst zawiera poradę medyczną (dawka, lek, zalecenie)":

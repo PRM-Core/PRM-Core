@@ -212,4 +212,23 @@ describe("the automation's agent", () => {
     expect(out[0].body).not.toContain("BRAK W BAZIE");
     expect((await listOpenGaps()).map((g) => g.source)).toEqual(["agent"]);
   });
+
+  test("{{firstName}} becomes the patient's name at the last moment; an internal id is never sent", async () => {
+    replies.push(
+      toolCall("send_message", {
+        channel: "sms",
+        text: "Dzień dobry #a1b2c3, zapraszamy na kontrolę.",
+      }),
+      toolCall("send_message", {
+        channel: "sms",
+        text: "Dzień dobry {{firstName}}, zapraszamy na kontrolę.",
+      }),
+      toolCall("choose_path", { pathId: "p1", reasoning: "Zaproszenie wysłane." }),
+    );
+    await runAgentNode(node, "c1");
+    const out = (await getDb().select().from(inboxMessages)).filter((m) => m.direction === "out");
+    expect(out).toHaveLength(1);
+    expect(out[0].body).toBe("Dzień dobry Anna, zapraszamy na kontrolę.");
+    expect(urls.filter((u) => u.includes("twilio"))).toHaveLength(1);
+  });
 });

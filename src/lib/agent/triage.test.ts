@@ -54,7 +54,24 @@ describe("parseModelTriage", () => {
       parseModelTriage('{"urgency":"critical","topic":"results","owner":"doctor"}'),
     ).toBeNull();
     expect(parseModelTriage('{"urgency":"high","topic":"money","owner":"doctor"}')).toBeNull();
-    expect(parseModelTriage('{"urgency":"high","topic":"billing","owner":"ceo"}')).toBeNull();
+    // The owner follows the topic — a rule the code applies, whatever the model said.
+    expect(parseModelTriage('{"urgency":"high","topic":"billing","owner":"ceo"}')?.owner).toBe(
+      "billing",
+    );
+    expect(
+      parseModelTriage('{"urgency":"normal","topic":"results","owner":"reception"}')?.owner,
+    ).toBe("doctor");
+    // Low urgency is for messages with nothing to do — never a topic with work in it.
+    expect(
+      parseModelTriage('{"urgency":"low","topic":"cancellation","owner":"reception"}')?.urgency,
+    ).toBe("normal");
+    expect(parseModelTriage('{"urgency":"low","topic":"other","owner":"reception"}')?.urgency).toBe(
+      "low",
+    );
+    // Only where the rule leaves a choice does the model's owner count.
+    expect(parseModelTriage('{"urgency":"normal","topic":"other","owner":"manager"}')?.owner).toBe(
+      "manager",
+    );
     expect(parseModelTriage("no json here")).toBeNull();
     expect(parseModelTriage("{broken")).toBeNull();
   });

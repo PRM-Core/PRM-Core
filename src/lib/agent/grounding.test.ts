@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { claimsIn, gapKey, splitMissing, ungrounded } from "./grounding";
+import {
+  claimsIn,
+  fitSentences,
+  gapKey,
+  medicalAdvice,
+  splitMissing,
+  ungrounded,
+} from "./grounding";
 
 const KB = [
   "### Cennik\nKonsultacja ortopedyczna — 250 zł. USG stawu — 1 200 zł.",
@@ -75,6 +82,17 @@ describe("hours from ranges only", () => {
 });
 
 describe("splitMissing", () => {
+  test("a marker inside a line: what precedes it stays, what follows is dropped", () => {
+    const r = splitMissing(
+      "Dzień dobry, informację o godzinach w soboty potwierdzi recepcja. BRAK W BAZIE: godziny pracy w soboty. Odpowiedź przygotowała placówka.",
+    );
+    expect(r.text).toBe("Dzień dobry, informację o godzinach w soboty potwierdzi recepcja.");
+    expect(r.missing).toEqual(["godziny pracy w soboty"]);
+    expect(splitMissing("Hello.\nBRAK W BAZIE: Czy macie USG?").missing).toEqual([
+      "Czy macie USG?",
+    ]);
+  });
+
   test("the marker line never reaches the patient and becomes a question", () => {
     const r = splitMissing(
       "Dzień dobry, recepcja potwierdzi godziny pracy pracowni.\nBRAK W BAZIE: godziny pracy pracowni RTG",
@@ -92,5 +110,31 @@ describe("gapKey", () => {
     expect(gapKey("Czy macie USG?")).toBe(gapKey("czy macie usg"));
     expect(gapKey("Godziny pracy pracowni RTG")).toBe(gapKey("godziny pracy  pracowni rtg!"));
     expect(gapKey("Cena łóżka")).toBe(gapKey("cena lozka"));
+  });
+});
+
+describe("medicalAdvice", () => {
+  test("advice in its usual forms, for a patient and for a note", () => {
+    expect(medicalAdvice("Może pani przyjmować ibuprofen co 8 godzin.")).toBe(true);
+    expect(medicalAdvice("Proszę zażywać lek 2 razy dziennie.")).toBe(true);
+    expect(medicalAdvice("Przyjmuj tabletki rano.")).toBe(true);
+    expect(medicalAdvice("You can take it every 6 hours.")).toBe(true);
+    expect(medicalAdvice("Pacjent pyta, czy 400 mg to dużo.", "staff")).toBe(false);
+    expect(medicalAdvice("Pacjent pyta, czy 400 mg to dużo.", "patient")).toBe(true);
+  });
+  test("ordinary clinic sentences are not advice", () => {
+    expect(medicalAdvice("W sobotę przyjmujemy do 14:00.")).toBe(false);
+    expect(
+      medicalAdvice("Pytania o dawkowanie leków prosimy kierować do lekarza prowadzącego."),
+    ).toBe(false);
+    expect(medicalAdvice("Zapraszamy na kontrolę za 2 tygodnie.")).toBe(false);
+  });
+});
+
+describe("fitSentences", () => {
+  test("whole sentences only", () => {
+    expect(fitSentences("Jedno. Dwa zdania tutaj. Trzy.", 20)).toBe("Jedno.");
+    expect(fitSentences("Krótko.", 100)).toBe("Krótko.");
+    expect(fitSentences("Bardzo długie zdanie bez końca", 5)).toBe("");
   });
 });

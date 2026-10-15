@@ -1,7 +1,5 @@
 /** The knowledge base as the single source of facts: checks, gaps and their screens. */
 export const knowledgeGrounding: Record<string, string> = {
-  "- Gdy pacjent pyta o coś, czego nie ma w bazie wiedzy, napisz, że recepcja potwierdzi, i dodaj na samym końcu osobną linię: „BRAK W BAZIE: <czego brakuje, kilka słów>”. Tej linii pacjent nie zobaczy — trafi do osoby, która uzupełnia bazę.":
-    "- When the patient asks about something the knowledge base does not contain, say the front desk will confirm, and add at the very end a separate line: “NOT IN KNOWLEDGE BASE: <what is missing, a few words>”. The patient will not see this line — it goes to whoever keeps the base.",
   "- Każda cena, godzina, data, telefon, czas trwania i link w wiadomości są sprawdzane z bazą wiedzy i danymi pacjenta; wiadomość z faktem spoza nich nie zostanie wysłana. Gdy czegoś brakuje, dopisz na końcu treści osobną linię „BRAK W BAZIE: <czego brakuje>” — pacjent jej nie zobaczy.":
     "- Every price, hour, date, phone number, duration and link in the message is checked against the knowledge base and the patient's data; a message with a fact from outside them will not be sent. When something is missing, add at the end of the text a separate line “NOT IN KNOWLEDGE BASE: <what is missing>” — the patient will not see it.",
   "Agent nie zgadywał — napisał pacjentowi, że recepcja potwierdzi, i zapisał pytanie tutaj. Dopisz odpowiedź, a następnym razem poda ją sam.":

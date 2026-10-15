@@ -98,6 +98,11 @@ export async function chatCompletions(
       headers,
       body: JSON.stringify({
         model: input.model,
+        // Both names: `max_tokens` is what Ollama, llama.cpp and LM Studio
+        // read; `max_completion_tokens` is the newer name vLLM also takes.
+        // A server that ignores the cap lets a small model run on for
+        // minutes and blocks every call queued behind it.
+        max_tokens: input.maxTokens,
         max_completion_tokens: input.maxTokens,
         messages: toChatMessages(input),
         tools:
