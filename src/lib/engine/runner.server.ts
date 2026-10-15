@@ -12,6 +12,7 @@ import { gateAutomationMessage, recordMessageSent } from "./settings.server";
 import { deferralMessage } from "./send-window";
 import { formatActivityDate } from "../activity-date";
 import { takeUnprocessedEvents, markEventProcessed } from "./events.server";
+import { scanTimeTriggers } from "./time-triggers.server";
 import { processDueCampaigns } from "../campaigns/campaigns.server";
 import { t } from "@/lib/i18n";
 
@@ -35,6 +36,8 @@ const TRIGGER_EVENT_TYPES: Record<string, EngineEventType> = {
   field_changed: "contact.field_changed",
   chat_message: "contact.message_received",
   stage_changed: "funnel.stage_changed",
+  visit_months_ago: "time.visit_months_ago",
+  birthday: "time.birthday",
 };
 
 // (Trigger keys with no event source are flagged per-item via `engineNote` in
@@ -60,6 +63,11 @@ function triggerMatches(node: AutomationNode, event: EngineEventRow): boolean {
   const config = node.config ?? {};
   const payload = event.payload ?? {};
   switch (key) {
+    // A time event is fired for one automation by the scan, which already
+    // applied that trigger's settings — see time-triggers.server.ts.
+    case "visit_months_ago":
+    case "birthday":
+      return true;
     case "contact_created": {
       // Wszystkie trzy filtry muszą pasować naraz — „nowy pacjent z kampanii X”
       // to jedno pytanie, nie trzy osobne. Puste pole nie pyta o nic.
@@ -218,6 +226,7 @@ async function processEvent(event: EngineEventRow, active: AutomationRow[]): Pro
     const graph = automation.flow;
     if (!graph || graph.nodes.length === 0) continue;
 
+    if (event.type.startsWith("time.") && event.payload?.automationId !== automation.id) continue;
     const trigger = graph.nodes.find((n) => n.kind === "trigger" && triggerMatches(n, event));
     if (!trigger) continue;
 
@@ -580,6 +589,18 @@ export interface TickResult {
 export async function tick(): Promise<TickResult> {
   const db = getDb();
   let runsStarted = 0;
+
+  // Dates that came since the last look become events first, so the runs
+  // they start are picked up in this same tick. A scan failure must not stop
+  // the engine — the next scan retries.
+  try {
+    await scanTimeTriggers();
+  } catch (err) {
+    await logStep({
+      kind: "error",
+      message: t("Błąd wyzwalaczy czasowych: {v0}", { v0: String(err) }),
+    });
+  }
 
   const events = await takeUnprocessedEvents();
   // One read of the active automations for the whole batch — see processEvent.

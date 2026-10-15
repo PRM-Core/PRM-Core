@@ -24,6 +24,8 @@ import {
   CircleStop,
   Newspaper,
   AppWindow,
+  CalendarClock,
+  Cake,
   type LucideIcon,
 } from "lucide-react";
 import type { BuilderKind } from "@/lib/content-builder";
@@ -320,6 +322,52 @@ export const triggerCatalog: CatalogItem[] = localized(() => [
     description: t("Pacjent przeszedł do innego etapu opieki"),
     icon: Milestone,
     tone: "bg-amber-100 text-amber-700",
+  },
+  {
+    key: "visit_months_ago",
+    label: t("Minęło N miesięcy od ostatniej wizyty"),
+    description: t("Kontrola, przypomnienie o profilaktyce, powrót po roku"),
+    icon: CalendarClock,
+    tone: "bg-sky-100 text-sky-700",
+    fields: [
+      {
+        key: "months",
+        label: t("Miesięcy od ostatniej wizyty"),
+        type: "number",
+        placeholder: "12",
+      },
+      {
+        key: "service",
+        label: t("Nazwa usługi zawiera"),
+        type: "text",
+        placeholder: t("kardiolog — puste = dowolna wizyta"),
+      },
+      {
+        key: "booked",
+        label: t("Tylko gdy nic nie jest umówione"),
+        type: "select",
+        options: ["tak", "nie"],
+      },
+      {
+        key: "overdue",
+        label: t("Także pacjenci po terminie"),
+        type: "select",
+        options: ["nie", "tak"],
+      },
+    ],
+    engineHint: t(
+      "Liczy od ostatniej odbytej wizyty (z tą usługą, jeśli ją podasz): jeden przebieg na wizytę, sprawdzane co kilka minut. Domyślnie tylko gdy pacjent nic nie ma umówionego i tylko pacjenci, którym termin minął w ostatnim tygodniu — włączenie automatyzacji nie wyśle do wszystkich, których ostatnia wizyta była lata temu. „Także pacjenci po terminie” obejmuje i ich, w tempie limitów wysyłki.",
+    ),
+  },
+  {
+    key: "birthday",
+    label: t("Urodziny pacjenta"),
+    description: t("W dniu urodzin, raz w roku"),
+    icon: Cake,
+    tone: "bg-pink-100 text-pink-700",
+    engineHint: t(
+      "Data urodzenia pochodzi z numeru PESEL (z poprawną cyfrą kontrolną); pacjent bez PESEL nie dostanie tej wiadomości. Wyzwala się raz w roku, w sam dzień — urodzeni 29 lutego w zwykłym roku 28 lutego. Wiadomość i tak czeka na godziny wysyłki, a jej treść podlega zgodom marketingowym.",
+    ),
   },
   {
     key: "points_changed",

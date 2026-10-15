@@ -8,6 +8,34 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.13.0] — Wyzwalacze czasowe: N miesięcy od ostatniej wizyty, urodziny
+
+Każdy wyzwalacz reagował dotąd na zdarzenie, które właśnie zaszło. Opieka
+cykliczna takiego zdarzenia nie ma — nikt nie rezerwuje „roku od ostatniej
+kontroli” — więc nie dało się jej zautomatyzować wcale.
+
+- **„Minęło N miesięcy od ostatniej wizyty”** — kontrola, przypomnienie
+  o profilaktyce, powrót po roku. Liczy od ostatniej odbytej wizyty
+  (opcjonalnie z daną usługą: „kardio” liczy od ostatniej wizyty
+  kardiologicznej), jeden przebieg na wizytę. Domyślnie tylko gdy pacjent
+  nic nie ma umówionego i tylko pacjenci, którym termin minął w ostatnim
+  tygodniu — włączenie automatyzacji nie wyśle do wszystkich, których
+  ostatnia wizyta była lata temu. „Także pacjenci po terminie” obejmuje
+  i ich, w tempie limitów wysyłki z 2.12.0.
+- **„Urodziny pacjenta”** — data urodzenia z numeru PESEL, z poprawną cyfrą
+  kontrolną (literówka w numerze nie wyśle życzeń w zły dzień); raz w roku,
+  w sam dzień; urodzeni 29 lutego w zwykłym roku 28 lutego.
+- Jak to działa: silnik co kilka minut sprawdza aktywne automatyzacje
+  z takim wyzwalaczem, zapisuje każde wyzwolenie (`engine_time_fires`:
+  jedno na wizytę, jedno na rok — także po restarcie) i wpisuje zwykłe
+  zdarzenie. Dalej przebieg startuje jak każdy inny: ta sama zasada
+  „jeden trwający przebieg na pacjenta”, ten sam dziennik, te same godziny
+  wysyłki.
+- Panel ustawień wyzwalacza pokazuje teraz jego opis działania — dotąd
+  widoczny był tylko przy akcjach, więc opisy wyzwalaczy (np. „Wizyta się
+  odbyła”) nie docierały do nikogo.
+- Migracja 0080: tabela `engine_time_fires`.
+
 ## [2.12.0] — Godziny wysyłki i tempo dla automatyzacji
 
 Kampanie od dawna miały okno wysyłki i limity na godzinę i dobę;

@@ -544,6 +544,7 @@ export function NodeInspector({
                   </Select>
                 </div>
                 <EngineNote note={findCatalogItem("trigger", draft.key ?? "")?.engineNote} />
+                <EngineHint hint={findCatalogItem("trigger", draft.key ?? "")?.engineHint} />
                 <ConfigFields
                   fields={findCatalogItem("trigger", draft.key ?? "")?.fields ?? []}
                   config={draft.config ?? {}}

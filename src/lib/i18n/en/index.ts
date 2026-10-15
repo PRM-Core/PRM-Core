@@ -42,6 +42,7 @@ import { patientSummary } from "./patient-summary";
 import { modelLimits } from "./model-limits";
 import { agentPromptsV2 } from "./agent-prompts-v2";
 import { engineSendWindow } from "./engine-send-window";
+import { engineTimeTriggers } from "./engine-time-triggers";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -82,6 +83,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   modelLimits,
   agentPromptsV2,
   engineSendWindow,
+  engineTimeTriggers,
 };
 
 /**

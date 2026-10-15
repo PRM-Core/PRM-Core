@@ -1338,7 +1338,14 @@ export type EngineEventType =
   | "contact.field_changed"
   /** A patient wrote to us — payload: { channel, preview, threadId }. Fed by the inbox collectors. */
   | "contact.message_received"
-  | "funnel.stage_changed";
+  | "funnel.stage_changed"
+  /**
+   * Time-based triggers — nothing happened, a date came. Written by the
+   * engine's own scan for one automation (payload.automationId), once per
+   * occurrence (engine_time_fires). Payload: { automationId, occurrence, … }.
+   */
+  | "time.visit_months_ago"
+  | "time.birthday";
 
 // One shared bus for everything that really happened. Written from the
 // EXISTING write points (/collect, /e/open, /e/click, the form and survey
@@ -1361,6 +1368,25 @@ export const engineEvents = sqliteTable(
     // a full scan that grows with the event history.
     index("idx_engine_events_unprocessed").on(t.processedAt, t.occurredAt),
   ],
+);
+
+/**
+ * Which time-based trigger already fired for whom. A date-driven trigger is
+ * evaluated again every scan; this row is what makes "12 months since the
+ * last visit" start one journey per visit and a birthday one a year, however
+ * often the engine looks and whether or not it restarted in between.
+ */
+export const engineTimeFires = sqliteTable(
+  "engine_time_fires",
+  {
+    id: text("id").primaryKey(),
+    automationId: text("automation_id").notNull(),
+    contactId: text("contact_id").notNull(),
+    /** What this firing is about: "<visit id>:12" for a recall, "2026" for a birthday. */
+    occurrence: text("occurrence").notNull(),
+    firedAt: integer("fired_at").notNull(),
+  },
+  (t) => [uniqueIndex("uq_engine_time_fires").on(t.automationId, t.contactId, t.occurrence)],
 );
 
 export type AutomationRunStatus = "running" | "waiting" | "completed" | "failed" | "stopped";

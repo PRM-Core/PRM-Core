@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.12.0",
+    "version": "2.13.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.12.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.13.0",
     "notes": {
-      "en": "Automation messages get the campaigns' sending window and hourly and daily limits: a step outside the hours waits for them; an automation can opt out of the window, never out of the limits. An upgraded installation keeps sending at any hour until an administrator sets a window.",
-      "pl": "Wiadomości automatyzacji dostają okno wysyłki oraz limity na godzinę i dobę, jak kampanie: krok poza godzinami czeka na nie; automatyzacja może wyłączyć dla siebie okno, nigdy limity. Zaktualizowana instalacja wysyła o każdej porze, dopóki administrator nie ustawi okna."
+      "en": "Time-based triggers: N months since the last visit (recall, preventive care, a year without a visit) and the patient's birthday from the PESEL — one journey per visit and one a year.",
+      "pl": "Wyzwalacze czasowe: N miesięcy od ostatniej wizyty (kontrola, profilaktyka, rok bez wizyty) i urodziny pacjenta z numeru PESEL — jeden przebieg na wizytę i jeden na rok."
     }
   },
   "messages": []

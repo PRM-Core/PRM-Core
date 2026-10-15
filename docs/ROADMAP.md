@@ -19,7 +19,9 @@ unique key in the schema guarantees it, not careful code.
 - **Triggers**: contact created, visit booked / completed / no-show /
   cancelled, tag added, segment joined, form or survey submitted, email opened
   or clicked, page visited, field changed, funnel stage changed, score
-  changed, asset downloaded, inbound message.
+  changed, asset downloaded, inbound message — and, since 2.13.0, dates:
+  N months since the last visit (recall, preventive care, "no visit in a
+  year") and the patient's birthday (from the PESEL).
 - **Conditions**: in segment, has tag, field value, email opened, do-not-contact.
 - **Actions**: email, newsletter, SMS, pop-up, tags, segments, field update,
   score, funnel stage, do-not-contact, delete contact, end.
@@ -35,28 +37,24 @@ unique key in the schema guarantees it, not careful code.
 
 ### Next
 
-1. **Time-based triggers** — recall after N months, birthday, anniversary of
-   the last visit, "no visit in 12 months". Today every trigger reacts to an
-   event that just happened, so recurring preventive care cannot be automated
-   at all. _(help wanted)_
-2. **Wait for an event, with a timeout** — "wait up to 48 h for the visit to
+1. **Wait for an event, with a timeout** — "wait up to 48 h for the visit to
    be confirmed, otherwise call reception". Today only fixed delays exist, so
    every branch has to guess how long to wait.
-3. **Frequency capping across automations** — at most N marketing messages per
+2. **Frequency capping across automations** — at most N marketing messages per
    patient per week, counted across all flows and channels. Each automation is
    reasonable on its own; together they are not.
-4. **Goals and conversion** — mark a step as the goal (visit booked, form
+3. **Goals and conversion** — mark a step as the goal (visit booked, form
    submitted) and measure how many patients reached it, per automation and per
    variant.
-5. **A/B split step** — two subject lines or two channels, with the result
+4. **A/B split step** — two subject lines or two channels, with the result
    visible in the same statistics.
-6. **Outgoing webhook action** — one step that POSTs to a URL, which connects
+5. **Outgoing webhook action** — one step that POSTs to a URL, which connects
    PRM Core to n8n, Make and Zapier in the other direction. _(help wanted)_
-7. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
+6. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
    as one step instead of a hand-built branch.
-8. **Re-entry rules** — whether a patient may enter the same automation again,
+7. **Re-entry rules** — whether a patient may enter the same automation again,
    and after how long.
-9. **Queue observability** — a view of delayed, failed and dead-lettered
+8. **Queue observability** — a view of delayed, failed and dead-lettered
    steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer
