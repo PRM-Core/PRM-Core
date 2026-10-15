@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.15.0",
+    "version": "2.16.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.15.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.16.0",
     "notes": {
-      "en": "A weekly cap on marketing messages per patient, counted across every automation and campaign; an automation's marketing step past it is skipped. Administrative messages never count.",
-      "pl": "Tygodniowy limit wiadomości marketingowych na pacjenta, liczony ze wszystkich automatyzacji i kampanii razem; krok marketingowy automatyzacji ponad limit jest pomijany. Wiadomości administracyjne nie liczą się nigdy."
+      "en": "Automation goals: conversion per automation and per A/B variant (with a significance test from 30 runs a variant), and an option to end the run once the patient reaches the goal.",
+      "pl": "Cele automatyzacji: konwersja per automatyzacja i per wariant A/B (z testem istotności od 30 przebiegów na wariant) oraz opcja zakończenia przebiegu, gdy pacjent osiągnie cel."
     }
   },
   "messages": []

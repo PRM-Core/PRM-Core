@@ -8,7 +8,7 @@ import {
   primaryKey,
 } from "drizzle-orm/sqlite-core";
 import type { UserRole } from "../auth/roles";
-import type { AutomationGraph, AutomationStatus } from "../automation-flow";
+import type { AutomationGoal, AutomationGraph, AutomationStatus } from "../automation-flow";
 import type { PopupConfig } from "../content-builder";
 import type { SegmentDefinition } from "../segments/segment-definition";
 import type { ReportDefinition } from "../reports/custom/catalog";
@@ -767,6 +767,8 @@ export const automations = sqliteTable("automations", {
    * visit). The hourly and daily limits apply either way.
    */
   quietHours: text("quiet_hours").notNull().default("respect").$type<"respect" | "ignore">(),
+  /** What counts as success, measured per automation and per split variant; null = no goal. */
+  goal: text("goal", { mode: "json" }).$type<AutomationGoal | null>(),
   updatedAt: text("updated_at").notNull(),
 });
 

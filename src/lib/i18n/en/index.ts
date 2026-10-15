@@ -45,6 +45,7 @@ import { engineSendWindow } from "./engine-send-window";
 import { engineTimeTriggers } from "./engine-time-triggers";
 import { engineWait } from "./engine-wait";
 import { engineMarketingCap } from "./engine-marketing-cap";
+import { engineGoals } from "./engine-goals";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -88,6 +89,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineTimeTriggers,
   engineWait,
   engineMarketingCap,
+  engineGoals,
 };
 
 /**

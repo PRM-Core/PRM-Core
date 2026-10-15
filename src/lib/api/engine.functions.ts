@@ -726,3 +726,47 @@ export const saveSendWindow = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+// ── goals and conversion ─────────────────────────────────────────────────────
+
+export type { GoalReport, VariantResult } from "../engine/goals";
+
+/**
+ * Conversion of one automation toward a goal; null when there is none. The
+ * editor sends the goal it shows — the save that stores it may still be on
+ * its way, and the report must not depend on which request lands first.
+ */
+export const getGoalReport = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .inputValidator(
+    z.object({
+      automationId: z.string(),
+      goal: z
+        .object({
+          key: z.string().min(1),
+          config: z.record(z.string(), z.string()).optional(),
+          days: z.number().int().min(1).max(365),
+          exit: z.boolean(),
+        })
+        .nullable()
+        .optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const row = await getDb()
+      .select()
+      .from(automations)
+      .where(eq(automations.id, data.automationId))
+      .get();
+    if (!row) return null;
+    const { goalReportFor } = await import("../engine/goals.server");
+    return goalReportFor(row, Date.now(), data.goal);
+  });
+
+/** Conversion of every automation that has a goal, keyed by automation id. */
+export const getGoalReports = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async () => {
+    const { goalReports } = await import("../engine/goals.server");
+    return goalReports();
+  });

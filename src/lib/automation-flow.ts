@@ -79,6 +79,19 @@ export interface AutomationGraph {
 
 export type AutomationStatus = "draft" | "active" | "inactive";
 
+/**
+ * What counts as success for an automation: the patient's event (a trigger
+ * catalog key with its filters — "visit booked, service contains kardio")
+ * within `days` of entering it. With `exit`, reaching it ends the run, so a
+ * patient who already booked stops getting reminders to book.
+ */
+export interface AutomationGoal {
+  key: string;
+  config?: Record<string, string>;
+  days: number;
+  exit: boolean;
+}
+
 let counter = 0;
 export function nodeId(prefix: string): string {
   counter += 1;

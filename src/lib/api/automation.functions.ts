@@ -77,6 +77,7 @@ export const getAllAutomations = createServerFn({ method: "GET" })
       aiCallsPerDay: r.aiCallsPerDay,
       aiCallsToday: today.get(r.id) ?? 0,
       quietHours: r.quietHours,
+      goal: r.goal ?? null,
     }));
   });
 
@@ -91,6 +92,15 @@ export const saveAutomation = createServerFn({ method: "POST" })
       reviewFirst: z.number().int().min(0).max(50).optional(),
       aiCallsPerDay: z.number().int().min(0).max(100_000).optional(),
       quietHours: z.enum(["respect", "ignore"]).optional(),
+      goal: z
+        .object({
+          key: z.string().min(1),
+          config: z.record(z.string(), z.string()).optional(),
+          days: z.number().int().min(1).max(365),
+          exit: z.boolean(),
+        })
+        .nullable()
+        .optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -98,12 +108,13 @@ export const saveAutomation = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const existing = await db.select().from(automations).where(eq(automations.id, data.id)).get();
     // `reviewed` is never taken from the client: only an approval counts.
-    const { reviewFirst, aiCallsPerDay, quietHours, ...rest } = data;
+    const { reviewFirst, aiCallsPerDay, quietHours, goal, ...rest } = data;
     const values = {
       ...rest,
       updatedAt: now,
       ...(aiCallsPerDay === undefined ? {} : { aiCallsPerDay }),
       ...(quietHours === undefined ? {} : { quietHours }),
+      ...(goal === undefined ? {} : { goal }),
     };
     if (existing) {
       await db

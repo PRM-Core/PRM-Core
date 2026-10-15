@@ -43,21 +43,22 @@ unique key in the schema guarantees it, not careful code.
   An automation's marketing step past it is skipped and the run goes on;
   administrative messages never count; campaigns count but are not held
   back.
+- **Goals and conversion** (since 2.16.0): an automation's goal is the
+  patient's event (a trigger with its filters) within N days of entering;
+  conversion per automation and per A/B split variant, with a
+  two-proportion test once each variant has 30 runs, counted from the runs
+  and the event bus. Reaching the goal can end the run, so a patient who
+  booked stops getting reminders to book.
 
 ### Next
 
-1. **Goals and conversion** — mark a step as the goal (visit booked, form
-   submitted) and measure how many patients reached it, per automation and per
-   variant.
-2. **A/B split step** — two subject lines or two channels, with the result
-   visible in the same statistics.
-3. **Outgoing webhook action** — one step that POSTs to a URL, which connects
+1. **Outgoing webhook action** — one step that POSTs to a URL, which connects
    PRM Core to n8n, Make and Zapier in the other direction. _(help wanted)_
-4. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
+2. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
    as one step instead of a hand-built branch.
-5. **Re-entry rules** — whether a patient may enter the same automation again,
+3. **Re-entry rules** — whether a patient may enter the same automation again,
    and after how long.
-6. **Queue observability** — a view of delayed, failed and dead-lettered
+4. **Queue observability** — a view of delayed, failed and dead-lettered
    steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer

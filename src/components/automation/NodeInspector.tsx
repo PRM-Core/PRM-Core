@@ -247,7 +247,7 @@ function BranchEditor({
   );
 }
 
-function ConfigFields({
+export function ConfigFields({
   fields,
   config,
   onChange,

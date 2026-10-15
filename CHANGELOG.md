@@ -8,6 +8,27 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.16.0] — Cele i konwersja, także dla wariantów A/B
+
+Automatyzacja wysyłała wiadomości, ale nie było wiadomo, czy coś z tego
+wynika: umówiona wizyta, wypełniony formularz. Split A/B dzielił pacjentów,
+ale wyniku wariantów nie było nigdzie widać.
+
+- **Cel automatyzacji** (pasek „Cel” w edytorze): zdarzenie pacjenta —
+  z tej samej listy co wyzwalacze, z ich filtrami, np. „wizyta
+  zarezerwowana, usługa zawiera kardio” — w ciągu N dni od wejścia.
+- **Konwersja** w pasku i w Statystykach: ilu pacjentów osiągnęło cel,
+  z ilu; przebiegi, którym okno jeszcze trwa, są „w trakcie”, nie liczą się
+  jako porażka. Liczona z przebiegów i zdarzeń, które system już zapisuje
+  — cel ustawiony dziś od razu pokazuje ostatnie 90 dni.
+- **Warianty splitu A/B**: konwersja każdego wariantu i test dwóch
+  proporcji — dopiero przy co najmniej 30 przebiegach na wariant; wcześniej
+  wprost „za mało przebiegów”, zamiast liczby udającej dowód.
+- **„Zakończ przebieg po osiągnięciu celu”**: pacjent, który już umówił
+  wizytę, przestaje dostawać zachęty do umówienia; jego zaplanowane kroki
+  i oczekiwania zostają zamknięte, dziennik mówi dlaczego.
+- Migracja 0083: kolumna `goal` w `automations`.
+
 ## [2.15.0] — Limit marketingu na pacjenta, ze wszystkich automatyzacji razem
 
 Każda automatyzacja z osobna jest rozsądna; pięć naraz plus newsletter już

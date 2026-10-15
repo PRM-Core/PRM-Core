@@ -4,6 +4,7 @@ import {
   type AutomationStatus,
   type AutomationNode,
   type AutomationEdge,
+  type AutomationGoal,
 } from "@/lib/automation-flow";
 import { t } from "@/lib/i18n";
 
@@ -22,6 +23,8 @@ export interface AutomationRecord {
   aiCallsToday?: number;
   /** "ignore" = this automation's messages go out at any hour; limits still apply. */
   quietHours?: "respect" | "ignore";
+  /** What counts as success; null = none. */
+  goal?: AutomationGoal | null;
 }
 
 export function createInitialRecords(): AutomationRecord[] {

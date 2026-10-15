@@ -28,7 +28,7 @@ import { t } from "@/lib/i18n";
 // per job, and never do the same step twice.
 
 /** Trigger catalog key → the event type it subscribes to. Keys absent here have no real event source yet. */
-const TRIGGER_EVENT_TYPES: Record<string, EngineEventType> = {
+export const TRIGGER_EVENT_TYPES: Record<string, EngineEventType> = {
   contact_created: "contact.created",
   visit_scheduled: "visit.scheduled",
   visit_completed: "visit.completed",
@@ -61,6 +61,22 @@ const DELAY_MS: Record<DelayUnit, number> = {
 
 function eq_ci(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/**
+ * Does this event match a catalog key with these filters? The same matcher
+ * triggers, waits and goals use, so "visit booked, service contains kardio"
+ * means one thing everywhere.
+ */
+export function eventMatches(
+  key: string,
+  config: Record<string, string> | undefined,
+  event: EngineEventRow,
+): boolean {
+  return triggerMatches(
+    { id: "", kind: "trigger", position: { x: 0, y: 0 }, key, config: config ?? {} },
+    event,
+  );
 }
 
 /** Does this trigger node fire for this event? An empty filter field means "any". */
@@ -297,6 +313,70 @@ async function processEvent(event: EngineEventRow, active: AutomationRow[]): Pro
   }
 
   return started;
+}
+
+// ── the goal reached ────────────────────────────────────────────────────────
+
+/**
+ * Ends the runs this event completes: an automation whose goal it is, with
+ * "end the run at the goal" on, for this patient, after the run began and
+ * within the goal's window. The patient who booked stops getting reminders
+ * to book. Pending steps and open waits of the run are closed with it.
+ */
+async function exitOnGoal(event: EngineEventRow): Promise<number> {
+  if (!event.contactId) return 0;
+  const db = getDb();
+  const live = await db
+    .select()
+    .from(automationRuns)
+    .where(
+      and(
+        eq(automationRuns.contactId, event.contactId),
+        inArray(automationRuns.status, ["running", "waiting"]),
+      ),
+    );
+  let ended = 0;
+  for (const run of live) {
+    const automation = await db
+      .select()
+      .from(automations)
+      .where(eq(automations.id, run.automationId))
+      .get();
+    const goal = automation?.goal;
+    if (!goal || !goal.exit || TRIGGER_EVENT_TYPES[goal.key] !== event.type) continue;
+    if (event.occurredAt < run.startedAt) continue;
+    if (event.occurredAt > run.startedAt + Math.max(1, goal.days) * DELAY_MS.days) continue;
+    if (!eventMatches(goal.key, goal.config, event)) continue;
+
+    await db
+      .update(engineJobs)
+      .set({ status: "done" })
+      .where(and(eq(engineJobs.runId, run.id), inArray(engineJobs.status, ["pending", "held"])));
+    await db
+      .update(engineWaits)
+      .set({ resolvedAt: Date.now(), outcome: "event" })
+      .where(and(eq(engineWaits.runId, run.id), isNull(engineWaits.resolvedAt)));
+    await endRun(
+      run,
+      "completed",
+      t("Cel osiągnięty: {goal} — przebieg zakończony.", {
+        goal: triggerLabel({
+          nodes: [
+            {
+              id: "",
+              kind: "trigger",
+              position: { x: 0, y: 0 },
+              key: goal.key,
+              config: goal.config,
+            },
+          ],
+          edges: [],
+        }),
+      }),
+    );
+    ended += 1;
+  }
+  return ended;
 }
 
 // ── waiting for an event ────────────────────────────────────────────────────
@@ -804,6 +884,7 @@ export async function tick(): Promise<TickResult> {
       : [];
   for (const event of events) {
     try {
+      await exitOnGoal(event);
       await resolveWaits(event);
       runsStarted += await processEvent(event, active);
     } catch (err) {

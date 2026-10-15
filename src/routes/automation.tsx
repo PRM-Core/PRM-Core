@@ -60,7 +60,12 @@ import {
 import { AutomationBuilder } from "@/components/automation/AutomationBuilder";
 import { NewAutomationDialog } from "@/components/automation/NewAutomationDialog";
 import { CreateAutomationNameDialog } from "@/components/automation/CreateAutomationNameDialog";
-import { nodeId, validateGraph, type AutomationStatus } from "@/lib/automation-flow";
+import {
+  nodeId,
+  validateGraph,
+  type AutomationGoal,
+  type AutomationStatus,
+} from "@/lib/automation-flow";
 import { triggerLabel } from "@/lib/automation-catalog";
 import { newDraftRecord, type AutomationRecord } from "@/lib/automation-records";
 import { getContentItemNames } from "@/lib/api/content-items.functions";
@@ -76,9 +81,13 @@ import {
   publishEngineTemplates,
   type AutomationKpis,
   getSendWindow,
+  getGoalReports,
+  type GoalReport,
 } from "@/lib/api/engine.functions";
 import { collectTemplateRefs } from "@/lib/engine/publish-templates";
 import { EnginePanel } from "@/components/automation/EnginePanel";
+import { GoalStrip } from "@/components/automation/GoalStrip";
+import { goalLabel, percent as goalPercent } from "@/lib/automation-goal";
 import { SupervisorPanel } from "@/components/automation/SupervisorPanel";
 import { RunHistorySheet } from "@/components/automation/RunHistorySheet";
 import { DryRunDialog } from "@/components/automation/DryRunDialog";
@@ -816,6 +825,10 @@ function AutomationPage() {
                 record={currentRecord}
                 onChange={(n) => updateRecord(currentRecord.id, { reviewFirst: n })}
               />
+              <GoalStrip
+                record={currentRecord}
+                onChange={(goal) => updateRecord(currentRecord.id, { goal })}
+              />
               {currentRecord.flow?.nodes.some((n) => MESSAGE_KEYS.includes(n.key ?? "")) && (
                 <SendHoursStrip
                   record={currentRecord}
@@ -1111,6 +1124,53 @@ function AiAgent({
 
 /* ---------- Statistics ---------- */
 
+/** One automation's conversion toward its goal, and each split variant's. */
+function GoalLine({ goal, report }: { goal: AutomationGoal; report: GoalReport }) {
+  const matured = report.entered - report.pending;
+  return (
+    <div className="mt-1 space-y-0.5 text-xs">
+      <div>
+        <span className="text-muted-foreground">
+          {tr("Cel: {goal} w {days} dni: ", { goal: goalLabel(goal), days: goal.days })}
+        </span>
+        <b>{goalPercent(report.rate)}</b>{" "}
+        <span className="text-muted-foreground">
+          {tr("({converted} z {matured}; w trakcie {pending})", {
+            converted: report.converted,
+            matured,
+            pending: report.pending,
+          })}
+        </span>
+      </div>
+      {report.variants.map((v) => (
+        <div key={v.id} className="text-muted-foreground">
+          {tr("Wariant {label}: {rate} ({converted} z {entered})", {
+            label: v.label,
+            rate: goalPercent(v.rate),
+            converted: v.converted,
+            entered: v.entered,
+          })}
+        </div>
+      ))}
+      {report.test && (
+        <div className="text-muted-foreground">
+          {report.test.p === null
+            ? tr(
+                "Za mało przebiegów, by rozstrzygnąć test A/B (potrzeba co najmniej 30 na wariant).",
+              )
+            : report.test.significant
+              ? tr("Różnica między wariantami jest istotna (p = {p}).", {
+                  p: report.test.p.toFixed(3),
+                })
+              : tr("Różnica między wariantami mieści się w przypadku (p = {p}).", {
+                  p: report.test.p.toFixed(3),
+                })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Stats({
   records,
   runCounts,
@@ -1121,6 +1181,14 @@ function Stats({
   const activeCount = records.filter((r) => r.status === "active").length;
   const totalUsers = Object.values(runCounts).reduce((sum, n) => sum + n, 0);
   const [kpiData, setKpiData] = useState<AutomationKpis | null>(null);
+  const [goals, setGoals] = useState<Record<string, GoalReport>>({});
+  useEffect(() => {
+    getGoalReports()
+      .then(setGoals)
+      .catch(() => {
+        /* the rows still render without conversion */
+      });
+  }, []);
 
   useEffect(() => {
     getAutomationKpis()
@@ -1231,6 +1299,7 @@ function Stats({
                     {count.toLocaleString(intlLocale())}{" "}
                     {count === 1 ? "przebieg" : tr("przebiegów")}
                   </div>
+                  {a.goal && goals[a.id] && <GoalLine goal={a.goal} report={goals[a.id]} />}
                 </div>
                 <StatusBadge status={a.status} />
               </div>
