@@ -11,10 +11,11 @@ import type { ContactRow } from "../db/schema";
 import type { AutomationGraph, AutomationNode } from "../automation-flow";
 import { pickSplitVariant } from "../automation-flow";
 import { nodeTitle } from "../automation-catalog";
-import { evaluateCondition, evaluatePath, DNC_TAG } from "./actions.server";
+import { evaluateCondition, evaluatePath, DNC_TAG, marketingChannel } from "./actions.server";
 import { snapshotId } from "./snapshots.server";
 import { resolveSmsSender } from "../sms/senders.server";
 import { checkConsent, type SendMode } from "../consent/consent.server";
+import { overMarketingCap } from "./marketing-cap.server";
 import { t as tr } from "@/lib/i18n";
 
 // "Przetestuj na kontakcie" — walks a real contact through a real graph and
@@ -437,6 +438,7 @@ export async function dryRun(input: {
 
     let handle = "out";
     let stop = false;
+    let over: { sent: number; cap: number } | null = null;
 
     if (node.kind === "delay") {
       const unit = node.unit === "minutes" ? "min" : node.unit === "hours" ? "godz." : "dni";
@@ -515,6 +517,17 @@ export async function dryRun(input: {
         ),
         outcome: "info",
         branch: first?.label,
+      });
+    } else if (marketingChannel(node) && (over = await overMarketingCap(contact.id)) !== null) {
+      steps.push({
+        nodeId: node.id,
+        kind: node.kind,
+        title: nodeTitle(node),
+        message: tr(
+          "Ta wiadomość marketingowa zostałaby pominięta — pacjent dostał już {sent} w ciągu 7 dni (limit {cap}). Przebieg idzie dalej.",
+          { sent: over.sent, cap: over.cap },
+        ),
+        outcome: "warning",
       });
     } else {
       const result = await previewAction(node, contact);

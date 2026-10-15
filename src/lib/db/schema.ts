@@ -1623,8 +1623,33 @@ export const engineSettings = sqliteTable("engine_settings", {
   hourSentCount: integer("hour_sent_count").notNull().default(0),
   dayKey: text("day_key").notNull().default(""),
   daySentCount: integer("day_sent_count").notNull().default(0),
+  /**
+   * At most this many marketing messages per patient in 7 days, counted
+   * across every automation and campaign; an automation's marketing step
+   * past it is skipped. Null = no cap. Administrative messages never count.
+   */
+  marketingPerWeek: integer("marketing_per_week"),
   updatedAt: text("updated_at").notNull(),
 });
+
+/**
+ * Every marketing message that actually went to a patient — from an
+ * automation or a campaign, by e-mail or SMS. The send tables do not say
+ * whether a message was marketing; this ledger is what the weekly cap counts.
+ */
+export const marketingTouches = sqliteTable(
+  "marketing_touches",
+  {
+    id: text("id").primaryKey(),
+    contactId: text("contact_id").notNull(),
+    channel: text("channel").notNull().$type<"email" | "sms">(),
+    source: text("source").notNull().$type<"automation" | "campaign">(),
+    automationId: text("automation_id"),
+    campaignId: text("campaign_id"),
+    sentAt: integer("sent_at").notNull(),
+  },
+  (t) => [index("idx_marketing_touches_contact").on(t.contactId, t.sentAt)],
+);
 
 /** The only provider: a model endpoint inside the clinic's perimeter. Older rows may still say "anthropic" — the value is not read. */
 export type AiProviderId = "local";

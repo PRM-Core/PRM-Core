@@ -30,6 +30,7 @@ export function SendWindowCard() {
   const [to, setTo] = useState("20:00");
   const [perHour, setPerHour] = useState("");
   const [perDay, setPerDay] = useState("");
+  const [perPatient, setPerPatient] = useState("");
   const [saving, setSaving] = useState(false);
 
   const load = () =>
@@ -40,6 +41,7 @@ export function SendWindowCard() {
       if (d.sendTo) setTo(d.sendTo);
       setPerHour(d.perHourLimit ? String(d.perHourLimit) : "");
       setPerDay(d.perDayLimit ? String(d.perDayLimit) : "");
+      setPerPatient(d.marketingPerWeek ? String(d.marketingPerWeek) : "");
     });
   useEffect(() => {
     void load();
@@ -54,6 +56,7 @@ export function SendWindowCard() {
           sendTo: windowOn ? to : "",
           perHourLimit: limitOrNull(perHour),
           perDayLimit: limitOrNull(perDay),
+          marketingPerWeek: limitOrNull(perPatient),
         },
       });
       toast.success(t("Godziny wysyłki zapisane."));
@@ -156,6 +159,19 @@ export function SendWindowCard() {
                 className="w-28"
               />
             </div>
+            <div className="space-y-1">
+              <label htmlFor="send-per-patient" className="block text-xs font-medium">
+                {t("Marketing na pacjenta / 7 dni")}
+              </label>
+              <Input
+                id="send-per-patient"
+                inputMode="numeric"
+                placeholder={t("bez limitu")}
+                value={perPatient}
+                onChange={(e) => setPerPatient(e.target.value)}
+                className="w-28"
+              />
+            </div>
             <Button size="sm" disabled={saving} onClick={() => void save()}>
               {t("Zapisz")}
             </Button>
@@ -164,6 +180,11 @@ export function SendWindowCard() {
             {t(
               "Limity liczą wiadomości wszystkich automatyzacji razem, e-mail i SMS; tempo: {pace}. Kampanie mają własne limity w Wysyłkach.",
               { pace: paceLabel(limitOrNull(perHour)) },
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Marketing na pacjenta: ile wiadomości marketingowych jeden pacjent może dostać w ciągu 7 dni — ze wszystkich automatyzacji i kampanii razem. Krok automatyzacji ponad limit jest pomijany, przebieg idzie dalej. Wiadomości administracyjne (przypomnienia o wizycie) nie liczą się nigdy; kampanie liczą się, ale nie są wstrzymywane.",
             )}
           </p>
         </CardContent>

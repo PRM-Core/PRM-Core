@@ -95,7 +95,7 @@ system. **This is where help matters most**, and it is well scoped:
   list with priorities: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md#integrations-we-would-love-to-see).
 
 Beyond connectors, [docs/ROADMAP.md](docs/ROADMAP.md) lists what is next in
-the automation engine (frequency capping, goals, channel fallback)
+the automation engine (goals and conversion, channel fallback, re-entry rules)
 and in PRM_Agent (a clinic server through the evaluation harness).
 
 Pick one, open an issue with the **Medical system connector** form, and say

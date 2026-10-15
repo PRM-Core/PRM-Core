@@ -25,6 +25,7 @@ import {
 import { resolveSmsSender } from "../sms/senders.server";
 import { resolveEmailSender } from "../email/senders.server";
 import { checkConsent } from "../consent/consent.server";
+import { recordMarketingTouch } from "../engine/marketing-cap.server";
 import { applyTagChange, sampleFromContact } from "../engine/actions.server";
 import { resolveMergeTagsInHtml, resolvePersonalizationInText } from "../content-builder";
 import { segmentMemberIds } from "../segments/segments.server";
@@ -508,6 +509,15 @@ async function sendBatch(campaign: CampaignRow): Promise<number> {
         }
       }
       sent += 1;
+      // A campaign counts toward the patient's weekly marketing total — it is
+      // what they received — though it is not held back by it: a person
+      // chose this audience, and silently dropping part of it would be worse.
+      await recordMarketingTouch({
+        contactId: contact.id,
+        channel: campaign.kind === "sms" ? "sms" : "email",
+        source: "campaign",
+        campaignId: campaign.id,
+      });
       await markDone(contact, doneTag, campaign.tags ?? []);
     } catch (err) {
       failed += 1;

@@ -6,7 +6,14 @@ import type { EngineEventRow, EngineEventType, AutomationRunRow } from "../db/sc
 import { pickSplitVariant } from "../automation-flow";
 import { triggerLabel } from "../automation-catalog";
 import type { AutomationGraph, AutomationNode, DelayUnit } from "../automation-flow";
-import { executeAction, evaluateCondition, evaluatePath, isMessageAction } from "./actions.server";
+import {
+  executeAction,
+  evaluateCondition,
+  evaluatePath,
+  isMessageAction,
+  marketingChannel,
+} from "./actions.server";
+import { overMarketingCap, recordMarketingTouch } from "./marketing-cap.server";
 import { runAgentNode } from "./agent.server";
 import { logStep } from "./log.server";
 import { gateAutomationMessage, recordMessageSent } from "./settings.server";
@@ -498,6 +505,26 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
         });
         break;
       }
+      // The weekly cap on marketing, across every automation and campaign:
+      // past it, the step is skipped (not postponed — a backlog would only
+      // arrive later in one burst) and the run goes on. Checked before the
+      // trial hold, so nobody is asked to approve a message that cannot go.
+      const marketing = marketingChannel(node);
+      if (marketing) {
+        const over = await overMarketingCap(run.contactId);
+        if (over) {
+          await logStep({
+            ...base,
+            kind: "skipped",
+            message: t(
+              "Pominięto — pacjent dostał już {sent} wiadomości marketingowych w ciągu 7 dni (limit {cap}). Przebieg idzie dalej.",
+              { sent: over.sent, cap: over.cap },
+            ),
+            detail: { action: node.key ?? "", cap: String(over.cap) },
+          });
+          break;
+        }
+      }
       if (
         isMessageAction(node) &&
         job.review !== "approved" &&
@@ -563,6 +590,13 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
         nodeId: node.id,
       });
       if (gate && result.status === "ok") await recordMessageSent(gate);
+      if (marketing && result.status === "ok")
+        await recordMarketingTouch({
+          contactId: run.contactId,
+          channel: marketing,
+          source: "automation",
+          automationId: run.automationId,
+        });
       await logStep({
         ...base,
         kind:

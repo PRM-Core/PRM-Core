@@ -44,6 +44,7 @@ import { agentPromptsV2 } from "./agent-prompts-v2";
 import { engineSendWindow } from "./engine-send-window";
 import { engineTimeTriggers } from "./engine-time-triggers";
 import { engineWait } from "./engine-wait";
+import { engineMarketingCap } from "./engine-marketing-cap";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -86,6 +87,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineSendWindow,
   engineTimeTriggers,
   engineWait,
+  engineMarketingCap,
 };
 
 /**

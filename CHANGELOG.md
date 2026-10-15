@@ -8,6 +8,33 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.15.0] — Limit marketingu na pacjenta, ze wszystkich automatyzacji razem
+
+Każda automatyzacja z osobna jest rozsądna; pięć naraz plus newsletter już
+nie — i pacjent wypisuje się ze wszystkiego.
+
+- **„Marketing na pacjenta / 7 dni”** (PRM Engine → Godziny wysyłki
+  automatyzacji, ustawia administrator): ile wiadomości marketingowych
+  jeden pacjent może dostać w ciągu 7 dni — ze wszystkich automatyzacji
+  i kampanii razem, e-mailem i SMS-em. Domyślnie bez limitu.
+- Krok marketingowy automatyzacji ponad limit jest **pomijany, nie
+  odkładany** (zaległości wyszłyby potem zrywem), z powodem w dzienniku;
+  przebieg idzie dalej. Sprawdzane przed okresem próbnym — nikt nie
+  zatwierdza wiadomości, która i tak nie wyjdzie — i jeszcze raz przy
+  wysyłce zatwierdzonej.
+- **Wiadomości administracyjne** (przypomnienie o wizycie, wynik gotowy)
+  nie liczą się nigdy i nigdy nie są wstrzymywane.
+- **Kampanie liczą się**, bo pacjent je dostał, ale nie są wstrzymywane:
+  odbiorców wybrał człowiek, a ciche pominięcie części z nich byłoby
+  gorsze.
+- Test na kontakcie mówi, gdy limit pominąłby wiadomość.
+- Liczone z nowego rejestru `marketing_touches`, zapisywanego po udanej
+  wysyłce — tabele wysyłek nie mówią, czy wiadomość była marketingowa.
+- Poprawka: SMS z automatyzacji zapisywał w historii identyfikator kroku
+  zamiast automatyzacji.
+- Migracja 0082: tabela `marketing_touches`, kolumna `marketing_per_week`
+  w `engine_settings`.
+
 ## [2.14.0] — Czekaj na zdarzenie, z limitem czasu
 
 Dotąd były tylko stałe opóźnienia, więc każda gałąź musiała zgadywać, ile

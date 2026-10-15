@@ -38,24 +38,26 @@ unique key in the schema guarantees it, not careful code.
   the window waits for it and says so once in the log; an automation whose
   message is useless later can opt out of the window, never out of the
   limits.
+- **Frequency cap** (since 2.15.0): at most N marketing messages per patient
+  in 7 days, counted across every automation and campaign, e-mail and SMS.
+  An automation's marketing step past it is skipped and the run goes on;
+  administrative messages never count; campaigns count but are not held
+  back.
 
 ### Next
 
-1. **Frequency capping across automations** — at most N marketing messages per
-   patient per week, counted across all flows and channels. Each automation is
-   reasonable on its own; together they are not.
-2. **Goals and conversion** — mark a step as the goal (visit booked, form
+1. **Goals and conversion** — mark a step as the goal (visit booked, form
    submitted) and measure how many patients reached it, per automation and per
    variant.
-3. **A/B split step** — two subject lines or two channels, with the result
+2. **A/B split step** — two subject lines or two channels, with the result
    visible in the same statistics.
-4. **Outgoing webhook action** — one step that POSTs to a URL, which connects
+3. **Outgoing webhook action** — one step that POSTs to a URL, which connects
    PRM Core to n8n, Make and Zapier in the other direction. _(help wanted)_
-5. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
+4. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
    as one step instead of a hand-built branch.
-6. **Re-entry rules** — whether a patient may enter the same automation again,
+5. **Re-entry rules** — whether a patient may enter the same automation again,
    and after how long.
-7. **Queue observability** — a view of delayed, failed and dead-lettered
+6. **Queue observability** — a view of delayed, failed and dead-lettered
    steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer

@@ -575,6 +575,13 @@
       "when": 1792070505978,
       "tag": "0081_engine_waits",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "6",
+      "when": 1792074662405,
+      "tag": "0082_marketing_cap",
+      "breakpoints": true
     }
   ]
 }

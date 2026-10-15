@@ -181,7 +181,11 @@ async function sendTemplatedEmail(
   }
 }
 
-async function sendTemplatedSms(node: AutomationNode, contact: ContactRow): Promise<ActionResult> {
+async function sendTemplatedSms(
+  node: AutomationNode,
+  contact: ContactRow,
+  context?: ActionContext,
+): Promise<ActionResult> {
   const templateName = cfg(node, "template");
   if (!templateName) {
     return { status: "skipped", message: tr("Krok pominięty — nie wybrano szablonu SMS.") };
@@ -221,16 +225,19 @@ async function sendTemplatedSms(node: AutomationNode, contact: ContactRow): Prom
     await sendSms({ to: contact.phone, fromNumber: sender.value, body });
     // Zapisane dopiero PO udanej wysyłce — historia ma mówić, co naprawdę
     // poszło do pacjenta, a nie co próbowaliśmy wysłać.
-    await getDb().insert(smsSends).values({
-      id: randomUUID(),
-      contactId: contact.id,
-      toPhone: contact.phone,
-      sender: sender.value,
-      body,
-      source: "automation",
-      automationId: node.id,
-      sentAt: Date.now(),
-    });
+    await getDb()
+      .insert(smsSends)
+      .values({
+        id: randomUUID(),
+        contactId: contact.id,
+        toPhone: contact.phone,
+        sender: sender.value,
+        body,
+        source: "automation",
+        // The automation, not the step: until 2.15.0 the step's id landed here.
+        automationId: context?.automationId ?? null,
+        sentAt: Date.now(),
+      });
     return {
       status: "ok",
       message: tr("Wysłano SMS na {phone} (nadawca „{value}”).", {
@@ -679,6 +686,16 @@ export function isMessageAction(node: AutomationNode): boolean {
   return (MESSAGE_ACTIONS as readonly string[]).includes(node.key ?? "");
 }
 
+/**
+ * A message step that sends marketing — the kind the weekly cap counts. An
+ * administrative message (a visit reminder, a result is ready) is never
+ * capped: the patient needs it whatever else they got this week.
+ */
+export function marketingChannel(node: AutomationNode): "email" | "sms" | null {
+  if (!isMessageAction(node) || sendMode(node) !== "marketing") return null;
+  return node.key === "send_sms" ? "sms" : "email";
+}
+
 export type MessagePreview =
   | { ok: true; channel: "email" | "sms"; template: string; subject: string; text: string }
   | { ok: false };
@@ -749,7 +766,7 @@ export async function executeAction(
       case "send_newsletter":
         return await sendTemplatedEmail(node, contact, "newsletter");
       case "send_sms":
-        return await sendTemplatedSms(node, contact);
+        return await sendTemplatedSms(node, contact, context);
 
       case "change_tags": {
         const tag = cfg(node, "tag");

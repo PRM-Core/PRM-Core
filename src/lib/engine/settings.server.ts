@@ -66,6 +66,8 @@ export interface SendSettings {
   sendTo: string;
   perHourLimit: number | null;
   perDayLimit: number | null;
+  /** Marketing messages per patient in 7 days, across automations and campaigns; null = no cap. */
+  marketingPerWeek: number | null;
   /** Automation messages sent so far today (Warsaw day). */
   sentToday: number;
 }
@@ -78,6 +80,7 @@ export async function getSendSettings(now = Date.now()): Promise<SendSettings> {
     sendTo: row?.sendTo ?? "",
     perHourLimit: row?.perHourLimit ?? null,
     perDayLimit: row?.perDayLimit ?? null,
+    marketingPerWeek: row?.marketingPerWeek ?? null,
     sentToday: row && row.dayKey === warsawDay(now) ? row.daySentCount : 0,
   };
 }
@@ -87,6 +90,7 @@ export async function saveSendSettings(input: {
   sendTo: string;
   perHourLimit: number | null;
   perDayLimit: number | null;
+  marketingPerWeek: number | null;
 }): Promise<void> {
   const existing = await getOrCreateRow();
   if (!existing) return;

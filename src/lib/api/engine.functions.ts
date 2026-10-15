@@ -684,6 +684,7 @@ export interface SendWindowView {
   sendTo: string;
   perHourLimit: number | null;
   perDayLimit: number | null;
+  marketingPerWeek: number | null;
   sentToday: number;
 }
 
@@ -705,6 +706,7 @@ export const saveSendWindow = createServerFn({ method: "POST" })
       sendTo: hhmm,
       perHourLimit: z.number().int().min(1).max(1_000_000).nullable(),
       perDayLimit: z.number().int().min(1).max(10_000_000).nullable(),
+      marketingPerWeek: z.number().int().min(1).max(100).nullable(),
     }),
   )
   .handler(async ({ data }) => {
