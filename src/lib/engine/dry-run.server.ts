@@ -357,6 +357,30 @@ async function previewAction(
     case "end_process":
       return { message: tr("Koniec procesu."), outcome: "info", stop: true };
 
+    case "send_webhook": {
+      // Nothing is sent from a preview — it only says where the data would go.
+      const endpointId = node.config?.endpoint ?? "";
+      if (!endpointId)
+        return {
+          message: tr("Nie wybrano odbiorcy webhooka — krok zostanie pominięty."),
+          outcome: "warning",
+        };
+      const { listWebhookEndpoints } = await import("../webhooks/outgoing.server");
+      const endpoint = (await listWebhookEndpoints()).find((w) => w.id === endpointId);
+      if (!endpoint)
+        return {
+          message: tr("Odbiorca webhooka nie istnieje — krok zakończy się błędem."),
+          outcome: "blocked",
+        };
+      return {
+        message: tr("Wysłałby do „{name}” ({host}): numer PRM{fields}.", {
+          name: endpoint.name,
+          host: endpoint.host,
+          fields: endpoint.fields.length > 0 ? `, ${endpoint.fields.join(", ")}` : "",
+        }),
+        outcome: "ok",
+      };
+    }
     default:
       return {
         message: tr("Nieznana akcja „{key}” — krok zostanie pominięty.", { key: key }),

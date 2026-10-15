@@ -74,6 +74,7 @@ self-hosted, in English and Polish.
 | Docplanner (ZnanyLekarz)  | in        | keys and connection test; visit sync in progress             |
 | Generic lead webhook      | in        | any system that can send JSON (n8n, Make, Zapier, your code) |
 | Booking webhook           | in        | visit bookings from an online booking system                 |
+| Outgoing webhook step     | out       | n8n, Make, Zapier, your code — signed, admin-approved fields |
 | MCP                       | out       | read-only access for AI assistants                           |
 
 ## Contributors wanted: connect a medical system
@@ -95,7 +96,7 @@ system. **This is where help matters most**, and it is well scoped:
   list with priorities: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md#integrations-we-would-love-to-see).
 
 Beyond connectors, [docs/ROADMAP.md](docs/ROADMAP.md) lists what is next in
-the automation engine (channel fallback, re-entry rules, an outgoing webhook)
+the automation engine (channel fallback, re-entry rules, queue observability)
 and in PRM_Agent (a clinic server through the evaluation harness).
 
 Pick one, open an issue with the **Medical system connector** form, and say

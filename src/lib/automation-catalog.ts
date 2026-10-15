@@ -26,6 +26,7 @@ import {
   AppWindow,
   CalendarClock,
   Cake,
+  Webhook,
   type LucideIcon,
 } from "lucide-react";
 import type { BuilderKind } from "@/lib/content-builder";
@@ -74,7 +75,9 @@ export interface CatalogField {
      * builder: the list comes from the card, so a field renamed there is
      * renamed here too, and nobody can type a name that does not exist.
      */
-    | "contact-field";
+    | "contact-field"
+    /** Picks one of the outgoing webhook destinations an administrator set up. */
+    | "webhook-endpoint";
   options?: string[];
   placeholder?: string;
   /** Used when type === "content-template" — which section's items to offer as "Szablon". */
@@ -651,6 +654,17 @@ export const actionCatalog: CatalogItem[] = localized(() => [
     description: t("Trwale usuwa kartotekę pacjenta"),
     icon: Trash2,
     tone: "bg-rose-100 text-rose-700",
+  },
+  {
+    key: "send_webhook",
+    label: t("Wyślij do webhooka"),
+    description: t("Przekazuje pacjenta do n8n, Make, Zapiera albo własnego systemu"),
+    icon: Webhook,
+    tone: "bg-cyan-100 text-cyan-700",
+    fields: [{ key: "endpoint", label: t("Odbiorca"), type: "webhook-endpoint" }],
+    engineHint: t(
+      "Odbiorców i to, jakie pola mogą do nich wyjść, ustawia administrator w PRM Engine → Webhooki wychodzące — zawsze idzie numer PRM, reszta tylko za jego zgodą; PESEL i pola własne nigdy. Zapytanie jest podpisane (X-PRM-Signature). Gdy odbiorca nie odpowie albo odrzuci zapytanie, przebieg zatrzymuje się z powodem w dzienniku.",
+    ),
   },
   {
     key: "end_process",

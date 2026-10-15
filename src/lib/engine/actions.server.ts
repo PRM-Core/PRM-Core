@@ -10,6 +10,7 @@ import {
   emailSettings,
   contactFieldDefs,
   smsSends,
+  automations,
 } from "../db/schema";
 import type { ContactRow } from "../db/schema";
 import type { AutomationNode } from "../automation-flow";
@@ -252,6 +253,49 @@ async function sendTemplatedSms(
       status: "error",
       message: tr("Wysyłka SMS nie powiodła się: {message}", { message: message }),
     };
+  }
+}
+
+/**
+ * Posts the patient to a destination an administrator set up (PRM Engine →
+ * Webhooki wychodzące), with only the fields allowed for it. A destination
+ * that fails is an error — the run stops there and says why, rather than
+ * carrying on as if the other system had been told.
+ */
+async function sendToWebhook(
+  node: AutomationNode,
+  contact: ContactRow,
+  context?: ActionContext,
+): Promise<ActionResult> {
+  const endpointId = cfg(node, "endpoint");
+  if (!endpointId)
+    return { status: "skipped", message: tr("Krok pominięty — nie wybrano odbiorcy webhooka.") };
+  const { deliverWebhook } = await import("../webhooks/outgoing.server");
+  const automation = context?.automationId
+    ? await getDb()
+        .select({ name: automations.name })
+        .from(automations)
+        .where(eq(automations.id, context.automationId))
+        .get()
+    : undefined;
+  try {
+    const d = await deliverWebhook(endpointId, contact, {
+      automationId: context?.automationId ?? "",
+      automationName: automation?.name ?? "",
+      runId: context?.runId ?? "",
+      stepId: context?.nodeId ?? node.id,
+    });
+    return {
+      status: "ok",
+      message: tr("Wysłano do „{name}” ({host}): numer PRM{fields}.", {
+        name: d.name,
+        host: d.host,
+        fields: d.fields.length > 0 ? `, ${d.fields.join(", ")}` : "",
+      }),
+      detail: { endpoint: d.name, host: d.host, status: String(d.status) },
+    };
+  } catch (err) {
+    return { status: "error", message: err instanceof Error ? err.message : String(err) };
   }
 }
 
@@ -767,6 +811,9 @@ export async function executeAction(
         return await sendTemplatedEmail(node, contact, "newsletter");
       case "send_sms":
         return await sendTemplatedSms(node, contact, context);
+
+      case "send_webhook":
+        return await sendToWebhook(node, contact, context);
 
       case "change_tags": {
         const tag = cfg(node, "tag");

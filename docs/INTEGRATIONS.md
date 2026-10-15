@@ -291,7 +291,6 @@ duplicated.
 | ★★       | Practice management systems used in Poland (e.g. Medfile, KS-SOMED, mMedica, CGM)   | where most Polish clinics keep their calendar — only through the vendor's official API and terms |
 | ★★       | International booking/PMS (e.g. Doctolib, Cliniko, Jane, Nookal)                    | same mechanism, other markets                                                                    |
 | ★★       | HL7 v2 (ADT/SIU) through an interface engine → booking webhook                      | older hospital systems without a REST API                                                        |
-| ★        | Outgoing webhook automation step                                                    | connects n8n, Make and Zapier in the other direction                                             |
 | ★        | Polish SMS gateways (SMSAPI, SerwerSMS), email beyond SendGrid (SES, Mailgun, SMTP) | lower cost, local providers                                                                      |
 | ★        | Google Calendar / Microsoft 365                                                     | visits in staff calendars                                                                        |
 | ★        | Recipes in `docs/recipes/`                                                          | connecting common tools through the lead webhook, no code                                        |

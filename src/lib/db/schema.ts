@@ -1635,6 +1635,26 @@ export const engineSettings = sqliteTable("engine_settings", {
 });
 
 /**
+ * Where an automation's "send to a webhook" step may post — set by an
+ * administrator, never in the automation itself. The address and the secret
+ * are encrypted with PRM_SECRETS_KEY (a Zapier or Make hook URL is itself a
+ * secret); `host` is kept apart in the clear only to show where data goes.
+ * `fields` is the administrator's decision about what may leave: the PRM
+ * number always, the rest only when listed.
+ */
+export const webhookEndpoints = sqliteTable("webhook_endpoints", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  host: text("host").notNull(),
+  urlEnc: text("url_enc").notNull(),
+  secretEnc: text("secret_enc").notNull(),
+  keyId: text("key_id").notNull(),
+  fields: text("fields", { mode: "json" }).notNull().$type<string[]>(),
+  updatedBy: text("updated_by").notNull().default(""),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/**
  * Every marketing message that actually went to a patient — from an
  * automation or a campaign, by e-mail or SMS. The send tables do not say
  * whether a message was marketing; this ledger is what the weekly cap counts.

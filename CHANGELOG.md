@@ -8,6 +8,36 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.17.0] — Krok „Wyślij do webhooka”: n8n, Make, Zapier w drugą stronę
+
+PRM Core przyjmował dane z n8n, Make i Zapiera (webhook leadów), ale nie
+umiał nic im przekazać. Nowy krok automatyzacji wysyła pacjenta do
+wskazanego systemu — i jest to jedyny krok, który wyprowadza dane pacjenta
+poza instalację, więc granice ustawia administrator, nie automatyzacja.
+
+- **Odbiorcy** (Automatyzacje → PRM Engine → Webhooki wychodzące, tylko
+  administrator): nazwa, adres, pola, które mogą wyjść. Krok w
+  automatyzacji tylko wybiera odbiorcę z listy — nie da się w nim wpisać
+  dowolnego adresu.
+- **Pola:** numer PRM zawsze; imię, nazwisko, e-mail, telefon, status,
+  tagi, segmenty, źródło, kampania, data dodania — tylko zaznaczone przez
+  administratora. **PESEL i pola własne nigdy** — pola własne mogą zawierać
+  cokolwiek, także dane medyczne.
+- **Adres:** HTTPS; zwykłe HTTP tylko w sieci placówki (n8n często stoi
+  lokalnie); bez loginu i hasła w adresie. Adres i sekret są
+  przechowywane **zaszyfrowane** kluczem `PRM_SECRETS_KEY` — adres haka
+  Zapiera czy Make sam jest sekretem; ekran pokazuje tylko host.
+- **Podpis:** `X-PRM-Signature` = HMAC-SHA256 z „znacznik czasu.treść”;
+  sekret pokazany raz przy dodaniu, „Nowy sekret” go wymienia. Opis
+  weryfikacji dla odbiorcy (Node.js, n8n): `docs/WEBHOOK-OUTGOING.md`.
+- **Dostarczenie:** jedna próba, 10 s; przekierowanie nie jest
+  wykonywane (mogłoby wysłać dane tam, gdzie administrator się nie
+  zgodził); błąd zatrzymuje przebieg z powodem w dzienniku. Test na
+  kontakcie mówi tylko, dokąd i jakie pola by poszły — nic nie wysyła.
+- **Ślad:** dodanie, zmiana, nowy sekret i usunięcie odbiorcy trafiają do
+  dziennika silnika — kto, jaki host, jakie pola; nigdy adres ani sekret.
+- Migracja 0084: tabela `webhook_endpoints`.
+
 ## [2.16.0] — Cele i konwersja, także dla wariantów A/B
 
 Automatyzacja wysyłała wiadomości, ale nie było wiadomo, czy coś z tego

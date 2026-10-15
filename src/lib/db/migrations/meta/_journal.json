@@ -589,6 +589,13 @@
       "when": 1792075160930,
       "tag": "0083_automation_goal",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "6",
+      "when": 1792075885016,
+      "tag": "0084_webhook_endpoints",
+      "breakpoints": true
     }
   ]
 }

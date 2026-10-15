@@ -28,7 +28,11 @@ unique key in the schema guarantees it, not careful code.
   — for at most a set time, with two ways out: "event" at once, or "time ran
   out" at the deadline. Only an event after the wait began counts.
 - **Actions**: email, newsletter, SMS, pop-up, tags, segments, field update,
-  score, funnel stage, do-not-contact, delete contact, end.
+  score, funnel stage, do-not-contact, delete contact, end — and, since
+  2.17.0, send to a webhook (n8n, Make, Zapier, your code): destinations and
+  the fields allowed out are an administrator's, the address and secret are
+  stored encrypted, every request is signed, redirects are refused
+  (`docs/WEBHOOK-OUTGOING.md`).
 - **Safety**: consent checked on the server before every marketing send, not
   in the flow; delays; retries with attempt counts; dry run before activation;
   a supervisor that reviews automations and reports findings.
@@ -52,13 +56,11 @@ unique key in the schema guarantees it, not careful code.
 
 ### Next
 
-1. **Outgoing webhook action** — one step that POSTs to a URL, which connects
-   PRM Core to n8n, Make and Zapier in the other direction. _(help wanted)_
-2. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
+1. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
    as one step instead of a hand-built branch.
-3. **Re-entry rules** — whether a patient may enter the same automation again,
+2. **Re-entry rules** — whether a patient may enter the same automation again,
    and after how long.
-4. **Queue observability** — a view of delayed, failed and dead-lettered
+3. **Queue observability** — a view of delayed, failed and dead-lettered
    steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer

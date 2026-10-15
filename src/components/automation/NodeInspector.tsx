@@ -39,6 +39,7 @@ import type { BuilderKind } from "@/lib/content-builder";
 import { KIND_LABELS } from "@/lib/content-builder";
 import { getAllFunnels } from "@/lib/api/funnels.functions";
 import { getSmsSenders, type SmsSenderView } from "@/lib/api/sms.functions";
+import { getWebhookEndpoints, type WebhookEndpointView } from "@/lib/api/webhooks.functions";
 import { getContactFields, type ContactFieldDef } from "@/lib/api/contact-fields.functions";
 
 /** Radix forbids an empty item value, so "use the default" needs a sentinel. */
@@ -262,6 +263,15 @@ export function ConfigFields({
     if (needsFunnels) getAllFunnels().then(setFunnels);
   }, [needsFunnels]);
 
+  const needsWebhooks = fields.some((f) => f.type === "webhook-endpoint");
+  const [webhooks, setWebhooks] = useState<WebhookEndpointView[] | null>(null);
+  useEffect(() => {
+    if (needsWebhooks)
+      getWebhookEndpoints()
+        .then(setWebhooks)
+        .catch(() => setWebhooks([]));
+  }, [needsWebhooks]);
+
   const needsSenders = fields.some((f) => f.type === "sms-sender");
   const [senders, setSenders] = useState<SmsSenderView[] | null>(null);
   useEffect(() => {
@@ -372,6 +382,32 @@ export function ConfigFields({
                         {d.builtin ? "" : tr(" (własne)")}
                       </SelectItem>
                     ))}
+                </SelectContent>
+              </Select>
+            )
+          ) : f.type === "webhook-endpoint" ? (
+            !webhooks ? (
+              <p className="text-xs text-muted-foreground">{tr("Wczytywanie odbiorców…")}</p>
+            ) : webhooks.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {tr(
+                  "Brak odbiorców — administrator dodaje ich w Automatyzacje → PRM Engine → Webhooki wychodzące.",
+                )}
+              </p>
+            ) : (
+              <Select
+                value={config[f.key] ?? ""}
+                onValueChange={(v) => onChange({ ...config, [f.key]: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={tr("Wybierz…")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {webhooks.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name} ({w.host})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )

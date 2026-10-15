@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.16.0",
+    "version": "2.17.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.16.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.17.0",
     "notes": {
-      "en": "Automation goals: conversion per automation and per A/B variant (with a significance test from 30 runs a variant), and an option to end the run once the patient reaches the goal.",
-      "pl": "Cele automatyzacji: konwersja per automatyzacja i per wariant A/B (z testem istotności od 30 przebiegów na wariant) oraz opcja zakończenia przebiegu, gdy pacjent osiągnie cel."
+      "en": "A new automation step sends the patient to n8n, Make, Zapier or your own system. Destinations and the fields allowed out are set by an administrator; addresses and secrets are stored encrypted and every request is signed. Needs PRM_SECRETS_KEY.",
+      "pl": "Nowy krok automatyzacji przekazuje pacjenta do n8n, Make, Zapiera albo własnego systemu. Odbiorców i pola, które mogą wyjść, ustawia administrator; adresy i sekrety są zaszyfrowane, każde zapytanie podpisane. Wymaga PRM_SECRETS_KEY."
     }
   },
   "messages": []
