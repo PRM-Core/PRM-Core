@@ -227,7 +227,7 @@ function normalize(limit: number | null): number | null {
 /** „co 36 s" — do pokazania przy ustawianiu limitu, żeby tempo nie było abstrakcją. */
 export function paceLabel(perHour: number | null): string {
   const n = normalize(perHour);
-  if (n === null) return "bez ograniczenia tempa";
+  if (n === null) return t("bez ograniczenia tempa");
   const seconds = Math.round(HOUR_MS / n / 1000);
   if (seconds >= 60) return t("około 1 wiadomość co {v0} min", { v0: Math.round(seconds / 60) });
   return t("około 1 wiadomość co {seconds} s", { seconds: seconds });

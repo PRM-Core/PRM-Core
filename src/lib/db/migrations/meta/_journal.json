@@ -554,6 +554,13 @@
       "when": 1792043423402,
       "tag": "0078_ai_call_limits",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "6",
+      "when": 1792067721533,
+      "tag": "0079_automation_send_window",
+      "breakpoints": true
     }
   ]
 }

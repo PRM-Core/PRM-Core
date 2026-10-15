@@ -676,3 +676,51 @@ export const getContactRuns = createServerFn({ method: "GET" })
       };
     });
   });
+
+// ── when automation messages may go out ──────────────────────────────────────
+
+export interface SendWindowView {
+  sendFrom: string;
+  sendTo: string;
+  perHourLimit: number | null;
+  perDayLimit: number | null;
+  sentToday: number;
+}
+
+export const getSendWindow = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async (): Promise<SendWindowView> => {
+    const { getSendSettings } = await import("../engine/settings.server");
+    return getSendSettings();
+  });
+
+const hhmm = z.string().regex(/^(?:|\d{1,2}:\d{2})$/);
+
+/** The installation's sending window and limits for automation messages — an administrator's decision. */
+export const saveSendWindow = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(
+    z.object({
+      sendFrom: hhmm,
+      sendTo: hhmm,
+      perHourLimit: z.number().int().min(1).max(1_000_000).nullable(),
+      perDayLimit: z.number().int().min(1).max(10_000_000).nullable(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const user = await getSessionUser();
+    if (!user || user.role !== "admin")
+      throw new Error(t("Godziny wysyłki automatyzacji ustawia administrator."));
+    const { parseHhMm } = await import("../campaigns/throttle");
+    // Both hours or neither: half a window would mean nothing.
+    const from = data.sendFrom && parseHhMm(data.sendFrom) !== null ? data.sendFrom : "";
+    const to = data.sendTo && parseHhMm(data.sendTo) !== null ? data.sendTo : "";
+    const { saveSendSettings } = await import("../engine/settings.server");
+    await saveSendSettings({
+      ...data,
+      sendFrom: from && to ? from : "",
+      sendTo: from && to ? to : "",
+    });
+    return { ok: true as const };
+  });

@@ -26,6 +26,7 @@ const {
   contentSnapshots,
   engineJobs,
   engineLog,
+  engineSettings,
   smsSends,
   smsSenders,
 } = await import("../db/schema");
@@ -86,10 +87,14 @@ beforeEach(async () => {
     contentSnapshots,
     engineJobs,
     engineLog,
+    engineSettings,
     smsSends,
     smsSenders,
   ])
     await db.delete(t);
+  // Any hour: what is tested here is the trial, not the sending window (a
+  // fresh database would start with 08:00–20:00 and fail in the evening).
+  await db.insert(engineSettings).values({ baseUrl: "", updatedAt: "" });
   await db.insert(smsSenders).values({
     id: "s1",
     label: "Placówka",

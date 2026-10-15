@@ -20,6 +20,8 @@ export interface AutomationRecord {
   aiCallsPerDay?: number;
   /** Model runs so far today — read-only, counted by the server. */
   aiCallsToday?: number;
+  /** "ignore" = this automation's messages go out at any hour; limits still apply. */
+  quietHours?: "respect" | "ignore";
 }
 
 export function createInitialRecords(): AutomationRecord[] {

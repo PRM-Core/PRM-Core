@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.11.0",
+    "version": "2.12.0",
     "date": "2026-10-15",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.11.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.12.0",
     "notes": {
-      "en": "Three local models measured with the same 18 cases (Bielik 11B, Qwen 2.5 14B, Gemma 3 12B), all usable; an empty or cut-off model answer now means the model is unavailable and the agent falls back on its rules.",
-      "pl": "Trzy modele lokalne przez ten sam sprawdzian 18 przypadków (Bielik 11B, Qwen 2.5 14B, Gemma 3 12B), wszystkie nadają się do pracy; pusta albo urwana odpowiedź modelu oznacza teraz niedostępny model i agent wraca do reguł."
+      "en": "Automation messages get the campaigns' sending window and hourly and daily limits: a step outside the hours waits for them; an automation can opt out of the window, never out of the limits. An upgraded installation keeps sending at any hour until an administrator sets a window.",
+      "pl": "Wiadomości automatyzacji dostają okno wysyłki oraz limity na godzinę i dobę, jak kampanie: krok poza godzinami czeka na nie; automatyzacja może wyłączyć dla siebie okno, nigdy limity. Zaktualizowana instalacja wysyła o każdej porze, dopóki administrator nie ustawi okna."
     }
   },
   "messages": []

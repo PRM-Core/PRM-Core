@@ -76,6 +76,7 @@ export const getAllAutomations = createServerFn({ method: "GET" })
       reviewed: r.reviewed,
       aiCallsPerDay: r.aiCallsPerDay,
       aiCallsToday: today.get(r.id) ?? 0,
+      quietHours: r.quietHours,
     }));
   });
 
@@ -89,6 +90,7 @@ export const saveAutomation = createServerFn({ method: "POST" })
       flow: automationGraphSchema.nullable(),
       reviewFirst: z.number().int().min(0).max(50).optional(),
       aiCallsPerDay: z.number().int().min(0).max(100_000).optional(),
+      quietHours: z.enum(["respect", "ignore"]).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -96,11 +98,12 @@ export const saveAutomation = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const existing = await db.select().from(automations).where(eq(automations.id, data.id)).get();
     // `reviewed` is never taken from the client: only an approval counts.
-    const { reviewFirst, aiCallsPerDay, ...rest } = data;
+    const { reviewFirst, aiCallsPerDay, quietHours, ...rest } = data;
     const values = {
       ...rest,
       updatedAt: now,
       ...(aiCallsPerDay === undefined ? {} : { aiCallsPerDay }),
+      ...(quietHours === undefined ? {} : { quietHours }),
     };
     if (existing) {
       await db

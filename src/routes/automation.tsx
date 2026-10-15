@@ -31,6 +31,7 @@ import {
   PlayCircle,
   Copy,
   Trash2,
+  Moon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ import {
   getRunCounts,
   publishEngineTemplates,
   type AutomationKpis,
+  getSendWindow,
 } from "@/lib/api/engine.functions";
 import { collectTemplateRefs } from "@/lib/engine/publish-templates";
 import { EnginePanel } from "@/components/automation/EnginePanel";
@@ -210,6 +212,60 @@ function ModelStrip({
                 {n === 0 ? tr("bez modelu") : n}
               </option>
             ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
+const MESSAGE_KEYS = ["send_email", "send_newsletter", "send_sms"];
+
+/**
+ * When this automation's messages go out: within the installation's sending
+ * window (PRM Engine panel), or at any hour — for a message that is useless
+ * later. The hourly and daily limits apply either way.
+ */
+function SendHoursStrip({
+  record,
+  onChange,
+}: {
+  record: AutomationRecord;
+  onChange: (v: "respect" | "ignore") => void;
+}) {
+  const [sendWindow, setSendWindow] = useState<{ from: string; to: string } | null>(null);
+  useEffect(() => {
+    getSendWindow()
+      .then((w) => setSendWindow({ from: w.sendFrom, to: w.sendTo }))
+      .catch(() => setSendWindow({ from: "", to: "" }));
+  }, []);
+  const mode = record.quietHours ?? "respect";
+  const hours =
+    sendWindow && sendWindow.from && sendWindow.to ? `${sendWindow.from}–${sendWindow.to}` : "";
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
+      <Moon className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="flex-1 min-w-[240px]">
+        {mode === "ignore"
+          ? tr(
+              "Wiadomości tej automatyzacji wychodzą o każdej porze — także w nocy. Limity na godzinę i dobę obowiązują.",
+            )
+          : hours
+            ? tr("Wiadomości wychodzą {hours}; krok poza tymi godzinami czeka do otwarcia okna.", {
+                hours,
+              })
+            : tr(
+                "Okno wysyłki nie jest ustawione — wiadomości wychodzą o każdej porze. Ustaw je w panelu PRM Engine.",
+              )}
+      </span>
+      <label className="flex items-center gap-1.5">
+        {tr("Wysyłka")}
+        <select
+          className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground"
+          value={mode}
+          onChange={(e) => onChange(e.target.value === "ignore" ? "ignore" : "respect")}
+        >
+          <option value="respect">{tr("w godzinach wysyłki")}</option>
+          <option value="ignore">{tr("o każdej porze")}</option>
         </select>
       </label>
     </div>
@@ -760,6 +816,12 @@ function AutomationPage() {
                 record={currentRecord}
                 onChange={(n) => updateRecord(currentRecord.id, { reviewFirst: n })}
               />
+              {currentRecord.flow?.nodes.some((n) => MESSAGE_KEYS.includes(n.key ?? "")) && (
+                <SendHoursStrip
+                  record={currentRecord}
+                  onChange={(v) => updateRecord(currentRecord.id, { quietHours: v })}
+                />
+              )}
               {currentRecord.flow?.nodes.some((n) => n.kind === "aiAgent") && (
                 <ModelStrip
                   record={currentRecord}

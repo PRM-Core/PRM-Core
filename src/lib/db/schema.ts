@@ -761,6 +761,12 @@ export const automations = sqliteTable("automations", {
    * model from the inbox and the other automations.
    */
   aiCallsPerDay: integer("ai_calls_per_day").notNull().default(100),
+  /**
+   * "ignore" lets this automation's messages out at any hour — for a flow
+   * whose message is useless later (a reminder an hour before an early
+   * visit). The hourly and daily limits apply either way.
+   */
+  quietHours: text("quiet_hours").notNull().default("respect").$type<"respect" | "ignore">(),
   updatedAt: text("updated_at").notNull(),
 });
 
@@ -1548,6 +1554,21 @@ export const engineSettings = sqliteTable("engine_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   baseUrl: text("base_url").notNull().default(""),
   enabled: integer("enabled").notNull().default(1),
+  /**
+   * When automation messages may go out, "HH:MM" Warsaw time — the same
+   * window campaigns have. Empty = any hour (installations before 2.12.0
+   * keep that; a new installation starts at 08:00–20:00).
+   */
+  sendFrom: text("send_from").notNull().default(""),
+  sendTo: text("send_to").notNull().default(""),
+  /** Automation messages an hour / a day across all flows; null = no limit. */
+  perHourLimit: integer("per_hour_limit"),
+  perDayLimit: integer("per_day_limit"),
+  /** The counters behind the limits — see campaigns/throttle.ts. */
+  hourWindowAt: integer("hour_window_at"),
+  hourSentCount: integer("hour_sent_count").notNull().default(0),
+  dayKey: text("day_key").notNull().default(""),
+  daySentCount: integer("day_sent_count").notNull().default(0),
   updatedAt: text("updated_at").notNull(),
 });
 

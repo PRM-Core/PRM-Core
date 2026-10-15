@@ -8,6 +8,9 @@ import type { AutomationGraph, AutomationNode, DelayUnit } from "../automation-f
 import { executeAction, evaluateCondition, evaluatePath, isMessageAction } from "./actions.server";
 import { runAgentNode } from "./agent.server";
 import { logStep } from "./log.server";
+import { gateAutomationMessage, recordMessageSent } from "./settings.server";
+import { deferralMessage } from "./send-window";
+import { formatActivityDate } from "../activity-date";
 import { takeUnprocessedEvents, markEventProcessed } from "./events.server";
 import { processDueCampaigns } from "../campaigns/campaigns.server";
 import { t } from "@/lib/i18n";
@@ -416,11 +419,46 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
           return;
         }
       }
+      // The sending window and the limits — the campaigns' rules, for
+      // automations too. A message that may not go now waits for its moment:
+      // the job goes back to pending with a later due time, and the claim
+      // above does not count as an attempt.
+      let gate: Awaited<ReturnType<typeof gateAutomationMessage>> | null = null;
+      if (isMessageAction(node)) {
+        gate = await gateAutomationMessage(automation.quietHours === "ignore");
+        if (!gate.send) {
+          const message = deferralMessage(gate, gate, formatActivityDate(gate.nextAt));
+          await db
+            .update(engineJobs)
+            .set({
+              status: "pending",
+              dueAt: gate.nextAt,
+              attempts: job.attempts,
+              lastError: `deferred:${gate.blockedBy}`,
+            })
+            .where(eq(engineJobs.id, job.id));
+          await db
+            .update(automationRuns)
+            .set({ status: "waiting", currentNodeId: node.id })
+            .where(eq(automationRuns.id, run.id));
+          // One line per reason, not one per tick: a queue held back by the
+          // hourly pace would otherwise write the same sentence every slot.
+          if (job.lastError !== `deferred:${gate.blockedBy}`)
+            await logStep({
+              ...base,
+              kind: "delay",
+              message,
+              detail: { action: node.key ?? "", dueAt: new Date(gate.nextAt).toISOString() },
+            });
+          return;
+        }
+      }
       const result = await executeAction(node, run.contactId, {
         runId: run.id,
         automationId: run.automationId,
         nodeId: node.id,
       });
+      if (gate && result.status === "ok") await recordMessageSent(gate);
       await logStep({
         ...base,
         kind:

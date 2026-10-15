@@ -8,6 +8,33 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.12.0] — Godziny wysyłki i tempo dla automatyzacji
+
+Kampanie od dawna miały okno wysyłki i limity na godzinę i dobę;
+automatyzacje je omijały. Wizyta zarezerwowana o 23:40 dostawała
+potwierdzenie o 23:40, a dziesięć rozsądnych osobno automatyzacji mogło
+razem wysłać zryw, który operator SMS bierze za spam.
+
+- **Okno wysyłki dla wiadomości automatyzacji** (PRM Engine → Godziny
+  wysyłki automatyzacji, ustawia administrator). Krok z wiadomością poza
+  oknem czeka do jego otwarcia — wraca do kolejki z późniejszym terminem,
+  bez liczenia jako próba — i mówi o tym raz w dzienniku silnika.
+- **Limity na godzinę i na dobę** dla wszystkich automatyzacji razem,
+  e-mail i SMS, z tą samą arytmetyką co kampanie: limit godzinowy rozkłada
+  wiadomości równo w czasie, zamiast wysłać je zrywem. Liczy się tylko
+  wiadomość, która naprawdę wyszła — krok pominięty z braku zgody nie
+  zużywa limitu.
+- **Wyjątek per automatyzacja** (w edytorze, przy automatyzacjach
+  z wiadomościami): „o każdej porze” dla wiadomości, która później traci
+  sens, np. przypomnienia godzinę przed wczesną wizytą. Limity obowiązują
+  zawsze.
+- **Nowa instalacja startuje z oknem 08:00–20:00.** Instalacja
+  aktualizowana zachowuje dotychczasowe zachowanie (wysyłka o każdej
+  porze), dopóki administrator nie ustawi okna — aktualizacja nie zmienia
+  po cichu, kiedy pacjenci dostają wiadomości.
+- Migracja 0079: kolumny okna, limitów i liczników w `engine_settings`,
+  `quiet_hours` w `automations` (istniejące: `respect`).
+
 ## [2.11.0] — Trzy modele lokalne przez sprawdzian: Bielik, Qwen, Gemma
 
 Ten sam sprawdzian 18 przypadków, ten sam kod i te same prompty, trzy

@@ -26,6 +26,12 @@ unique key in the schema guarantees it, not careful code.
 - **Safety**: consent checked on the server before every marketing send, not
   in the flow; delays; retries with attempt counts; dry run before activation;
   a supervisor that reviews automations and reports findings.
+- **Sending window and pace** (since 2.12.0): automation messages keep the
+  installation's hours (08:00–20:00 on a new installation) and an hourly and
+  daily limit across all flows — the campaigns' arithmetic. A step outside
+  the window waits for it and says so once in the log; an automation whose
+  message is useless later can opt out of the window, never out of the
+  limits.
 
 ### Next
 
@@ -33,29 +39,25 @@ unique key in the schema guarantees it, not careful code.
    the last visit, "no visit in 12 months". Today every trigger reacts to an
    event that just happened, so recurring preventive care cannot be automated
    at all. _(help wanted)_
-2. **Quiet hours and rate limits for automation sends.** Campaigns already
-   have both (`src/lib/campaigns/throttle.ts`); automations bypass them, so a
-   visit booked at 23:40 sends a confirmation at 23:40. Reuse the same
-   arithmetic for engine actions. _(help wanted)_
-3. **Wait for an event, with a timeout** — "wait up to 48 h for the visit to
+2. **Wait for an event, with a timeout** — "wait up to 48 h for the visit to
    be confirmed, otherwise call reception". Today only fixed delays exist, so
    every branch has to guess how long to wait.
-4. **Frequency capping across automations** — at most N marketing messages per
+3. **Frequency capping across automations** — at most N marketing messages per
    patient per week, counted across all flows and channels. Each automation is
    reasonable on its own; together they are not.
-5. **Goals and conversion** — mark a step as the goal (visit booked, form
+4. **Goals and conversion** — mark a step as the goal (visit booked, form
    submitted) and measure how many patients reached it, per automation and per
    variant.
-6. **A/B split step** — two subject lines or two channels, with the result
+5. **A/B split step** — two subject lines or two channels, with the result
    visible in the same statistics.
-7. **Outgoing webhook action** — one step that POSTs to a URL, which connects
+6. **Outgoing webhook action** — one step that POSTs to a URL, which connects
    PRM Core to n8n, Make and Zapier in the other direction. _(help wanted)_
-8. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
+7. **Channel fallback** — "if the email is not opened in 24 h, send an SMS",
    as one step instead of a hand-built branch.
-9. **Re-entry rules** — whether a patient may enter the same automation again,
+8. **Re-entry rules** — whether a patient may enter the same automation again,
    and after how long.
-10. **Queue observability** — a view of delayed, failed and dead-lettered
-    steps with the reason, and a safe retry button.
+9. **Queue observability** — a view of delayed, failed and dead-lettered
+   steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer
 
