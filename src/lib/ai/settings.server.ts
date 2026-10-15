@@ -1,6 +1,6 @@
-import { eq, gte, and } from "drizzle-orm";
+import { and, eq, gte, like, sql } from "drizzle-orm";
 import { getDb } from "../db/client.server";
-import { aiSettings, engineLog } from "../db/schema";
+import { aiSettings, automations, engineLog } from "../db/schema";
 import type { AiProviderId } from "../db/schema";
 import { localProvider } from "./local.server";
 import { aiMode, localEndpoint } from "./boundary.server";
@@ -130,21 +130,111 @@ export function envVarFor(provider: AiProviderId): string {
   return PROVIDER_ENV_VARS[provider];
 }
 
+/** Local midnight — the day the limits count. */
+function midnight(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 /** USD spent on AI steps since local midnight, summed from the engine log. Zero with a local model. */
 export async function getSpendToday(): Promise<number> {
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
-
   const db = getDb();
   const rows = await db
     .select({ costUsd: engineLog.costUsd })
     .from(engineLog)
-    .where(and(eq(engineLog.kind, "ai"), gte(engineLog.createdAt, midnight.getTime())));
-
+    .where(and(eq(engineLog.kind, "ai"), gte(engineLog.createdAt, midnight())));
   return rows.reduce((sum, row) => sum + (row.costUsd ?? 0), 0);
 }
 
-export async function isOverDailyLimit(): Promise<{ over: boolean; spent: number; limit: number }> {
-  const [{ dailyLimitUsd }, spent] = await Promise.all([getAiConfig(), getSpendToday()]);
-  return { over: spent >= dailyLimitUsd, spent, limit: dailyLimitUsd };
+/** Model runs since local midnight — every "ai" entry of the engine log, or one automation's. */
+export async function getCallsToday(automationId?: string): Promise<number> {
+  const db = getDb();
+  const conditions = [eq(engineLog.kind, "ai"), gte(engineLog.createdAt, midnight())];
+  if (automationId) conditions.push(eq(engineLog.automationId, automationId));
+  const row = await db
+    .select({ n: sql<number>`count(*)` })
+    .from(engineLog)
+    .where(and(...conditions))
+    .get();
+  return row?.n ?? 0;
+}
+
+export interface LimitState {
+  over: boolean;
+  used: number;
+  limit: number;
+  /** A sentence for whoever reads why a step did not use the model. */
+  reason: string;
+}
+
+/** The installation's daily model runs against its limit. */
+export async function isOverDailyLimit(): Promise<LimitState> {
+  const row = await getOrCreateRow();
+  const limit = row?.dailyCallLimit ?? 2000;
+  const used = await getCallsToday();
+  return {
+    over: used >= limit,
+    used,
+    limit,
+    reason: t(
+      "Dzienny limit uruchomień modelu wyczerpany ({used} / {limit}) — do północy kroki z modelem są pomijane. Limit ustawia administrator w Ustawienia → PRM_Agent.",
+      { used, limit },
+    ),
+  };
+}
+
+/** One automation's daily model runs against its own limit. */
+export async function automationOverLimit(automationId: string): Promise<LimitState> {
+  const db = getDb();
+  const auto = await db
+    .select({ name: automations.name, limit: automations.aiCallsPerDay })
+    .from(automations)
+    .where(eq(automations.id, automationId))
+    .get();
+  const limit = auto?.limit ?? 100;
+  const used = await getCallsToday(automationId);
+  const over = used >= limit;
+  const reason =
+    limit === 0
+      ? t("Automatyzacja „{name}” nie korzysta z modelu (limit 0).", { name: auto?.name ?? "" })
+      : t(
+          "Automatyzacja „{name}” wykorzystała dzienny limit uruchomień modelu ({used} / {limit}).",
+          { name: auto?.name ?? "", used, limit },
+        );
+  // Said once a day in the log, not on every patient that passes the node.
+  if (over && limit > 0) {
+    const already = await db
+      .select({ id: engineLog.id })
+      .from(engineLog)
+      .where(
+        and(
+          eq(engineLog.automationId, automationId),
+          gte(engineLog.createdAt, midnight()),
+          like(engineLog.detail, '%"source":"agent-budget"%'),
+        ),
+      )
+      .limit(1)
+      .get();
+    if (!already) {
+      const { logStep } = await import("../engine/log.server");
+      await logStep({
+        automationId,
+        kind: "agent",
+        message: t("{reason} Do północy jej węzły agenta idą pierwszą ścieżką.", { reason }),
+        detail: { source: "agent-budget", used: String(used), limit: String(limit) },
+      });
+    }
+  }
+  return { over, used, limit, reason };
+}
+
+export async function saveDailyCallLimit(limit: number): Promise<void> {
+  const db = getDb();
+  const row = await getOrCreateRow();
+  if (!row) return;
+  await db
+    .update(aiSettings)
+    .set({ dailyCallLimit: Math.max(0, Math.round(limit)), updatedAt: new Date().toISOString() })
+    .where(eq(aiSettings.id, row.id));
 }

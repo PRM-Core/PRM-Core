@@ -348,10 +348,7 @@ export async function askCopilot(
   if (limit.over) {
     return {
       ok: false,
-      error: tr(
-        "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD). Podnieś go w Ustawieniach → PRM_Agent.",
-        { v0: limit.spent.toFixed(2), v1: limit.limit.toFixed(2) },
-      ),
+      error: limit.reason,
     };
   }
 
@@ -482,7 +479,7 @@ export async function copilotStatus(): Promise<{
     provider: config.providerId,
     model: config.model,
     keyConfigured: (await getKeyStatus())[config.providerId],
-    spentToday: limit.spent,
+    spentToday: limit.used,
     dailyLimit: limit.limit,
     knowledgeEntries: rows.length,
   };

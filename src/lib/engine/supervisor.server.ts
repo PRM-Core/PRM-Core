@@ -16,7 +16,7 @@ import {
 import type { AgentInsightRow, InsightKind, InsightSeverity } from "../db/schema";
 import { validateGraph } from "../automation-flow";
 import type { AutomationGraph } from "../automation-flow";
-import { getAiConfig, getSpendToday, getKeyStatus } from "../ai/settings.server";
+import { getAiConfig, getKeyStatus, isOverDailyLimit } from "../ai/settings.server";
 import { purgeCopilotHistory } from "../ai/copilot.server";
 import { getCredential } from "@/lib/credentials/store.server";
 import { t } from "@/lib/i18n";
@@ -426,35 +426,35 @@ async function detectMonotonousAiNodes(since: number): Promise<InsightDraft[]> {
   return drafts;
 }
 
-/** Daily AI spend against the ceiling the user set. */
+/** Daily model runs against the installation's limit — the model's time is the resource. */
 async function detectAiSpend(): Promise<InsightDraft[]> {
-  const [config, spent] = await Promise.all([getAiConfig(), getSpendToday()]);
-  if (config.dailyLimitUsd <= 0) return [];
-  const ratio = spent / config.dailyLimitUsd;
+  const limit = await isOverDailyLimit();
+  if (limit.limit <= 0) return [];
+  const ratio = limit.used / limit.limit;
   if (ratio < 0.8) return [];
 
   const over = ratio >= 1;
   return [
     {
-      signature: `ai-spend:${warsawToday()}`,
+      signature: `ai-calls:${warsawToday()}`,
       kind: "performance",
       severity: over ? "critical" : "warning",
       title: over
-        ? t("Dzienny limit kosztów AI wyczerpany")
-        : t("Dzienny limit kosztów AI na {v0}%", { v0: Math.round(ratio * 100) }),
-      detail: t("Wydano ${v0} z limitu ${v1}. {v2}", {
-        v0: spent.toFixed(4),
-        v1: config.dailyLimitUsd.toFixed(2),
-        v2: over
+        ? t("Dzienny limit uruchomień modelu wyczerpany")
+        : t("Dzienny limit uruchomień modelu na {v0}%", { v0: Math.round(ratio * 100) }),
+      detail: t("{used} z {limit} uruchomień. {rest}", {
+        used: limit.used,
+        limit: limit.limit,
+        rest: over
           ? t(
-              "Węzły AI są pomijane — przebiegi idą pierwszą ścieżką. Deterministyczne kroki działają normalnie.",
+              "Kroki z modelem są pomijane do północy — węzły agenta idą pierwszą ścieżką. Deterministyczne kroki działają normalnie.",
             )
-          : t("Po przekroczeniu limitu węzły AI zaczną być pomijane."),
+          : t("Po przekroczeniu limitu kroki z modelem zaczną być pomijane."),
       }),
       proposedAction: t(
-        "Podnieś limit w Ustawienia → PRM_Agent albo ogranicz liczbę węzłów AI w aktywnych automatyzacjach.",
+        "Sprawdź w Raportach → Finanse i w dzienniku agenta, która automatyzacja zużywa model; ogranicz jej limit w edytorze albo podnieś limit instalacji w Ustawienia → PRM_Agent.",
       ),
-      evidence: { wydano: `$${spent.toFixed(4)}`, limit: `$${config.dailyLimitUsd.toFixed(2)}` },
+      evidence: { uruchomienia: String(limit.used), limit: String(limit.limit) },
     },
   ];
 }

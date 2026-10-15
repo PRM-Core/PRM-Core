@@ -187,8 +187,6 @@ export const engine: Record<string, string> = {
   "„{v0}” — {count} przebiegów stoi w miejscu": "“{v0}” — {count} runs are stuck",
   "{length} kroków przerwanych w trakcie wykonania": "{length} steps interrupted while running",
   "Węzeł AI zawsze wybiera „{path}”{v1}": "The AI step always chooses “{path}”{v1}",
-  "Dzienny limit kosztów AI wyczerpany": "Daily AI cost limit reached",
-  "Dzienny limit kosztów AI na {v0}%": "Daily AI cost limit at {v0}%",
   "{count} odrzuconych wywołań webhooka leadów": "{count} rejected lead webhook calls",
   "Nietypowy przyrost kontaktów: {todayCount} dzisiaj":
     "Unusual growth in contacts: {todayCount} today",

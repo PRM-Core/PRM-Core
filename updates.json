@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.8.0",
-    "date": "2026-10-14",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.8.0",
+    "version": "2.9.0",
+    "date": "2026-10-15",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.9.0",
     "notes": {
-      "en": "The patient in three sentences before the call — visits, what is ahead, where the correspondence stands — on call lists, in the inbox and on the patient's card. From the record, no model.",
-      "pl": "Pacjent w trzech zdaniach przed telefonem — wizyty, co przed nim, stan korespondencji — w listach dla rejestracji, w skrzynce i na karcie pacjenta. Z kartoteki, bez modelu."
+      "en": "Model limits counted in runs a day, not money: one for the installation and one per automation; past them, model steps are skipped until midnight and agent nodes take the first path.",
+      "pl": "Limity modelu liczone w uruchomieniach na dobę, nie w pieniądzach: dla instalacji i per automatyzacja; po przekroczeniu kroki z modelem są pomijane do północy, a węzły agenta idą pierwszą ścieżką."
     }
   },
   "messages": []

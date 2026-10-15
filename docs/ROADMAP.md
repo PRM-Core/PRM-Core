@@ -129,6 +129,11 @@ pseudonymisation layer, and what the agent does with no model at all — is in
   no-show risk when it matters), where the correspondence stands; from the
   record only, no model; before the call on every call list, in the inbox
   header and on the patient's card.
+- **Model budgets and a hard stop** — counted in model runs a day, since a
+  local model costs nothing per token and its time is the resource: a
+  limit for the installation and one per automation (0 = no model); past
+  it, model steps are skipped until midnight and agent nodes take the
+  first path; one log entry a day and a supervisor alarm at 80%.
 - **Evaluation harness** — fixed cases for drafts, the brief and triage,
   traps included, put to the model in reach and judged by code; from the
   screen before enabling a direction, or `bun run agent:eval` in CI.
@@ -142,8 +147,6 @@ the rest.
 1. **A real local model through the harness** — the harness exists (below);
    what remains is running it against Bielik / Qwen on Ollama on a real
    installation and fixing what fails. _(help wanted)_
-2. **Per-automation budgets and a hard stop** — one flow must not consume the
-   installation's whole daily limit.
 
 ## Security
 

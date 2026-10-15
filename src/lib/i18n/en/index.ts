@@ -39,6 +39,7 @@ import { automationTrial } from "./automation-trial";
 import { roleViews } from "./role-views";
 import { knowledgeGrounding } from "./knowledge-grounding";
 import { patientSummary } from "./patient-summary";
+import { modelLimits } from "./model-limits";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -76,6 +77,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   roleViews,
   knowledgeGrounding,
   patientSummary,
+  modelLimits,
 };
 
 /**

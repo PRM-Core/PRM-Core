@@ -480,13 +480,13 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
       // A failed agent call is deliberately NOT a failed run: it falls back to
       // the first path and says why. An LLM outage or a spent cost limit
       // shouldn't strand a patient halfway through a journey.
-      const decision = await runAgentNode(node, run.contactId);
+      const decision = await runAgentNode(node, run.contactId, run.automationId);
       handle = decision.handle;
       await logStep({
         ...base,
         // Keyed on tokens, not on success: a call that failed after burning
         // tokens still cost money, and the daily limit sums "ai" rows only.
-        kind: decision.tokensIn > 0 ? "ai" : "skipped",
+        kind: (decision.calls ?? 0) > 0 || decision.tokensIn > 0 ? "ai" : "skipped",
         message: decision.message,
         detail: { goal: node.goal ?? "", ...decision.detail },
         tokensIn: decision.tokensIn || undefined,

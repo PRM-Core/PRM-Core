@@ -64,10 +64,7 @@ export async function draftInboxReply(threadId: string): Promise<InboxDraftResul
   if (limit.over) {
     return {
       ok: false,
-      error: t(
-        "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD). Podnieś go w Ustawieniach → PRM_Agent.",
-        { v0: limit.spent.toFixed(2), v1: limit.limit.toFixed(2) },
-      ),
+      error: limit.reason,
     };
   }
 

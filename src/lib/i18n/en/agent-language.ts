@@ -4,8 +4,6 @@ export const agentLanguage: Record<string, string> = {
   "Brief wygładzony — każda liczba sprawdzona z wersją z szablonu.":
     "Brief polished — every number checked against the template version.",
   "Cel: {title}": "Purpose: {title}",
-  "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD).":
-    "The daily AI spend limit is used up ({v0} / {v1} USD).",
   "Jesteś redaktorem w placówce medycznej. Dostaniesz brief dla zarządu napisany z szablonu. Przepisz go tak, żeby czytało się go jak notatkę od człowieka: pełne zdania, krótkie akapity, bez żargonu.":
     "You are an editor at a medical clinic. You will receive a leadership brief written from a template. Rewrite it so that it reads like a note from a person: full sentences, short paragraphs, no jargon.",
   "Język: {lang}. Odpowiedz wyłącznie tekstem briefu, bez komentarza.":

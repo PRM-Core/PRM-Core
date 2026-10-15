@@ -22,7 +22,7 @@ import { checkConsent } from "../consent/consent.server";
 import { knowledgeForPrompt, knowledgeSources, recordGap } from "../ai/knowledge.server";
 import { splitMissing, ungrounded } from "../agent/grounding";
 import { logStep } from "./log.server";
-import { getAiConfig, isOverDailyLimit } from "../ai/settings.server";
+import { automationOverLimit, getAiConfig, isOverDailyLimit } from "../ai/settings.server";
 import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "../ai/provider.server";
 import { intlLocale, t } from "@/lib/i18n";
 import { identifiersOf, pseudonym } from "../ai/redact";
@@ -49,6 +49,8 @@ export interface AgentDecision {
   costUsd: number;
   /** Set when the agent could not run at all; the runner falls back to the first path. */
   failed?: boolean;
+  /** Model rounds actually made — what the daily call limits count, whatever the token figures say. */
+  calls?: number;
 }
 
 /** Per-node autonomy switches, stored as strings in the node config. */
@@ -499,6 +501,7 @@ async function runTool(
 export async function runAgentNode(
   node: AutomationNode,
   contactId: string,
+  automationId?: string | null,
 ): Promise<AgentDecision> {
   const paths = node.paths ?? [];
   const fallbackHandle = paths[0]?.id ?? "out";
@@ -516,14 +519,16 @@ export async function runAgentNode(
     return fail(t("Węzeł Agent AI nie ma zdefiniowanych ścieżek — nie ma z czego wybierać."));
   }
 
+  // The automation's own budget first: one flow must not take the model
+  // from the inbox, the triage and every other automation.
+  if (automationId) {
+    const own = await automationOverLimit(automationId);
+    if (own.over)
+      return fail(t("{reason} Węzeł pominięty, wybrano pierwszą ścieżkę.", { reason: own.reason }));
+  }
   const limit = await isOverDailyLimit();
   if (limit.over) {
-    return fail(
-      t(
-        "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD) — węzeł pominięty, wybrano pierwszą ścieżkę.",
-        { v0: limit.spent.toFixed(2), v1: limit.limit.toFixed(2) },
-      ),
-    );
+    return fail(t("{reason} Węzeł pominięty, wybrano pierwszą ścieżkę.", { reason: limit.reason }));
   }
 
   const db = getDb();
@@ -633,6 +638,7 @@ export async function runAgentNode(
   ];
 
   let tokensIn = 0;
+  let calls = 0;
   let tokensOut = 0;
   let costUsd = 0;
 
@@ -648,6 +654,7 @@ export async function runAgentNode(
         identifiers: identifiersOf(contact),
       });
 
+      calls += 1;
       tokensIn += completion.usage.inputTokens;
       tokensOut += completion.usage.outputTokens;
       costUsd += priceCall(config.providerId, config.model, completion.usage);
@@ -692,6 +699,7 @@ export async function runAgentNode(
           tokensIn,
           tokensOut,
           costUsd,
+          calls,
         };
       }
 
@@ -750,6 +758,7 @@ export async function runAgentNode(
       tokensIn,
       tokensOut,
       costUsd,
+      calls,
     };
   }
 }

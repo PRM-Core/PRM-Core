@@ -13,8 +13,6 @@ export const server: Record<string, string> = {
     "Write a concise summary of this patient for a receptionist who is about to talk to them. Answer in English.\n\nStructure:\n**Who they are** — 2–3 sentences.\n**History** — what actually happened (visits, messages, sends).\n**Watch out for** — missing consents, missing data, warning signs.\n**Suggested next step** — one, following from the facts and possible within the consents.\n\nIf there is little data, say so plainly instead of building on guesses.",
   "Brak klucza API dostawcy {providerId} — uzupełnij go w Integracje → Klucze i dane dostępowe albo zmień dostawcę w Ustawieniach → PRM_Agent.":
     "No API key for provider {providerId} — add it in Integrations → Keys and credentials or change the provider in Settings → PRM_Agent.",
-  "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD). Podnieś go w Ustawieniach → PRM_Agent.":
-    "Daily AI cost limit reached ({v0} / {v1} USD). Raise it in Settings → PRM_Agent.",
   "Nie znaleziono pacjenta.": "Patient not found.",
   "PRM_Agent odpowiedział na karcie pacjenta.": "PRM_Agent answered on the patient card.",
 
@@ -109,8 +107,6 @@ export const server: Record<string, string> = {
   "Co użytkownik może z tym zrobić.": "What the user can do about it.",
   "Brak klucza API dostawcy AI — pominięto analizę modelem.":
     "No AI provider API key — model analysis skipped.",
-  "Dzienny limit kosztów AI wyczerpany (${v0} / ${v1}) — pominięto analizę modelem.":
-    "Daily AI cost limit reached (${v0} / ${v1}) — model analysis skipped.",
   "Nadzorca PRM_Agent — analiza stanu systemu.": "PRM_Agent supervisor — system state analysis.",
   "Model nie zwrócił spostrzeżeń.": "The model returned no insights.",
   "Analiza modelem nie powiodła się: {v0}": "Model analysis failed: {v0}",
@@ -160,8 +156,6 @@ export const server: Record<string, string> = {
   "SMS-a nie da się przenieść — to zwykły tekst, nie bloki.":
     "An SMS cannot be moved — it is plain text, not blocks.",
   "Sesja wygasła — zaloguj się ponownie.": "Your session has expired — sign in again.",
-  "Dzienny limit wydatków AI wyczerpany ({v0} z {limit} USD). Podnieś limit w Automation → Agent AI albo wróć jutro.":
-    "Daily AI spending limit reached ({v0} of {limit} USD). Raise the limit in Settings → PRM_Agent or come back tomorrow.",
   "Nie znaleziono grafiki w bibliotece Media.": "Image not found in the Media library.",
   "Klucze i dane dostępowe może zmieniać tylko administrator.":
     "Only an administrator can change keys and credentials.",

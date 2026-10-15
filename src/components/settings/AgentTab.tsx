@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Bot, Loader2, AlertTriangle, ShieldCheck, Power } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAiSettings, type AiSettingsView } from "@/lib/api/ai.functions";
+import { getAiSettings, saveDailyCallLimitFn, type AiSettingsView } from "@/lib/api/ai.functions";
+import { useRouteContext } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { KnowledgeBase } from "@/components/settings/KnowledgeBase";
 import { t } from "@/lib/i18n";
 
@@ -59,10 +64,32 @@ function BoundaryCard({ data }: { data: AiSettingsView }) {
 
 export function AgentTab() {
   const [data, setData] = useState<AiSettingsView | null>(null);
+  const [limit, setLimit] = useState("");
+  const [saving, setSaving] = useState(false);
+  const { user } = useRouteContext({ from: "__root__" });
+  const isAdmin = user?.role === "admin";
 
+  const load = () =>
+    getAiSettings().then((d) => {
+      setData(d);
+      setLimit(String(d.dailyCallLimit));
+    });
   useEffect(() => {
-    getAiSettings().then(setData);
+    void load();
   }, []);
+
+  const saveLimit = async () => {
+    setSaving(true);
+    try {
+      await saveDailyCallLimitFn({ data: { limit: Math.max(0, Math.round(Number(limit) || 0)) } });
+      toast.success(t("Limit zapisany."));
+      await load();
+    } catch (err) {
+      toast.error(t("Nie udało się zapisać limitu"), { description: String(err) });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!data) {
     return (
@@ -104,6 +131,50 @@ export function AgentTab() {
               </div>
             </div>
           )}
+          <div className="rounded-lg border border-border p-3 space-y-2">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">{t("Limit uruchomień modelu na dobę")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t(
+                    "Czas modelu w sieci placówki jest ograniczony: po przekroczeniu limitu kroki z modelem są pomijane do północy (węzły agenta idą pierwszą ścieżką), reszta systemu działa. Każda automatyzacja ma też własny limit w edytorze.",
+                  )}
+                </p>
+              </div>
+              {isAdmin && (
+                <div className="flex items-end gap-2">
+                  <div className="space-y-1">
+                    <label htmlFor="ai-call-limit" className="block text-xs font-medium">
+                      {t("Uruchomień na dobę")}
+                    </label>
+                    <Input
+                      id="ai-call-limit"
+                      value={limit}
+                      onChange={(e) => setLimit(e.target.value)}
+                      className="w-28"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <Button size="sm" disabled={saving} onClick={() => void saveLimit()}>
+                    {t("Zapisz")}
+                  </Button>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <Progress
+                value={
+                  data.dailyCallLimit > 0
+                    ? Math.min(100, (data.callsToday / data.dailyCallLimit) * 100)
+                    : 100
+                }
+                className="h-2 flex-1"
+              />
+              <span>
+                {t("dziś {used} z {limit}", { used: data.callsToday, limit: data.dailyCallLimit })}
+              </span>
+            </div>
+          </div>
           <p className="text-xs text-muted-foreground">
             {t(
               "Co agent może robić z modelem — pisać treść draftów, wygładzać brief, oceniać wiadomości — włącza administrator na ekranie PRM_Agent → Kierunki. Agent sam proponuje, kiedy ma do tego podstawy.",

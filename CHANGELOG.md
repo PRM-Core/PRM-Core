@@ -8,6 +8,31 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.9.0] — Limity modelu: uruchomienia na dobę, dla instalacji i per automatyzacja
+
+Model w sieci placówki nie kosztuje nic za token, więc limit w dolarach
+nigdy się nie uruchamiał. Realnym zasobem jest **czas modelu** — jedna
+automatyzacja z węzłem agenta na tysiące pacjentów zabrałaby go skrzynce,
+triażowi i pozostałym automatyzacjom. Limity liczą teraz **uruchomienia
+modelu na dobę**.
+
+- **Limit instalacji** (Ustawienia → PRM_Agent, domyślnie 2000, ustawia
+  administrator) z paskiem dzisiejszego zużycia. Po przekroczeniu kroki
+  z modelem są pomijane do północy, z powodem podanym tam, gdzie krok się
+  nie wykonał; deterministyczna część silnika działa dalej.
+- **Limit per automatyzacja** (w edytorze, przy automatyzacjach z węzłem
+  agenta: 0 / 20 / 50 / 100 / 200 / 500 / 1000, domyślnie 100; 0 = węzły
+  agenta nie pytają modelu). Po przekroczeniu węzły agenta tej
+  automatyzacji idą pierwszą ścieżką do północy, przebieg trwa; jeden wpis
+  w dzienniku na dobę.
+- Uruchomienia liczone z rzeczywistych rund modelu (nie z tokenów, których
+  serwer lokalny może nie raportować). Supervisor ostrzega przy 80%
+  limitu instalacji i alarmuje po przekroczeniu. Copilot pokazuje
+  uruchomienia zamiast dolarów.
+- Migracja 0078: kolumny `daily_call_limit` w `ai_settings`,
+  `ai_calls_per_day` w `automations` (istniejące automatyzacje dostają
+  100).
+
 ## [2.8.0] — Pacjent w trzech zdaniach, przed telefonem
 
 - **Trzy zdania o pacjencie** dla osoby, która zaraz zadzwoni albo

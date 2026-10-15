@@ -63,10 +63,7 @@ export async function modelGate(capability?: DirectionKey): Promise<Gate> {
   if (limit.over)
     return {
       ok: false,
-      reason: t("Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD).", {
-        v0: limit.spent.toFixed(2),
-        v1: limit.limit.toFixed(2),
-      }),
+      reason: limit.reason,
     };
   return { ok: true, config };
 }

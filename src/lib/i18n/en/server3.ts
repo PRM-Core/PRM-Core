@@ -101,8 +101,6 @@ export const server3: Record<string, string> = {
     "Access for external AI assistants to the system's tools. Without a token, access is off.",
   "Dozwolone wartości: włączone albo wyłączone.": "Allowed values: on or off.",
   "Dwa kafelki mają ten sam identyfikator.": "Two tiles have the same identifier.",
-  "Dzienny limit kosztów AI wyczerpany ({v0} / {v1} USD) — węzeł pominięty, wybrano pierwszą ścieżkę.":
-    "Daily AI cost limit reached ({v0} / {v1} USD) — step skipped, the first path was chosen.",
   "E-maile: kampanie, automatyzacje, Skrzynka, kody logowania i raport bezpieczeństwa.":
     "Emails: campaigns, automations, Inbox, sign-in codes and the security report.",
   "Funkcje serwerowe wymagają zalogowania": "Server functions require signing in",

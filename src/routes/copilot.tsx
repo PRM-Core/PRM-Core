@@ -80,6 +80,7 @@ interface Status {
   provider: string;
   model: string;
   keyConfigured: boolean;
+  /** Model runs today — the field keeps its old name for the API shape. */
   spentToday: number;
   dailyLimit: number;
   knowledgeEntries: number;
@@ -439,9 +440,9 @@ function CopilotPage() {
                     )}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">{tr("Dziś wydano")}</span>
+                    <span className="text-muted-foreground">{tr("Uruchomienia modelu dziś")}</span>
                     <span className={`font-medium ${overBudget ? "text-destructive" : ""}`}>
-                      ${status.spentToday.toFixed(4)} / ${status.dailyLimit.toFixed(2)}
+                      {status.spentToday} / {status.dailyLimit}
                     </span>
                   </div>
                   <div className="flex items-center justify-between gap-2">

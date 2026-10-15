@@ -755,6 +755,12 @@ export const automations = sqliteTable("automations", {
   reviewFirst: integer("review_first").notNull().default(0),
   /** Messages approved so far — when it reaches `reviewFirst`, the trial is over. */
   reviewed: integer("reviewed").notNull().default(0),
+  /**
+   * Model runs a day for this automation's agent nodes; 0 = the agent never
+   * calls the model and takes the first path. One flow must not take the
+   * model from the inbox and the other automations.
+   */
+  aiCallsPerDay: integer("ai_calls_per_day").notNull().default(100),
   updatedAt: text("updated_at").notNull(),
 });
 
@@ -1557,8 +1563,14 @@ export const aiSettings = sqliteTable("ai_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   provider: text("provider").notNull().default("anthropic").$type<AiProviderId>(),
   model: text("model").notNull().default("claude-opus-5"),
-  /** Daily spend ceiling in USD. Once crossed, AI nodes stop; the deterministic engine keeps running. */
+  /** Daily spend ceiling in USD. Kept for older installs; a local model costs nothing per token. */
   dailyLimitUsd: real("daily_limit_usd").notNull().default(5),
+  /**
+   * Model runs a day for the whole installation — the real resource of a
+   * model in the clinic's own network is its time. Once reached, model
+   * steps stop until midnight; the deterministic engine keeps running.
+   */
+  dailyCallLimit: integer("daily_call_limit").notNull().default(2000),
   updatedAt: text("updated_at").notNull(),
 });
 

@@ -62,6 +62,11 @@ export const getAllAutomations = createServerFn({ method: "GET" })
     await ensureSeeded();
     const db = getDb();
     const rows = await db.select().from(automations);
+    const { getCallsToday } = await import("../ai/settings.server");
+    const today = new Map<string, number>();
+    for (const r of rows)
+      if (r.flow?.nodes.some((n) => n.kind === "aiAgent"))
+        today.set(r.id, await getCallsToday(r.id));
     return rows.map((r) => ({
       id: r.id,
       name: r.name,
@@ -69,6 +74,8 @@ export const getAllAutomations = createServerFn({ method: "GET" })
       flow: r.flow,
       reviewFirst: r.reviewFirst,
       reviewed: r.reviewed,
+      aiCallsPerDay: r.aiCallsPerDay,
+      aiCallsToday: today.get(r.id) ?? 0,
     }));
   });
 
@@ -81,6 +88,7 @@ export const saveAutomation = createServerFn({ method: "POST" })
       status: z.enum(["draft", "active", "inactive"]),
       flow: automationGraphSchema.nullable(),
       reviewFirst: z.number().int().min(0).max(50).optional(),
+      aiCallsPerDay: z.number().int().min(0).max(100_000).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -88,8 +96,12 @@ export const saveAutomation = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const existing = await db.select().from(automations).where(eq(automations.id, data.id)).get();
     // `reviewed` is never taken from the client: only an approval counts.
-    const { reviewFirst, ...rest } = data;
-    const values = { ...rest, updatedAt: now };
+    const { reviewFirst, aiCallsPerDay, ...rest } = data;
+    const values = {
+      ...rest,
+      updatedAt: now,
+      ...(aiCallsPerDay === undefined ? {} : { aiCallsPerDay }),
+    };
     if (existing) {
       await db
         .update(automations)

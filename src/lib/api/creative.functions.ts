@@ -55,12 +55,7 @@ export const runCreativeCoder = createServerFn({ method: "POST" })
     // Ten sam sufit dzienny co reszta PRM_Agenta — studio nie ma osobnej kasy.
     const budget = await isOverDailyLimit();
     if (budget.over) {
-      throw new Error(
-        t(
-          "Dzienny limit wydatków AI wyczerpany ({v0} z {limit} USD). Podnieś limit w Automation → Agent AI albo wróć jutro.",
-          { v0: budget.spent.toFixed(2), limit: budget.limit },
-        ),
-      );
+      throw new Error(budget.reason);
     }
 
     const baseUrl = await getBaseUrl();

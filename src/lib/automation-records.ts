@@ -16,6 +16,10 @@ export interface AutomationRecord {
   reviewFirst?: number;
   /** Messages approved so far — read-only, counted by the server. */
   reviewed?: number;
+  /** Model runs a day for this automation's agent nodes; 0 = no model. */
+  aiCallsPerDay?: number;
+  /** Model runs so far today — read-only, counted by the server. */
+  aiCallsToday?: number;
 }
 
 export function createInitialRecords(): AutomationRecord[] {

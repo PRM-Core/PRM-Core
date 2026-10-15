@@ -123,9 +123,14 @@ recommendation. The evaluation harness has reply cases for both.
 - The consent check stays in the sending code, not in any prompt. A model
   talked into ignoring an instruction still cannot message someone who opted
   out. This exists today and does not change.
-- Budgets: a shared daily limit (exists) plus a per-automation limit, and a
-  hard stop that fails to the first path instead of stopping the run (exists
-  for the agent node).
+- Budgets (since 2.9.0): counted in **model runs a day**, not in money — a
+  model in the clinic's network costs nothing per token, and its time is
+  what one flow could take from the others. A limit for the installation
+  (Ustawienia → PRM_Agent, default 2000) and one per automation (in the
+  editor, default 100, 0 = the agent never asks the model). Past either,
+  model steps are skipped until midnight; agent nodes take the first path
+  and the run goes on; the log says so once a day, and the supervisor warns
+  at 80%.
 
 ## 5. What the agent does — mapped to the website
 

@@ -164,6 +164,58 @@ function TrialStrip({
   );
 }
 
+const MODEL_OPTIONS = [0, 20, 50, 100, 200, 500, 1000];
+
+/**
+ * This automation's share of the model: its agent nodes may run the model
+ * this many times a day; past that they take the first path until midnight,
+ * so one flow cannot take the model from the inbox and the others.
+ */
+function ModelStrip({
+  record,
+  onChange,
+}: {
+  record: AutomationRecord;
+  onChange: (n: number) => void;
+}) {
+  const limit = record.aiCallsPerDay ?? 100;
+  const used = record.aiCallsToday ?? 0;
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
+      <Bot className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="flex-1 min-w-[240px]">
+        {limit === 0
+          ? tr("Węzły agenta nie korzystają z modelu — zawsze idą pierwszą ścieżką.")
+          : used >= limit
+            ? tr(
+                "Dzienny limit modelu wykorzystany ({used} z {limit}) — do północy węzły agenta idą pierwszą ścieżką.",
+                { used, limit },
+              )
+            : tr("Model dziś: {used} z {limit} uruchomień dla tej automatyzacji.", {
+                used,
+                limit,
+              })}
+      </span>
+      <label className="flex items-center gap-1.5">
+        {tr("Limit na dobę")}
+        <select
+          className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground"
+          value={String(limit)}
+          onChange={(e) => onChange(Number(e.target.value))}
+        >
+          {[...new Set([...MODEL_OPTIONS, limit])]
+            .sort((a, b) => a - b)
+            .map((n) => (
+              <option key={n} value={n}>
+                {n === 0 ? tr("bez modelu") : n}
+              </option>
+            ))}
+        </select>
+      </label>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: AutomationStatus }) {
   if (status === "active") {
     return (
@@ -708,6 +760,12 @@ function AutomationPage() {
                 record={currentRecord}
                 onChange={(n) => updateRecord(currentRecord.id, { reviewFirst: n })}
               />
+              {currentRecord.flow?.nodes.some((n) => n.kind === "aiAgent") && (
+                <ModelStrip
+                  record={currentRecord}
+                  onChange={(n) => updateRecord(currentRecord.id, { aiCallsPerDay: n })}
+                />
+              )}
 
               {currentRecord.status === "active" && (
                 <div className="flex flex-wrap items-center gap-3 border-b border-border bg-warning/10 px-4 py-2.5 text-xs text-warning-foreground">

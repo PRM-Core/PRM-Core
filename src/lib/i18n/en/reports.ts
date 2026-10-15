@@ -254,7 +254,6 @@ export const reports: Record<string, string> = {
   "Usuń rozmowę": "Delete conversation",
   "Klucz API": "API key",
   skonfigurowany: "configured",
-  "Dziś wydano": "Spent today",
   " wpisów": " entries",
   "Brak klucza API — uzupełnij go w Integracje → Klucze i dane dostępowe, żeby Copilot zaczął odpowiadać.":
     "No API key — add it in Integrations → Keys and credentials so Copilot can start answering.",

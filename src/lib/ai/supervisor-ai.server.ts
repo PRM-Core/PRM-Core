@@ -182,10 +182,7 @@ export async function runAiSupervisor(deterministic: InsightDraft[]): Promise<Ai
     return {
       drafts: [],
       used: false,
-      error: t("Dzienny limit kosztów AI wyczerpany (${v0} / ${v1}) — pominięto analizę modelem.", {
-        v0: limit.spent.toFixed(4),
-        v1: limit.limit.toFixed(2),
-      }),
+      error: t("{reason} Pominięto analizę modelem.", { reason: limit.reason }),
     };
   }
 
