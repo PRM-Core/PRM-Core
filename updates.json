@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.19.0",
+    "version": "2.20.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.19.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.20.0",
     "notes": {
-      "en": "Re-entry rules per automation: a patient whose run is over may enter again always (the default, unchanged), only once, or after N days.",
-      "pl": "Zasady ponownego wejścia per automatyzacja: pacjent po zakończonym przebiegu może wejść znowu zawsze (domyślnie, bez zmian), tylko raz albo po N dniach."
+      "en": "A step queue in PRM Engine: scheduled, deferred, awaiting approval, failed (with the reason) and cut-off steps, and a safe retry for failed ones.",
+      "pl": "Kolejka kroków w PRM Engine: zaplanowane, odłożone, czekające na zatwierdzenie, nieudane (z powodem) i przerwane kroki oraz bezpieczne ponowienie nieudanych."
     }
   },
   "messages": []

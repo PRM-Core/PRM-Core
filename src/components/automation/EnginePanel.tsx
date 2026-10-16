@@ -18,6 +18,7 @@ import { getBookingSchedule, runBookingSyncNow } from "@/lib/api/doctors.functio
 import { toast } from "sonner";
 import { intlLocale, t, localized } from "@/lib/i18n";
 import { SendWindowCard } from "./SendWindowCard";
+import { QueueCard } from "./QueueCard";
 import { OutgoingWebhooksCard } from "./OutgoingWebhooksCard";
 
 // Live view of the deterministic engine: is the loop ticking, how much work is
@@ -259,6 +260,7 @@ export function EnginePanel() {
         </CardContent>
       </Card>
 
+      <QueueCard />
       <SendWindowCard />
       <OutgoingWebhooksCard />
       <BookingScheduleCard />

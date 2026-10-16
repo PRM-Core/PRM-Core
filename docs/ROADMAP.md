@@ -35,6 +35,11 @@ unique key in the schema guarantees it, not careful code.
 - **Re-entry rules** (since 2.19.0): per automation, a patient whose run
   is over may enter again always (the default, as before), only once, or
   after N days; one live run per patient holds in every case.
+- **Queue observability** (since 2.20.0): PRM Engine → Step queue lists
+  what is scheduled, deferred by the sending window or a limit, awaiting
+  approval, failed (with the reason) and cut off mid-step. A failed step can
+  be retried — the same step, for the same run, under the usual rules; a
+  cut-off one only after a confirmation, since it may already have sent.
 - **Actions**: email, newsletter, SMS, pop-up, tags, segments, field update,
   score, funnel stage, do-not-contact, delete contact, end — and, since
   2.17.0, send to a webhook (n8n, Make, Zapier, your code): destinations and
@@ -64,8 +69,7 @@ unique key in the schema guarantees it, not careful code.
 
 ### Next
 
-1. **Queue observability** — a view of delayed, failed and dead-lettered
-   steps with the reason, and a safe retry button.
+Everything planned for the engine is in; ideas are welcome as issues.
 
 ## PRM_Agent — the AI layer
 

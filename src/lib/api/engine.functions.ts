@@ -770,3 +770,33 @@ export const getGoalReports = createServerFn({ method: "GET" })
     const { goalReports } = await import("../engine/goals.server");
     return goalReports();
   });
+
+// ── the queue ─────────────────────────────────────────────────────────────────
+
+export type { Queue, QueueItem, QueueBucket } from "../engine/queue.server";
+
+/** Scheduled, deferred, held, failed and stuck steps, with names and reasons. */
+export const getEngineQueue = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async () => {
+    const { readQueue } = await import("../engine/queue.server");
+    return readQueue();
+  });
+
+/**
+ * Puts a failed step (or, confirmed, a stuck one) back in the queue. The
+ * engine runs it at its next tick under the usual rules; nothing is sent here.
+ */
+export const retryEngineJob = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .inputValidator(z.object({ jobId: z.string(), confirmStuck: z.boolean().optional() }))
+  .handler(async ({ data }) => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const user = await getSessionUser();
+    const who = user
+      ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+      : t("użytkownik");
+    const { retryJob } = await import("../engine/queue.server");
+    await retryJob(data.jobId, who, data.confirmStuck ?? false);
+    return { ok: true as const };
+  });

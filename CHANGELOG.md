@@ -8,6 +8,27 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.20.0] — Kolejka kroków: co czeka, co poszło nie tak, bezpieczne ponowienie
+
+Nieudany krok było widać tylko w dzienniku, wśród setek innych wpisów,
+a jedynym sposobem, żeby go ponowić, była ręczna zmiana w bazie.
+
+- **PRM Engine → Kolejka kroków**: nieudane (z powodem), przerwane
+  w trakcie, czekające na zatwierdzenie, odłożone przez godziny wysyłki
+  albo limit, zaplanowane — z automatyzacją, pacjentem, krokiem i czasem.
+  Odświeża się co 15 s.
+- **„Ponów”** dla kroku nieudanego: ten sam krok, dla tego samego
+  przebiegu, przy najbliższym takcie silnika — przez te same zgody, limity
+  i godziny wysyłki. Odmowa, gdy automatyzacja jest wyłączona, kroku nie ma
+  już w scenariuszu albo pacjent jest w innym trwającym przebiegu tej
+  automatyzacji.
+- **Krok przerwany** (serwer zatrzymany w środku kroku) mógł już wysłać
+  wiadomość, więc silnik nie ponawia go sam — ponowienie wymaga drugiego
+  kliknięcia z ostrzeżeniem.
+- Każde ponowienie trafia do dziennika z tym, kto je zlecił. Rola
+  „raporty” widzi kolejkę, ale nie ponawia.
+- Plan silnika z roadmapy jest zrealizowany w całości.
+
 ## [2.19.0] — Zasady ponownego wejścia do automatyzacji
 
 Dotąd pacjent mógł wejść do tej samej automatyzacji znowu, gdy tylko
