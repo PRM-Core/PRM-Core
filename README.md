@@ -2,8 +2,9 @@
 
 **Open-source CRM and marketing automation built for medical clinics.** Patient
 records with consents (GDPR / RODO), email and SMS campaigns, a visual
-automation engine, an omnichannel inbox, a design studio and reports —
-self-hosted, in English and Polish.
+automation engine, an omnichannel inbox, a design studio, reports and
+PRM_Agent — an AI layer that runs on a model inside your network, or with no
+model at all. Self-hosted, in English and Polish.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 ![Self-hosted](https://img.shields.io/badge/self--hosted-Docker-2496ED)
@@ -12,8 +13,10 @@ self-hosted, in English and Polish.
 
 > **🇵🇱 Po polsku.** PRM Core to otwarty system do komunikacji z pacjentem:
 > kartoteka ze zgodami RODO, kampanie e-mail i SMS, automatyzacje, skrzynka
-> odpowiedzi, studio projektów i raporty — instalowany na własnym serwerze,
-> po polsku i po angielsku. **Szukamy osób, które podłączą systemy medyczne**
+> odpowiedzi, studio projektów, raporty i PRM_Agent — warstwa AI na modelu
+> w sieci placówki albo bez modelu w ogóle; dane pacjentów nie wychodzą do
+> żadnego zewnętrznego dostawcy. Instalowany na własnym serwerze, po polsku
+> i po angielsku. **Szukamy osób, które podłączą systemy medyczne**
 > (systemy gabinetowe, rejestracje online, EDM, FHIR) — sekcja
 > [Contributors wanted](#contributors-wanted-connect-a-medical-system).
 > Zgłoszenia i pull requesty po polsku są mile widziane.
@@ -31,17 +34,33 @@ self-hosted, in English and Polish.
   database, or the screen says there is no data. A feature that does not
   exist is disabled and explained — never wired to a button that does nothing.
 - **Connects to the systems a clinic already runs** — lead webhooks, a booking
-  webhook, and pluggable connectors for booking / practice management systems.
+  webhook, pluggable connectors for booking / practice management systems,
+  and signed outgoing webhooks to n8n, Make or Zapier.
+- **AI without sending data out.** There is no external AI provider in the
+  product: the model, if any, runs in your network, and what the agent may
+  start doing is the administrator's decision.
 
 ## What it does
 
 - **Automation engine.** Real events (form submitted, visit booked, visit
   completed, patient did not show up, visit cancelled, email opened, tag
-  added) start flows drawn on a canvas. Delays survive restarts because the
-  step queue lives in the database. A message cannot go out twice — a unique
-  key in the schema guarantees it, not careful code.
+  added) start flows drawn on a canvas, and so do dates: N months since the
+  last visit (recall, preventive care) and the patient's birthday. A flow can
+  wait for the patient's next move — a reply, a booking, an opened email —
+  with a time limit; send an email and fall back to SMS when it goes
+  unopened; and stop once its goal (for example a booked visit) is reached,
+  with conversion per flow and per A/B variant. Delays survive restarts
+  because the step queue lives in the database, and a failed step can be
+  retried from the queue view. A message cannot go out twice — a unique key
+  in the schema guarantees it, not careful code.
+- **Sending rules across all flows.** A sending window and hourly / daily
+  limits, a cap on marketing messages per patient per 7 days (across every
+  automation and campaign), re-entry rules, and a trial period: the first
+  messages of a new automation wait for a person's approval.
 - **Messaging.** Email via SendGrid and SMS via Twilio, with open and click
   tracking. An omnichannel inbox collects patient replies in one place.
+  Outgoing webhooks send a patient to n8n, Make, Zapier or your code — only
+  to destinations and fields an administrator approved, signed with HMAC.
 - **Consent.** Any number of consents defined by the clinic, enforced on the
   server before every marketing send. The unsubscribe link works on POST, so
   mail scanners cannot unsubscribe people who never opened the message.
@@ -49,18 +68,28 @@ self-hosted, in English and Polish.
   computed on every read, so it cannot go stale.
 - **Design Studio.** Newsletters, emails and website pop-ups from blocks, with
   fonts served from your own server (no Google Fonts).
-- **Reports.** Built-in dashboards plus drag-and-drop custom reports over
+- **Reports.** Built-in dashboards, Finance (volume and cost per channel,
+  revenue from completed visits, the loss on no-shows) and Marketing (per
+  campaign and per A/B variant), plus drag-and-drop custom reports over
   contacts, visits, emails, SMS, campaigns and the inbox (aggregates only).
 - **PRM_Agent.** Analyses, draws conclusions and prepares — a person
   decides. Nightly signals and a no-show model trained on your own history,
   recommendations with evidence, campaign drafts with approval, call lists,
-  triage of patient messages, a leadership brief. The language layer runs
-  only on a model inside your network; there is no external provider in the
-  product. The agent develops itself and proposes directions; the
-  administrator enables them. Design: [docs/AGENT.md](docs/AGENT.md).
+  triage of patient messages, a leadership brief, the patient in three
+  sentences before a call, and a decision log that says who acted and why.
+  The language layer runs only on a model inside your network; there is no
+  external provider in the product. Every price, hour or link a model writes
+  is checked in code against the clinic's knowledge base. An evaluation
+  harness scores a model before you trust it — Bielik 11B, Qwen 2.5 14B and
+  Gemma 3 12B are measured on a 16 GB machine. The agent proposes
+  directions; the administrator enables them. Design:
+  [docs/AGENT.md](docs/AGENT.md).
 - **Security.** Two-factor login (SMS or authenticator app), a read-only
-  reviewer role, login throttling, 30-minute sessions, encrypted integration
-  keys (AES-256-GCM) and a daily security report.
+  reviewer role, login throttling, 30-minute sessions, an enforced
+  Content-Security-Policy with a nonce per request, encrypted integration
+  keys (AES-256-GCM) with rotation without an outage, an audit trail of
+  administrative actions, a CI check that every server function requires
+  sign-in, dependency review in CI, and a daily security report.
 
 ### Integrations today
 
@@ -71,10 +100,11 @@ self-hosted, in English and Polish.
 | Meta Lead Ads             | in        | leads from Facebook and Instagram ad forms                   |
 | Canva                     | in        | importing designs into the content studio                    |
 | Booking system connectors | in        | patients, visits and schedules — pluggable providers         |
-| Docplanner (ZnanyLekarz)  | in        | keys and connection test; visit sync in progress             |
+| Docplanner (ZnanyLekarz)  | in        | keys and connection test; visit sync needs Docplanner's API  |
 | Generic lead webhook      | in        | any system that can send JSON (n8n, Make, Zapier, your code) |
 | Booking webhook           | in        | visit bookings from an online booking system                 |
 | Outgoing webhook step     | out       | n8n, Make, Zapier, your code — signed, admin-approved fields |
+| Local model server        | out       | PRM_Agent's language layer — Ollama, vLLM, LM Studio, etc.   |
 | MCP                       | out       | read-only access for AI assistants                           |
 
 ## Contributors wanted: connect a medical system
@@ -118,7 +148,9 @@ The app runs without any API key — it simply will not send messages and says s
 Outside production it seeds demo data (fictional patients and automations) so
 there is something to click through.
 
-To save integration keys from the admin panel, add an encryption key to `.env`:
+To save integration keys from the admin panel, and to add outgoing webhook
+destinations (their addresses and secrets are stored only encrypted), add an
+encryption key to `.env`:
 
 ```bash
 echo "PRM_SECRETS_KEY=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')" >> .env
@@ -126,7 +158,9 @@ echo "PRM_SECRETS_KEY=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')" >>
 
 Losing this key does not break the system (it falls back to `.env`), but keys
 saved in the panel will have to be entered again. Keep a copy of it separately
-from database backups.
+from database backups. To change it without an outage, follow
+[docs/KEY-ROTATION.md](docs/KEY-ROTATION.md) (`PRM_SECRETS_KEY_PREVIOUS` and
+`bun run secrets:rotate`).
 
 ## Production deployment
 
@@ -153,6 +187,14 @@ Mounting the database directory needs the `:Z` suffix there (already in
    - **Caddy in a container**: `cp Caddyfile.example Caddyfile`, put your domain
      in it and start with the profile:
      `docker compose --profile bundled-caddy up -d`.
+
+   The application sends its own `Content-Security-Policy` with a nonce per
+   request (`PRM_CSP=enforce` by default in production, `report` to diagnose
+   without blocking). Do not set a CSP header in Caddy: it cannot know the
+   nonce, and two policies narrow to what both allow. Installations whose
+   Caddyfile predates 2.22.0 should remove the
+   `Content-Security-Policy-Report-Only` line.
+
 3. Deploy:
 
 ```bash
@@ -215,6 +257,14 @@ Download requires a session, and every file records who uploaded it and when.
 PDFs, images, Office files, CSV and text up to 20 MB are accepted. HTML and SVG
 are rejected on purpose: they can run scripts on our domain.
 
+### Audit trail
+
+_Settings → Security → Administrative actions log_ (administrators only)
+records who added or deleted an account, reset a password, exported contacts,
+opened, added or deleted a patient's document, changed integration keys
+(names, never values), issued an MCP token or changed webhooks. Entries are kept for
+`PRM_AUDIT_RETENTION_DAYS` (365 by default, at least 30) and then purged.
+
 ### Nightly backup
 
 One-time setup on the server:
@@ -251,8 +301,13 @@ patient by a short pseudonym. Any server that speaks the OpenAI Chat
 Completions protocol works as the local model (Ollama, vLLM, LM Studio,
 llama.cpp). Before trusting one, run the evaluation harness —
 `bun run agent:eval`, or the button on PRM_Agent → Directions — and read
-the report. The daily security report states the mode and the endpoint's
-host class. Design and what comes next: [docs/AGENT.md](docs/AGENT.md).
+the report. Measured so far on a 16 GB machine without a discrete GPU:
+Bielik 11B, Qwen 2.5 14B and Gemma 3 12B are all usable (17–18 of 18
+cases); Bielik 11B is the suggested start. Results and setup: section 7 of
+[docs/AGENT.md](docs/AGENT.md). Model use is capped in runs per day, for
+the installation and per automation. The daily security report states the
+mode and the endpoint's host class. Design and what comes next:
+[docs/AGENT.md](docs/AGENT.md).
 
 ### Update notices
 
@@ -271,8 +326,11 @@ in `/health`, so you always know what runs on the server.
 
 ## Stack
 
-React 19, TypeScript 5, TanStack Start (SSR) + Router, Tailwind CSS 4,
+React 19, TypeScript 5, TanStack Start (SSR) + Router, Vite 7, Tailwind CSS 4,
 shadcn/ui (Radix), Recharts, Drizzle ORM + libSQL (SQLite), Bun.
+
+TanStack Start is pinned at 1.168.61, the last release for Vite 7; moving to
+1.169+ means moving to Vite 8, which is a separate major change.
 
 ## Project structure
 
