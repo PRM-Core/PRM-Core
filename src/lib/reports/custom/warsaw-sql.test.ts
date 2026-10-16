@@ -9,12 +9,48 @@ import { bucketExpr, bucketOfDay, dstIntervals, warsawDayExpr, warsawOffsetMs } 
 
 const HOUR = 60 * 60 * 1000;
 
+// Jeden formatter na cały test: `warsawOffset()` buduje dwa nowe przy każdym
+// wywołaniu, przez co pętla po ~35 tys. godzin trwała ponad 3 s i na granicy
+// 5 s limitu bun-a wywracała się pod obciążeniem. Samo formatowanie chwili
+// gotowym formatterem to ~40 ms.
+const intlWarsaw = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Europe/Warsaw",
+  timeZoneName: "longOffset",
+});
+
+/** Offset Warszawy w ms według Intl — niezależnie od kodu produktu. */
+function intlOffsetMs(ms: number): number {
+  const name = intlWarsaw.formatToParts(ms).find((p) => p.type === "timeZoneName")?.value;
+  if (name === "GMT+01:00") return HOUR;
+  if (name === "GMT+02:00") return 2 * HOUR;
+  throw new Error(`nieoczekiwany offset Intl: ${name}`);
+}
+
 describe("reguła czasu letniego", () => {
   test("offset zgadza się z Intl dla każdej godziny 2024–2027", () => {
     let rozbieznosci = 0;
+    let godzin = 0;
     for (let ms = Date.UTC(2024, 0, 1); ms < Date.UTC(2028, 0, 1); ms += HOUR) {
-      const intl = warsawOffset(ms) === "+02:00" ? 2 * HOUR : HOUR;
-      if (warsawOffsetMs(ms) !== intl) rozbieznosci++;
+      godzin++;
+      if (warsawOffsetMs(ms) !== intlOffsetMs(ms)) rozbieznosci++;
+    }
+    expect(godzin).toBe(35064);
+    expect(rozbieznosci).toBe(0);
+  });
+
+  test("warsawOffset() z kodu produktu zgadza się z Intl w południe każdej doby i wokół przejść", () => {
+    // Pełna pętla po godzinach byłaby tu zbyt wolna (patrz wyżej), więc: każda
+    // doba w południe UTC oraz każda godzina w promieniu 3 h od przejścia.
+    const sprawdz = (ms: number) =>
+      (warsawOffset(ms) === "+02:00" ? 2 * HOUR : HOUR) === intlOffsetMs(ms);
+    let rozbieznosci = 0;
+    for (let ms = Date.UTC(2024, 0, 1, 12); ms < Date.UTC(2028, 0, 1); ms += 24 * HOUR) {
+      if (!sprawdz(ms)) rozbieznosci++;
+    }
+    for (const [start, end] of dstIntervals(Date.UTC(2024, 0, 1), Date.UTC(2028, 0, 1))) {
+      for (const przejscie of [start, end]) {
+        for (let h = -3; h <= 3; h++) if (!sprawdz(przejscie + h * HOUR)) rozbieznosci++;
+      }
     }
     expect(rozbieznosci).toBe(0);
   });
