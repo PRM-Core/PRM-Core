@@ -12,6 +12,14 @@ describe("redactText — by shape", () => {
     const text = "Wizyta 2026-09-12 o 10:30, gabinet 12, cena 150 zł, 3 wizyty.";
     expect(redactText(text)).toBe(text);
   });
+  test("a date with its time is not a phone", () => {
+    const text =
+      "Dziś: 2026-10-16 19:41. Wizyty: 2026-10-23 05:08, 2026-10-05T09:30:00, 23.10.2026, 05:08.";
+    expect(redactText(text)).toBe(text);
+  });
+  test("a phone right after a date is still a phone", () => {
+    expect(redactText("2026-10-16 19:41 tel. 600 100 200")).toBe("2026-10-16 19:41 tel. {{phone}}");
+  });
   test("phone formats seen in Polish data", () => {
     for (const p of [
       "600100200",

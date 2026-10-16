@@ -35,6 +35,8 @@ export function demoTickMs(): number {
 
 /** Warsaw hour of the nightly reset; `PRM_DEMO_RESET_HOUR`, 3 by default. */
 export function demoResetHour(): number {
-  const n = Number(process.env.PRM_DEMO_RESET_HOUR);
-  return Number.isInteger(n) && n >= 0 && n <= 23 ? n : 3;
+  // Empty, as .env.example ships it, is "not set" — Number("") would be midnight.
+  const raw = (process.env.PRM_DEMO_RESET_HOUR ?? "").trim();
+  const n = Number(raw);
+  return raw !== "" && Number.isInteger(n) && n >= 0 && n <= 23 ? n : 3;
 }

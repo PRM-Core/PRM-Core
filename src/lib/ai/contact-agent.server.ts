@@ -17,6 +17,8 @@ import { logStep } from "../engine/log.server";
 import { formatActivityDate } from "../activity-date";
 import { t as tr } from "@/lib/i18n";
 import { identifiersOf, pseudonym } from "./redact";
+import { patientSummary } from "../agent/summary.server";
+import { visitLabel, isVisitState } from "../booking-system/status";
 
 /**
  * PRM_Agent na karcie pacjenta.
@@ -43,7 +45,7 @@ export interface AgentResult {
 }
 
 /** Wyciąg faktów o pacjencie — to samo źródło dla podsumowania i dla pytań. */
-async function gatherFacts(contactId: string): Promise<string | null> {
+async function gatherFacts(contactId: string, now = Date.now()): Promise<string | null> {
   const db = getDb();
   const c = await db.select().from(contacts).where(eq(contacts.id, contactId)).get();
   if (!c) return null;
@@ -108,7 +110,25 @@ async function gatherFacts(contactId: string): Promise<string | null> {
     if (a) autoNames.set(id, a.name);
   }
 
+  // Upcoming and past apart, each with its state, and today's date on top: a
+  // smaller local model does not work out from bare dates which visit is
+  // ahead, and answered "no visit booked" with one on the list.
+  const state = (v: (typeof visits)[number]) =>
+    isVisitState(v.systemStatus) ? visitLabel(v.systemStatus, v.startsAt, "", now) : "";
+  const visitLine = (v: (typeof visits)[number]) =>
+    `- ${v.startsAt ? formatActivityDate(v.startsAt) : tr("termin nieokreślony")} · ${v.title}${v.specialization ? ` · ${v.specialization}` : ""}${v.doctor ? ` · ${v.doctor}` : ""}${state(v) ? ` · ${state(v)}` : ""}`;
+  const upcoming = visits
+    .filter((v) => v.startsAt !== null && v.startsAt > now && v.systemStatus !== "cancelled")
+    .reverse();
+  const past = visits.filter((v) => !upcoming.includes(v));
+  const brief = (await patientSummary(contactId, now)) ?? [];
+
   const lines: string[] = [
+    tr("DZIŚ: {today}", { today: formatActivityDate(now) }),
+    "",
+    tr("W SKRÓCIE (policzone przez system z całej historii, pewne):"),
+    ...brief.map((sentence) => `- ${sentence}`),
+    "",
     // Who the patient is stays on this side of the boundary: a pseudonym and
     // the PRM ID identify the record for staff, not the person for the model.
     `PACJENT: ${pseudonym(c.id)} (${c.prmId})`,
@@ -131,11 +151,13 @@ async function gatherFacts(contactId: string): Promise<string | null> {
       v3: c.consentSource || "—",
     }),
     "",
-    `WIZYTY (${visits.length}):`,
-    ...visits.map(
-      (v) =>
-        `- ${v.startsAt ? formatActivityDate(v.startsAt) : tr("termin nieokreślony")} · ${v.title}${v.specialization ? ` · ${v.specialization}` : ""}${v.doctor ? ` · ${v.doctor}` : ""}`,
-    ),
+    tr("WIZYTY ZAPLANOWANE — przyszłe, najbliższa pierwsza ({length}):", {
+      length: upcoming.length,
+    }),
+    ...upcoming.map(visitLine),
+    "",
+    tr("WIZYTY MINIONE — najnowsze pierwsze, do 20 ({length}):", { length: past.length }),
+    ...past.map(visitLine),
     "",
     `NOTATKI (${notes.length}):`,
     ...notes.map(
@@ -228,7 +250,9 @@ async function callModel(
     const completion = await config.provider.complete({
       model: config.model,
       system: tr("{SYSTEM}\n\nFAKTY O PACJENCIE (jedyne źródło prawdy):\n{facts}", {
-        SYSTEM: SYSTEM(),
+        SYSTEM: `${SYSTEM()}\n${tr(
+          "6. Dane kontaktowe pacjenta nie są w faktach i nie piszesz ich ani nie wstawiasz za nie znaczników typu {{phone}}. Daty i godziny bierzesz dokładnie z faktów; o tym, co już było, a co dopiero będzie, decyduje DZIŚ.",
+        )}`,
         facts: facts,
       }),
       messages: history.map((h) => ({ role: h.role, text: h.text })),

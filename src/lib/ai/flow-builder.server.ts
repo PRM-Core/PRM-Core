@@ -602,6 +602,7 @@ export async function generateFlow(input: {
       messages: [{ role: "user", text: input.prompt }],
       tools: [buildTool(input.templates)],
       maxTokens: MAX_TOKENS,
+      requireTool: true,
     });
 
     const costUsd = priceCall(config.providerId, config.model, completion.usage);

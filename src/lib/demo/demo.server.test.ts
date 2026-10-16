@@ -181,3 +181,21 @@ describe("the simulator", () => {
     expect(visits.some((v) => v.source === "Rejestracja online")).toBe(true);
   }, 180_000);
 });
+
+describe("demoResetHour", () => {
+  test("empty, as .env.example ships it, is the default 3:00 — not midnight", async () => {
+    const { demoResetHour } = await import("./mode.server");
+    const before = process.env.PRM_DEMO_RESET_HOUR;
+    try {
+      process.env.PRM_DEMO_RESET_HOUR = "";
+      expect(demoResetHour()).toBe(3);
+      process.env.PRM_DEMO_RESET_HOUR = "0";
+      expect(demoResetHour()).toBe(0);
+      process.env.PRM_DEMO_RESET_HOUR = "25";
+      expect(demoResetHour()).toBe(3);
+    } finally {
+      if (before === undefined) delete process.env.PRM_DEMO_RESET_HOUR;
+      else process.env.PRM_DEMO_RESET_HOUR = before;
+    }
+  });
+});

@@ -15,7 +15,7 @@ import path from "node:path";
 const katalog = fs.mkdtempSync(path.join(os.tmpdir(), "prm-raport-"));
 process.env.DATABASE_URL = `file:${path.join(katalog, "test.db")}`;
 
-const { stanPoNieudanychProbach } = await import("./daily-report.server");
+const { liczbaZEnv, stanPoNieudanychProbach } = await import("./daily-report.server");
 const { getDb } = await import("../db/client.server");
 const { engineLog } = await import("../db/schema");
 
@@ -101,5 +101,18 @@ describe("stanPoNieudanychProbach", () => {
     await wpis({ source: "kampanie", proba: "blad" }, TERAZ - 10 * 60 * 1000);
 
     expect((await stanPoNieudanychProbach(TERAZ)).wstrzymaj).toBe(false);
+  });
+});
+
+describe("liczbaZEnv", () => {
+  test("pusta zmienna z .env.example to wartość domyślna, nie zero", () => {
+    expect(liczbaZEnv("", 5)).toBe(5);
+    expect(liczbaZEnv("  ", 7)).toBe(7);
+    expect(liczbaZEnv(undefined, 5)).toBe(5);
+  });
+  test("ustawiona liczba wygrywa, także zero; śmieci to domyślna", () => {
+    expect(liczbaZEnv("2.5", 5)).toBe(2.5);
+    expect(liczbaZEnv("0", 5)).toBe(0);
+    expect(liczbaZEnv("pięć", 5)).toBe(5);
   });
 });

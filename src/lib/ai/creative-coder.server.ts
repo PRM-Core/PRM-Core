@@ -196,6 +196,36 @@ function toBlocks(raw: unknown): ContentBlock[] {
   return out;
 }
 
+/**
+ * The shape of the coder's reply, for servers that can hold a model to it.
+ * A large hosted model writes this JSON unaided; an 11B one on a clinic's
+ * server leaves strings open or keys unquoted without it.
+ */
+const RESULT_SCHEMA = (): Record<string, unknown> => ({
+  type: "object",
+  properties: {
+    subjects: { type: "array", items: { type: "string" } },
+    preheader: { type: "string" },
+    blocks: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          type: { type: "string", enum: ALLOWED_BLOCKS },
+          data: { type: "object", additionalProperties: { type: "string" } },
+        },
+        required: ["type", "data"],
+        additionalProperties: false,
+      },
+    },
+    notes: { type: "array", items: { type: "string" } },
+    recommendations: { type: "array", items: { type: "string" } },
+    reply: { type: "string" },
+  },
+  required: ["subjects", "preheader", "blocks", "notes", "recommendations", "reply"],
+  additionalProperties: false,
+});
+
 interface ParsedCreative {
   blocks: ContentBlock[];
   subjects: string[];
@@ -254,6 +284,7 @@ export async function generateCreative(input: CreativeInput): Promise<CreativeRe
   let slices: SlicedImage[] = input.existingSlices ?? [];
   let skippedSlices: { name: string; reason: string }[] = [];
   let plan = "";
+  let imageUnseen = false;
   if (input.image && input.onSlice && slices.length === 0 && input.kind !== "popup") {
     const planCompletion = await config.provider.complete({
       model: config.model,
@@ -270,42 +301,46 @@ export async function generateCreative(input: CreativeInput): Promise<CreativeRe
       maxTokens: 4000,
     });
     costUsd += priceCall(config.providerId, config.model, planCompletion.usage);
+    // A model that never saw the design has no frames to point at: a plan
+    // from it would cut made-up rectangles out of the image.
+    if (planCompletion.imagesDropped) imageUnseen = true;
 
-    try {
-      let raw = planCompletion.text.trim();
-      const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (fenced) raw = fenced[1].trim();
-      const start = raw.indexOf("{");
-      const end = raw.lastIndexOf("}");
-      const parsed = JSON.parse(raw.slice(start, end + 1)) as {
-        slices?: Array<SliceSpec & { alt?: string; role?: string }>;
-        sections?: string[];
-        palette?: Record<string, string>;
-      };
-      const specs = (parsed.slices ?? []).filter(
-        (sp) => Number(sp.width) > 0 && Number(sp.height) > 0,
-      );
-      if (specs.length > 0) {
-        const outcome = await input.onSlice(specs);
-        slices = outcome.slices;
-        skippedSlices = outcome.skipped;
+    if (!imageUnseen)
+      try {
+        let raw = planCompletion.text.trim();
+        const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (fenced) raw = fenced[1].trim();
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+        const parsed = JSON.parse(raw.slice(start, end + 1)) as {
+          slices?: Array<SliceSpec & { alt?: string; role?: string }>;
+          sections?: string[];
+          palette?: Record<string, string>;
+        };
+        const specs = (parsed.slices ?? []).filter(
+          (sp) => Number(sp.width) > 0 && Number(sp.height) > 0,
+        );
+        if (specs.length > 0) {
+          const outcome = await input.onSlice(specs);
+          slices = outcome.slices;
+          skippedSlices = outcome.skipped;
+        }
+        // Plan wraca do drugiego przebiegu jako opis projektu: model ma
+        // kolejność sekcji i paletę na piśmie, zamiast odczytywać je z obrazu
+        // drugi raz i za drugim razem inaczej.
+        plan =
+          t("\n\nSEKCJE PROJEKTU (od góry):\n{v0}", {
+            v0: (parsed.sections ?? []).map((x, i) => `${i + 1}. ${x}`).join("\n"),
+          }) +
+          (parsed.palette
+            ? `\n\nPALETA: ${Object.entries(parsed.palette)
+                .map(([k, v]) => `${k}=${v}`)
+                .join(", ")}`
+            : "");
+      } catch {
+        // Bez planu kodujemy dalej — po prostu bez kadrów. Lepszy e-mail
+        // z samego tekstu niż zerwana operacja.
       }
-      // Plan wraca do drugiego przebiegu jako opis projektu: model ma
-      // kolejność sekcji i paletę na piśmie, zamiast odczytywać je z obrazu
-      // drugi raz i za drugim razem inaczej.
-      plan =
-        t("\n\nSEKCJE PROJEKTU (od góry):\n{v0}", {
-          v0: (parsed.sections ?? []).map((x, i) => `${i + 1}. ${x}`).join("\n"),
-        }) +
-        (parsed.palette
-          ? `\n\nPALETA: ${Object.entries(parsed.palette)
-              .map(([k, v]) => `${k}=${v}`)
-              .join(", ")}`
-          : "");
-    } catch {
-      // Bez planu kodujemy dalej — po prostu bez kadrów. Lepszy e-mail
-      // z samego tekstu niż zerwana operacja.
-    }
   }
 
   // ── przebieg 2: kod ──────────────────────────────────────────────────────
@@ -357,6 +392,7 @@ export async function generateCreative(input: CreativeInput): Promise<CreativeRe
     // Uproszczony szkielet jest zwięzły, ale wiadomość z kilkunastoma sekcjami
     // nadal ma kilkadziesiąt kilobajtów; mniejszy limit ucinał w połowie tabeli.
     maxTokens: input.kind === "popup" ? 16000 : 32000,
+    responseSchema: RESULT_SCHEMA(),
   });
 
   costUsd += priceCall(config.providerId, config.model, completion.usage);
@@ -382,6 +418,13 @@ export async function generateCreative(input: CreativeInput): Promise<CreativeRe
     // Pominięte kadry trafiają do rekomendacji — użytkownik ma prawo wiedzieć,
     // że jakaś sekcja została bez zdjęcia, i dlaczego.
     const recommendations = [
+      ...(imageUnseen || completion.imagesDropped
+        ? [
+            t(
+              "Model w użyciu nie widzi obrazów — wiadomość powstała z samego opisu, bez odczytania grafiki. Do kodowania z grafiki potrzebny jest model z obsługą obrazów (PRM_AI_LOCAL_MODEL).",
+            ),
+          ]
+        : []),
       ...parsed.recommendations,
       ...skippedSlices.map((sk) =>
         t('Nie udało się wyciąć kadru „{name}" — {reason}. Ta sekcja jest bez zdjęcia.', {

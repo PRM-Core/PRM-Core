@@ -8,6 +8,40 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.28.0] — Każda funkcja AI na modelu lokalnym
+
+Wszystko, co kiedyś działało na modelu w chmurze, działa teraz na modelu
+w sieci placówki — także na Bieliku 11B, który nie obsługuje narzędzi ani
+obrazów. Opis: `docs/AGENT.md`, sekcja 7.1.
+
+- **Narzędzia w prompcie.** Copilot, kreator automatyzacji i segmentów, węzeł
+  Agent AI, nadzorca i raport bezpieczeństwa wołają narzędzia. Gdy serwer
+  odpowiada, że model ich nie obsługuje, adapter lokalny opisuje narzędzia
+  w prompcie, a odpowiedź modelu trzyma schematem JSON (`response_format`,
+  które rozumieją Ollama, vLLM i llama.cpp): albo poprawne wywołanie, albo
+  odpowiedź — bez prozy wokół wywołania i bez wymyślonego wyniku narzędzia.
+  Funkcje, które działają tylko na wywołaniu, nie dostają w ogóle opcji
+  „odpowiedź”. `PRM_AI_LOCAL_TOOLS`: `auto` (domyślnie), `native`, `prompt`.
+- **Model bez obrazów.** Studio kreacji z modelem tekstowym koduje wiadomość
+  z opisu i mówi to wprost w rekomendacjach, zamiast kończyć się błędem;
+  odpowiedź studia jest trzymana schematem, więc 11B nie zostawia
+  niedomkniętego JSON-a.
+- **Daty wizyt nie są już brane za numer telefonu.** Maskowanie
+  identyfikatorów brało „2026-10-23 05:08” (dziesięć cyfr) za telefon
+  i wysyłało modelowi `{{phone}}:08` — przy każdym dostawcy. Model nie
+  widział więc, kiedy są wizyty. Daty są teraz odkładane na bok przed wzorcem
+  telefonu; telefon tuż po dacie nadal jest maskowany.
+- **Karta pacjenta i węzeł Agent AI mówią modelowi, jaki jest dziś dzień.**
+  Karta dzieli wizyty na zaplanowane i minione (ze stanem), obie dostają
+  trzy zdania policzone przez system. Bielik odpowiadał „brak umówionej
+  wizyty” przy wizycie za tydzień.
+- **Pusta zmienna z `.env.example` to „nie ustawiono”, nie zero.**
+  `PRM_SECURITY_REPORT_LIMIT_USD=` dawało limit 0 USD i raport
+  bezpieczeństwa nigdy nie korzystał z modelu; `PRM_SECURITY_REPORT_HOUR=`
+  i `PRM_DEMO_RESET_HOUR=` dawały północ.
+- Z odpowiedzi modelu lokalnego znikają tokeny szablonu (`<|im_sep|>`) oraz
+  zabłąkane ukośniki i znaki powrotu karetki na końcach linii.
+
 ## [2.27.0] — Tryb demonstracyjny i symulator pacjentów
 
 Publiczne demo, w którym cały system pracuje na pacjentach, którzy nie

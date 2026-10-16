@@ -33,6 +33,14 @@ const PESEL = /(?<!\d)\d{11}(?!\d)/g;
  * dots between groups. Dates (`2026-09-12`) have too few digits to match.
  */
 const PHONE = /(?<![\w+])\+?(?:\d[\s.-]?){8,14}\d(?!\w)/g;
+/**
+ * A date, with or without the time: `2026-10-23 05:08`, `23.10.2026, 05:08`.
+ * With the hour it has ten digits and would pass for a phone — every visit
+ * date in a prompt would arrive as `{{phone}}:08`. Dates are set aside before
+ * the phone pattern runs and put back after it.
+ */
+const DATE =
+  /(?<!\d)(?:\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?|\d{2}\.\d{2}\.\d{4}(?:,? \d{2}:\d{2})?)(?!\d)/g;
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -73,7 +81,10 @@ export function redactText(text: string, known: KnownIdentifiers = {}): string {
   for (const n of known.nationalIds ?? []) if (n) out = out.split(n).join("{{nationalId}}");
   out = out.replace(EMAIL, "{{email}}");
   out = out.replace(PESEL, "{{nationalId}}");
+  const dates: string[] = [];
+  out = out.replace(DATE, (date) => `\uE000${dates.push(date) - 1}\uE000`);
   out = out.replace(PHONE, "{{phone}}");
+  out = out.replace(/\uE000(\d+)\uE000/g, (_, i: string) => dates[Number(i)]);
   const first = wholeWord(known.firstNames);
   const last = wholeWord(known.lastNames);
   // Last names first: "Anna Kowalska" → "Anna {{lastName}}" → "{{firstName}} {{lastName}}".

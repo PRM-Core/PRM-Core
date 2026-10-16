@@ -40,7 +40,18 @@ function odbiorca(): string {
 function temat(): string {
   return withOrgName(t("Analiza bezpieczeństwa PRM Core"), " / ");
 }
-const GODZINA = Number(process.env.PRM_SECURITY_REPORT_HOUR ?? 7);
+/**
+ * Liczba z .env albo wartość domyślna. Pusta zmienna — tak przychodzi z
+ * .env.example — to „nie ustawiono”, nie zero: `Number("")` daje 0, a limit
+ * 0 USD po cichu wyłączał model w każdym raporcie.
+ */
+export function liczbaZEnv(value: string | undefined, domyslna: number): number {
+  if (value === undefined || value.trim() === "") return domyslna;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : domyslna;
+}
+
+const GODZINA = liczbaZEnv(process.env.PRM_SECURITY_REPORT_HOUR, 7);
 
 /**
  * Własny budżet dobowy — 5 USD.
@@ -49,7 +60,7 @@ const GODZINA = Number(process.env.PRM_SECURITY_REPORT_HOUR ?? 7);
  * z rekomendacjami pod raportami wysyłek: jedno drogie popołudnie w kampaniach
  * nie może skasować porannego raportu bezpieczeństwa ani odwrotnie.
  */
-const LIMIT_USD = Number(process.env.PRM_SECURITY_REPORT_LIMIT_USD ?? 5);
+const LIMIT_USD = liczbaZEnv(process.env.PRM_SECURITY_REPORT_LIMIT_USD, 5);
 const ZNACZNIK = "raport-bezpieczenstwa";
 
 /**
@@ -204,6 +215,7 @@ async function ocenModelem(
       messages: [{ role: "user", text: JSON.stringify({ sprawdzenia: snapshot, ruch }, null, 1) }],
       tools: [buildTool()],
       maxTokens: MAX_TOKENS,
+      requireTool: true,
     });
 
     const costUsd = priceCall(config.providerId, config.model, completion.usage);

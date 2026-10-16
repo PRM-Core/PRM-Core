@@ -194,6 +194,7 @@ export async function runAiSupervisor(deterministic: InsightDraft[]): Promise<Ai
       messages: [{ role: "user", text: JSON.stringify(snapshot, null, 1) }],
       tools: [buildTool()],
       maxTokens: MAX_TOKENS,
+      requireTool: true,
     });
 
     const costUsd = priceCall(config.providerId, config.model, completion.usage);

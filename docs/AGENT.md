@@ -269,6 +269,43 @@ PRM_AI_MODE=local PRM_AI_LOCAL_URL=http://127.0.0.1:11434/v1 PRM_AI_LOCAL_MODEL=
 - Enterprise can supply and size the model host inside the clinic's
   perimeter; Community brings its own endpoint.
 
+### 7.1 Every feature on a model without tools (since 2.28.0)
+
+The Copilot, the automation and segment builders, the AI Agent node, the
+supervisor and the security report all ask the model to call a tool.
+Bielik's chat template has none, and Ollama refuses such a request ("does
+not support tools"). The local adapter then carries the tools in the prompt
+(`src/lib/ai/prompt-tools.ts`): each tool's name, description and
+parameters go into the system text, and every reply is one JSON object —
+a call, `{"tool": "<name>", "input": {…}}`, or the answer,
+`{"tool": "answer", "text": "…"}`. The reply is held to a JSON schema with
+one branch per tool (`response_format`, which Ollama, vLLM and llama.cpp
+honour), so the model cannot wrap a call in prose or invent a tool's result
+instead of asking for it. A feature that works only with a call (the
+builders, the supervisor, the agent node) gets no answer branch. The call
+comes back as an ordinary tool call; the features cannot tell the
+difference.
+
+`PRM_AI_LOCAL_TOOLS` decides: `auto` (the default) tries native tools and
+switches to the prompt for a model the server refuses, remembering it until
+restart; `native` never switches; `prompt` always uses the prompt. A server
+that refuses the schema gets the same prompt without it, and the call is
+read from free text, with one reminder when a reply announces a call and
+stops.
+
+Images: a text-only model is sent the request without them, and the
+Creative Studio says that the email was written from the description
+alone. Coding from a design needs a model that takes images.
+
+What a smaller model needs that a large one inferred: today's date and
+which visits are ahead (the patient card and the agent node now get both,
+plus the three-sentence summary counted by the code). Measured on Bielik
+11B, M2, 16 GB: a Copilot question with one tool in 10–20 s, an automation
+from a description in about a minute, the patient summary in under a
+minute. The facts are right; the reading of them is an 11B model's — it
+can still miscount a tool's result, which is why the answer names the tool
+it used.
+
 ## 8. How we know it holds
 
 - **Egress test**: in `local` mode, every prompt builder is run against a

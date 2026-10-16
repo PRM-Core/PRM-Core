@@ -26,6 +26,8 @@ import { automationOverLimit, getAiConfig, isOverDailyLimit } from "../ai/settin
 import { priceCall, AiProviderError, type AiMessage, type AiToolDef } from "../ai/provider.server";
 import { intlLocale, t } from "@/lib/i18n";
 import { identifiersOf, pseudonym } from "../ai/redact";
+import { patientSummary } from "../agent/summary.server";
+import { formatActivityDate } from "../activity-date";
 
 // The PRM_Agent as an automation node. It reads the contact and their recent
 // history, then decides which outgoing path the run should take — and may tag,
@@ -237,7 +239,14 @@ async function loadContext(
           .join("\n")
       : t("- (brak zarejestrowanych zdarzeń)");
 
+  // Visits counted by the system and today's date: without them a model
+  // reasons from events alone and a smaller one says "no visit this year"
+  // about a patient seen last week.
+  const brief = (await patientSummary(contact.id)) ?? [];
+
   return [
+    t("Dziś: {today}", { today: formatActivityDate(Date.now()) }),
+    "",
     "## Pacjent",
     // A pseudonym and the record id. The message the agent writes uses
     // {{firstName}} and is personalised at send time, so the model has no
@@ -253,6 +262,9 @@ async function loadContext(
         [contact.source, contact.medium, contact.campaign].filter(Boolean).join(" / ") || "(brak)",
     }),
     t("W bazie od: {createdAt}", { createdAt: contact.createdAt }),
+    "",
+    t("## W skrócie (policzone przez system z wizyt i korespondencji)"),
+    ...(brief.length > 0 ? brief.map((sentence) => `- ${sentence}`) : [t("- (brak danych)")]),
     "",
     t("## Ostatnie zdarzenia (od najnowszych)"),
     timeline,
@@ -663,6 +675,7 @@ export async function runAgentNode(
         messages,
         tools,
         maxTokens: MAX_TOKENS,
+        requireTool: true,
         webSearch,
         identifiers: identifiersOf(contact),
       });

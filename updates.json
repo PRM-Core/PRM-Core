@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.27.0",
+    "version": "2.28.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.27.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.28.0",
     "notes": {
-      "en": "Demo mode (PRM_DEMO=1) for a public demo on simulated patients: nothing is sent — e-mail, SMS and outgoing webhooks land in a “Sent in the demo” preview — a simulator keeps leads, bookings, visits, opens and replies flowing through the real intake paths, and the data resets nightly to a seed on which every PRM_Agent list, the no-show model and the brief have something to show. Never enable it on a clinic's installation. See docs/DEMO.md.",
-      "pl": "Tryb demonstracyjny (PRM_DEMO=1) do publicznego demo na symulowanych pacjentach: nic nie jest wysyłane — e-maile, SMS-y i webhooki trafiają do podglądu „Wysłane w demo” — symulator dokłada leady, rezerwacje, wizyty, otwarcia i odpowiedzi tymi samymi wejściami co w placówce, a dane co noc wracają do zasiewu, na którym każda lista PRM_Agenta, model nieobecności i brief mają co pokazać. Nigdy na instalacji placówki. Opis: docs/DEMO.md."
+      "en": "Every AI feature on a local model, Bielik 11B included: tools travel in the prompt with replies held to a JSON schema when the model has none, the Creative Studio codes from the description when the model cannot see images, and visit dates are no longer masked as phone numbers before reaching the model. An empty PRM_SECURITY_REPORT_LIMIT_USD no longer switches the model off in the security report. See docs/AGENT.md, section 7.1.",
+      "pl": "Każda funkcja AI na modelu lokalnym, także na Bieliku 11B: gdy model nie ma narzędzi, idą w prompcie, a odpowiedź trzyma schemat JSON; studio kreacji koduje z opisu, gdy model nie widzi obrazów; daty wizyt nie są już maskowane jako numery telefonów, zanim trafią do modelu. Pusta zmienna PRM_SECURITY_REPORT_LIMIT_USD nie wyłącza już modelu w raporcie bezpieczeństwa. Opis: docs/AGENT.md, sekcja 7.1."
     }
   },
   "messages": []

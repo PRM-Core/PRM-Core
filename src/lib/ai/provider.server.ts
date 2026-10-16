@@ -74,6 +74,11 @@ export interface AiCompletion {
   paused?: boolean;
   /** Provider-native assistant content, to be echoed back on the next turn. See AiMessage.raw. */
   raw?: unknown;
+  /**
+   * The model takes no images and the attached ones were left out — it
+   * answered from the text alone. A feature built on seeing the image says so.
+   */
+  imagesDropped?: boolean;
 }
 
 export interface AiCompleteInput {
@@ -95,6 +100,18 @@ export interface AiCompleteInput {
    * it always applies. A builder that knows the contact passes them.
    */
   identifiers?: KnownIdentifiers;
+  /**
+   * The caller works only with a tool call — the answer is the call (the
+   * scenario, the chosen path, the insights). The model is then not offered
+   * a plain-text reply at all.
+   */
+  requireTool?: boolean;
+  /**
+   * The reply is one JSON object of this shape (a request without tools).
+   * Servers that can hold a model to a schema (Ollama, vLLM, llama.cpp) are
+   * asked to; the caller still parses and checks what comes back.
+   */
+  responseSchema?: Record<string, unknown>;
 }
 
 export interface AiProvider {

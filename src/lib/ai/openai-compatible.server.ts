@@ -115,6 +115,14 @@ export async function chatCompletions(
                 },
               }))
             : undefined,
+        tool_choice: input.tools.length > 0 && input.requireTool ? "required" : undefined,
+        response_format:
+          input.responseSchema && input.tools.length === 0
+            ? {
+                type: "json_schema",
+                json_schema: { name: "reply", strict: true, schema: input.responseSchema },
+              }
+            : undefined,
       }),
       signal: AbortSignal.timeout(target.timeoutMs ?? 120_000),
     });
