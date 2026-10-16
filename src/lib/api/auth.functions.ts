@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { recordAudit } from "../audit/audit.server";
 import { allowReporter, requireUser } from "./require-user";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
@@ -25,7 +26,7 @@ import {
 } from "../auth/throttle.server";
 import { logStep } from "../engine/log.server";
 import { adminDeleteUserAccount } from "../auth/delete-account.server";
-import { hashPassword, verifyPassword } from "../auth/password.server";
+import { generateTempPassword, hashPassword, verifyPassword } from "../auth/password.server";
 import { ALL_ROLES, isReadOnlyRole } from "../auth/roles";
 import {
   checkResetToken,
@@ -465,6 +466,7 @@ export const adminSetUserPhone = createServerFn({ method: "POST" })
 
     await db.update(users).set({ phone }).where(eq(users.id, data.userId));
     await db.delete(trustedDevices).where(eq(trustedDevices.userId, data.userId));
+    await recordAudit({ action: "user.phone_set", target: target.email });
     return { ok: true };
   });
 
@@ -494,6 +496,7 @@ export const adminResetPassword = createServerFn({ method: "POST" })
       .where(eq(users.id, data.userId));
     await db.delete(sessions).where(eq(sessions.userId, data.userId));
     await db.delete(loginChallenges).where(eq(loginChallenges.userId, data.userId));
+    await recordAudit({ action: "user.password_reset", target: target.email });
 
     return { tempPassword };
   });
@@ -507,7 +510,13 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
   .inputValidator(z.object({ userId: z.string().min(1) }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const admin = await requireAdmin();
+    const target = await getDb().select().from(users).where(eq(users.id, data.userId)).get();
     await adminDeleteUserAccount(admin.id, data.userId);
+    await recordAudit({
+      action: "user.deleted",
+      target: target?.email ?? data.userId,
+      detail: { role: target?.role ?? "" },
+    });
     return { ok: true };
   });
 
@@ -520,15 +529,6 @@ async function requireAdmin() {
     throw new Error(t("Tylko administrator może wykonać tę operację."));
   }
   return sessionUser;
-}
-
-function generateTempPassword(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  let out = "";
-  for (let i = 0; i < 12; i += 1) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
 }
 
 export const listUsers = createServerFn({ method: "GET" })
@@ -607,6 +607,11 @@ export const addUser = createServerFn({ method: "POST" })
       role,
       createdAt,
       expiresAt,
+    });
+    await recordAudit({
+      action: "user.added",
+      target: email,
+      detail: { role, ...(expiresAt ? { expiresAt: new Date(expiresAt).toISOString() } : {}) },
     });
 
     return {

@@ -8,6 +8,7 @@ import {
   type DocumentView,
 } from "../documents/documents.server";
 import { getSessionUser } from "../auth/session.server";
+import { recordAudit } from "../audit/audit.server";
 import { t } from "@/lib/i18n";
 
 // Warstwa RPC dokumentów. Logika w documents.server.ts — patrz nota
@@ -36,7 +37,7 @@ export const uploadContactDocument = createServerFn({ method: "POST" })
     // Kto wgrał — na dokumentacji medycznej to nie ozdoba, tylko ślad audytowy.
     const user = await getSessionUser();
     if (!user) return { ok: false, error: t("Musisz być zalogowany.") };
-    return uploadDocument({
+    const result = await uploadDocument({
       contactId: data.contactId,
       fileName: data.fileName,
       mimeType: data.mimeType,
@@ -44,6 +45,13 @@ export const uploadContactDocument = createServerFn({ method: "POST" })
       note: data.note,
       uploadedBy: `${user.firstName} ${user.lastName}`.trim() || user.email,
     });
+    if (result.ok)
+      await recordAudit({
+        action: "document.uploaded",
+        target: data.fileName,
+        detail: { contactId: data.contactId },
+      });
+    return result;
   });
 
 export const removeContactDocument = createServerFn({ method: "POST" })
@@ -52,5 +60,7 @@ export const removeContactDocument = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await getSessionUser();
     if (!user) return { ok: false, error: t("Musisz być zalogowany.") };
-    return deleteDocument(data.id);
+    const result = await deleteDocument(data.id);
+    if (result.ok) await recordAudit({ action: "document.removed", target: data.id });
+    return result;
   });

@@ -187,12 +187,12 @@ router's nonce-stamped ones run; `PRM_CSP=report` diagnoses without
 blocking. **Key rotation without an outage** (2.23.0) — the app reads values
 under `PRM_SECRETS_KEY_PREVIOUS` while `bun run secrets:rotate` moves them to
 the new key; the incoming webhook secret can be rotated with 24 hours of
-grace, or revoked at once after a leak (`docs/KEY-ROTATION.md`).
+grace, or revoked at once after a leak (`docs/KEY-ROTATION.md`). **An audit trail of administrative actions**
+(2.24.0) — accounts added and deleted, password resets, contact exports,
+patients' documents opened, credentials, webhooks: one view under Settings →
+Security, kept for `PRM_AUDIT_RETENTION_DAYS` (365) and then purged.
 
-1. **Audit trail for administrator actions** — who changed a role, reset a
-   password, exported contacts, read a document. Parts are in the engine log
-   today; it should be one view with retention.
-2. **Automated dependency review** in CI, and a documented response time for
+1. **Automated dependency review** in CI, and a documented response time for
    reports that arrive through private vulnerability reporting.
 
 ## What we will not build

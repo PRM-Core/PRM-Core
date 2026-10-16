@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.23.0",
+    "version": "2.24.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.23.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.24.0",
     "notes": {
-      "en": "Rotate PRM_SECRETS_KEY and the webhook secret without an outage: PRM_SECRETS_KEY_PREVIOUS, `bun run secrets:rotate`, and a 24-hour grace for a planned webhook-secret rotation. Steps in docs/KEY-ROTATION.md.",
-      "pl": "Wymiana PRM_SECRETS_KEY i sekretu webhooka bez przestoju: PRM_SECRETS_KEY_PREVIOUS, `bun run secrets:rotate` i 24 godziny dla planowej wymiany sekretu webhooka. Kroki w docs/KEY-ROTATION.md."
+      "en": "An audit trail of administrative actions under Settings → Security (accounts, password resets, contact exports, patients' documents, credentials, webhooks), kept for PRM_AUDIT_RETENTION_DAYS. Temporary passwords now come from a cryptographic generator.",
+      "pl": "Dziennik działań administracyjnych w Ustawienia → Bezpieczeństwo (konta, resety haseł, eksport kontaktów, dokumenty pacjentów, klucze, webhooki), przechowywany PRM_AUDIT_RETENTION_DAYS dni. Hasła tymczasowe losowane teraz generatorem kryptograficznym."
     }
   },
   "messages": []

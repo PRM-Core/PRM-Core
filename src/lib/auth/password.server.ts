@@ -1,4 +1,4 @@
-import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { randomBytes, randomInt, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
 const scryptAsync = promisify(scrypt);
@@ -17,4 +17,14 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const storedBuf = Buffer.from(hashHex, "hex");
   if (derived.length !== storedBuf.length) return false;
   return timingSafeEqual(derived, storedBuf);
+}
+
+/** A temporary password from a cryptographic generator — Math.random is guessable. */
+export function generateTempPassword(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let out = "";
+  for (let i = 0; i < 12; i += 1) {
+    out += chars[randomInt(chars.length)];
+  }
+  return out;
 }

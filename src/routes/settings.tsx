@@ -1,4 +1,5 @@
 import { AuthenticatorCard } from "@/components/settings/AuthenticatorCard";
+import { AuditLogCard } from "@/components/settings/AuditLogCard";
 import { StatusesCard } from "@/components/settings/StatusesCard";
 import { EmailSendersCard } from "@/components/settings/EmailSendersCard";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -212,6 +213,7 @@ function SettingsPage() {
 
         <TabsContent value="security" className="space-y-4">
           <AuthenticatorCard />
+          <AuditLogCard />
         </TabsContent>
 
         {/* Integracje mają własny ekran od dawna — ta zakładka została po czasach,

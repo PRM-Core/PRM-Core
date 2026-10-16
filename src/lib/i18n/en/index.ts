@@ -51,6 +51,7 @@ import { engineFallback } from "./engine-fallback";
 import { engineReentry } from "./engine-reentry";
 import { engineQueue } from "./engine-queue";
 import { keyRotation } from "./key-rotation";
+import { audit } from "./audit";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -100,6 +101,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineReentry,
   engineQueue,
   keyRotation,
+  audit,
 };
 
 /**

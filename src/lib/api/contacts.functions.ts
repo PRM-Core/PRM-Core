@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { recordAudit } from "../audit/audit.server";
 import { allowReporter, requireUser } from "./require-user";
 import { randomUUID } from "node:crypto";
 
@@ -113,7 +114,16 @@ export const getContactsPage = createServerFn({ method: "POST" })
 export const getContactsForExport = createServerFn({ method: "POST" })
   .middleware([requireUser])
   .inputValidator(contactQuery)
-  .handler(async ({ data }): Promise<Contact[]> => listContactsForExport(data));
+  .handler(async ({ data }): Promise<Contact[]> => {
+    const rows = await listContactsForExport(data);
+    // An export takes patient data out of the system: who, how many, which filter.
+    await recordAudit({
+      action: "contacts.exported",
+      target: String(rows.length),
+      detail: { filter: JSON.stringify(data).slice(0, 500) },
+    });
+    return rows;
+  });
 
 /** Wartości do filtrów — agregat z całej bazy, nie z bieżącej strony. */
 export const getContactFacets = createServerFn({ method: "POST" })

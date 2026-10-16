@@ -96,7 +96,7 @@ system. **This is where help matters most**, and it is well scoped:
   list with priorities: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md#integrations-we-would-love-to-see).
 
 Beyond connectors, [docs/ROADMAP.md](docs/ROADMAP.md) lists what is next in
-security (an audit trail, dependency review) and in PRM_Agent (a clinic server through the evaluation
+security (dependency review in CI) and in PRM_Agent (a clinic server through the evaluation
 harness).
 
 Pick one, open an issue with the **Medical system connector** form, and say

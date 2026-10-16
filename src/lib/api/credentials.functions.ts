@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { recordAudit } from "../audit/audit.server";
 import { z } from "zod";
 import { requireUser } from "./require-user";
 import { INTEGRATIONS, isCredentialName, type IntegrationId } from "../credentials/catalog";
@@ -57,6 +58,11 @@ export const saveIntegrationCredentials = createServerFn({ method: "POST" })
     const { label } = await requireAdmin();
     const { saveCredentials } = await import("../credentials/store.server");
     const saved = await saveCredentials(data.values, label);
+    // Names only — never a value.
+    await recordAudit({
+      action: "credentials.saved",
+      target: Object.keys(data.values).join(", "),
+    });
     return { saved };
   });
 
@@ -71,6 +77,7 @@ export const clearIntegrationCredential = createServerFn({ method: "POST" })
     const { label } = await requireAdmin();
     const { clearCredential } = await import("../credentials/store.server");
     await clearCredential(data.name, label);
+    await recordAudit({ action: "credentials.cleared", target: data.name });
     return { ok: true as const };
   });
 
@@ -88,7 +95,9 @@ export const generateMcpAccessToken = createServerFn({ method: "POST" })
   .handler(async () => {
     const { label } = await requireAdmin();
     const { generateMcpToken } = await import("../credentials/store.server");
-    return { token: await generateMcpToken(label) };
+    const token = await generateMcpToken(label);
+    await recordAudit({ action: "mcp.token_generated" });
+    return { token };
   });
 
 /** Przeniesienie wartości używanych dziś z `.env` do panelu — bez zwracania ich. */
@@ -97,5 +106,7 @@ export const importIntegrationCredentialsFromEnv = createServerFn({ method: "POS
   .handler(async () => {
     const { label } = await requireAdmin();
     const { importCredentialsFromEnv } = await import("../credentials/store.server");
-    return importCredentialsFromEnv(label);
+    const result = await importCredentialsFromEnv(label);
+    await recordAudit({ action: "credentials.imported" });
+    return result;
   });

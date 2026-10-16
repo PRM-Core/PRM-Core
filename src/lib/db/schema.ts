@@ -1649,6 +1649,28 @@ export const engineSettings = sqliteTable("engine_settings", {
 });
 
 /**
+ * Who did what with access, accounts, credentials and patient files — one
+ * place, with a retention period (PRM_AUDIT_RETENTION_DAYS, 365 by default).
+ * Written next to the action, never instead of it: a failed write here does
+ * not undo or block the action.
+ */
+export const auditLog = sqliteTable(
+  "audit_log",
+  {
+    id: text("id").primaryKey(),
+    at: integer("at").notNull(),
+    actorId: text("actor_id").notNull().default(""),
+    actorName: text("actor_name").notNull().default(""),
+    /** "user.added", "contacts.exported", "document.downloaded", … — see audit.server.ts. */
+    action: text("action").notNull(),
+    /** What it was done to: an e-mail, a patient's PRM number, a file name. */
+    target: text("target").notNull().default(""),
+    detail: text("detail", { mode: "json" }).notNull().$type<Record<string, string>>(),
+  },
+  (t) => [index("idx_audit_at").on(t.at), index("idx_audit_action").on(t.action, t.at)],
+);
+
+/**
  * Where an automation's "send to a webhook" step may post — set by an
  * administrator, never in the automation itself. The address and the secret
  * are encrypted with PRM_SECRETS_KEY (a Zapier or Make hook URL is itself a

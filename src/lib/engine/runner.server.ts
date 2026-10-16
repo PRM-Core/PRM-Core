@@ -1024,6 +1024,9 @@ export async function tick(): Promise<TickResult> {
   // the engine — the next scan retries.
   try {
     await scanTimeTriggers();
+    // Housekeeping on the same clock: the audit trail's retention, once a day.
+    const { purgeAuditIfDue } = await import("../audit/audit.server");
+    await purgeAuditIfDue();
   } catch (err) {
     await logStep({
       kind: "error",

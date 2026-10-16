@@ -3,6 +3,7 @@ import { readDocument } from "@/lib/documents/documents.server";
 import { getSessionUser } from "@/lib/auth/session.server";
 import { isReadOnlyRole } from "@/lib/auth/roles";
 import { t } from "@/lib/i18n";
+import { recordAudit } from "@/lib/audit/audit.server";
 
 // Pobieranie dokumentu pacjenta. Osobna trasa, a nie funkcja RPC, bo plik ma
 // wyjść jako plik — z nagłówkami, które przeglądarka rozumie.
@@ -26,6 +27,12 @@ export const Route = createFileRoute("/documents/$id")({
 
         const found = await readDocument(params.id);
         if (!found) return new Response("Nie znaleziono dokumentu.", { status: 404 });
+        // Who opened a patient's document, and when — the audit trail.
+        await recordAudit({
+          action: "document.downloaded",
+          target: found.row.fileName,
+          detail: { contactId: found.row.contactId, documentId: params.id },
+        });
 
         return new Response(new Uint8Array(found.bytes), {
           status: 200,

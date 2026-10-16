@@ -8,6 +8,31 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.24.0] — Dziennik działań administracyjnych
+
+Kto dodał konto, zresetował hasło, wyeksportował kontakty albo otworzył
+dokument pacjenta — część tych śladów była w dzienniku silnika, wśród
+tysięcy kroków automatyzacji, część nigdzie.
+
+- **Ustawienia → Bezpieczeństwo → Dziennik działań administracyjnych**
+  (tylko administrator): kto, kiedy, co i na czym, z filtrem po rodzaju
+  działania.
+- **Zapisywane**: dodanie i usunięcie konta (z rolą), reset hasła przez
+  administratora, zmiana numeru do kodów, **eksport kontaktów** (ile
+  i z jakim filtrem), **pobranie, dodanie i usunięcie dokumentu pacjenta**,
+  zapis, usunięcie i import kluczy integracji (same nazwy, nigdy
+  wartości), nowy token MCP, wymiana sekretu webhooka (planowa czy po
+  wycieku), odbiorcy webhooków wychodzących.
+- **Retencja**: `PRM_AUDIT_RETENTION_DAYS` (domyślnie 365, najmniej 30);
+  starsze wpisy silnik usuwa raz na dobę.
+- Zapis do dziennika nigdy nie zatrzymuje samego działania.
+- Rola konta jest nadawana przy jego tworzeniu i nie ma osobnej funkcji jej
+  zmiany — dziennik zapisuje ją przy „dodaniu konta”.
+- **Poprawka bezpieczeństwa**: hasła tymczasowe (nowe konto, reset przez
+  administratora) były losowane `Math.random`, które nie jest generatorem
+  kryptograficznym. Teraz `crypto.randomInt`.
+- Migracja 0087: tabela `audit_log`.
+
 ## [2.23.0] — Wymiana kluczy i sekretów bez przestoju
 
 Zmiana `PRM_SECRETS_KEY` czyniła dotąd wszystkie zapisane klucze integracji

@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import { webhookEndpoints } from "../db/schema";
 import { logStep } from "../engine/log.server";
+import { recordAudit } from "../audit/audit.server";
 import {
   decryptCredential,
   encryptCredential,
@@ -162,6 +163,15 @@ export async function saveWebhookEndpoint(
     }),
     detail: { webhook: id, host },
   });
+  await recordAudit({
+    action: "webhook.destination_saved",
+    target: `${name} (${host})`,
+    detail: {
+      fields: fields.join(", "),
+      ...(input.rotateSecret ? { secret: "rotated" } : {}),
+      ...(!existing ? { created: "yes" } : {}),
+    },
+  });
   return { id, secret };
 }
 
@@ -178,6 +188,11 @@ export async function deleteWebhookEndpoint(id: string, who: string): Promise<vo
         host: row.host,
       }),
       detail: { webhook: id, host: row.host },
+    });
+  if (row)
+    await recordAudit({
+      action: "webhook.destination_deleted",
+      target: `${row.name} (${row.host})`,
     });
 }
 
