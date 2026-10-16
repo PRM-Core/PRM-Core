@@ -31,6 +31,25 @@ export function ContactWebhookCard() {
   const [revealed, setRevealed] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [rotating, setRotating] = useState(false);
+  const rotate = async (keepPrevious: boolean) => {
+    setRotating(true);
+    const r = await regenerateWebhookSecret({ data: { keepPrevious } }).catch(() => null);
+    setRotating(false);
+    setConfirmOpen(false);
+    if (!r) {
+      toast.error(t("Nie udało się wygenerować nowego sekretu."));
+      return;
+    }
+    setSecret(r.secret);
+    setRevealed(true);
+    toast.success(
+      keepPrevious
+        ? t(
+            "Nowy sekret gotowy — stary działa jeszcze 24 godziny. Zaktualizuj go w systemach, które go używają.",
+          )
+        : t("Nowy sekret gotowy — zaktualizuj go w systemach, które go używają."),
+    );
+  };
   const [origin, setOrigin] = useState("");
 
   useEffect(() => setOrigin(window.location.origin), []);
@@ -156,7 +175,7 @@ export function ContactWebhookCard() {
             <AlertDialogTitle>{t("Wygenerować nowy sekret?")}</AlertDialogTitle>
             <AlertDialogDescription>
               {t(
-                "Stary przestanie działać natychmiast. Każdy system, który go używa — w tym system rezerwacji — zacznie dostawać odmowę, dopóki nie wpiszecie tam nowego. Rób to wtedy, gdy sekret wyciekł.",
+                "Planowa wymiana: stary sekret działa jeszcze 24 godziny, żeby zdążyć wpisać nowy w systemie rezerwacji i w źródłach leadów. Wyciek: stary przestaje działać od razu — każdy system, który go używa, dostaje odmowę, dopóki nie wpiszecie nowego.",
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -164,23 +183,13 @@ export function ContactWebhookCard() {
             <AlertDialogCancel>{t("Anuluj")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={rotating}
-              onClick={async () => {
-                setRotating(true);
-                const r = await regenerateWebhookSecret().catch(() => null);
-                setRotating(false);
-                setConfirmOpen(false);
-                if (!r) {
-                  toast.error(t("Nie udało się wygenerować nowego sekretu."));
-                  return;
-                }
-                setSecret(r.secret);
-                setRevealed(true);
-                toast.success(
-                  t("Nowy sekret gotowy — zaktualizuj go w systemach, które go używają."),
-                );
-              }}
+              onClick={() => void rotate(true)}
+              className="bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
-              {t("Wygeneruj nowy")}
+              {t("Planowa wymiana (stary 24 h)")}
+            </AlertDialogAction>
+            <AlertDialogAction disabled={rotating} onClick={() => void rotate(false)}>
+              {t("Wyciek — unieważnij od razu")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

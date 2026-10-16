@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.23.0] — Wymiana kluczy i sekretów bez przestoju
+
+Zmiana `PRM_SECRETS_KEY` czyniła dotąd wszystkie zapisane klucze integracji
+nieczytelnymi, a nic nie umiało ich przeszyfrować. Wymiana sekretu webhooka
+odcinała od razu system rezerwacji i źródła leadów.
+
+- **`PRM_SECRETS_KEY_PREVIOUS`**: na czas wymiany aplikacja odczytuje wpisy
+  zapisane poprzednim kluczem, a nowe zapisuje nowym — nic nie przestaje
+  działać.
+- **`bun run secrets:rotate`** przenosi wszystkie zapisane wartości (klucze
+  integracji, adresy i sekrety webhooków wychodzących) na bieżący klucz,
+  podczas pracy aplikacji. Najpierw próba (nic nie zapisuje), potem
+  `--apply`. Każda wartość jest odszyfrowana i sprawdzona przed zapisem;
+  gdy którakolwiek nie należy do żadnego z kluczy, nic nie jest zapisane.
+- **Sekret webhooka kontaktów i rezerwacji**: dwa wybory przy wymianie —
+  „planowa” (stary działa jeszcze 24 h, każde jego użycie trafia do
+  dziennika) albo „wyciek” (stary przestaje działać od razu). Porównanie
+  sekretu w stałym czasie.
+- Poprawka: zapis odbiorcy webhooka wychodzącego bez zmiany adresu
+  oznaczał wiersz bieżącym kluczem, choć wartości mogły być zaszyfrowane
+  poprzednim — w trakcie wymiany wiersz stałby się nieczytelny. Teraz
+  zapis przenosi je na bieżący klucz.
+- **Instrukcja krok po kroku: `docs/KEY-ROTATION.md`.**
+- Migracja 0086: kolumny `previous_secret`, `previous_until`
+  w `lead_webhook_settings`.
+
 ## [2.22.0] — Content-Security-Policy egzekwowana, z nonce na każde żądanie
 
 Polityka treści była dotąd w Caddyfile w trybie „tylko zgłaszaj”

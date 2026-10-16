@@ -50,6 +50,7 @@ import { webhooksOutgoing } from "./webhooks-outgoing";
 import { engineFallback } from "./engine-fallback";
 import { engineReentry } from "./engine-reentry";
 import { engineQueue } from "./engine-queue";
+import { keyRotation } from "./key-rotation";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -98,6 +99,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineFallback,
   engineReentry,
   engineQueue,
+  keyRotation,
 };
 
 /**

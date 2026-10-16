@@ -51,6 +51,23 @@ export function readMasterKey(raw = process.env.PRM_SECRETS_KEY): MasterKeyState
   return { state: "ok", master: { key, id: keyId(key) } };
 }
 
+/**
+ * The key a row was encrypted with: the current PRM_SECRETS_KEY, or — during
+ * a rotation — PRM_SECRETS_KEY_PREVIOUS. Rows from before key ids existed
+ * (empty id) are read with the current key. Null when neither matches.
+ */
+export function masterFor(
+  storedKeyId: string,
+  current = process.env.PRM_SECRETS_KEY,
+  previous = process.env.PRM_SECRETS_KEY_PREVIOUS,
+): MasterKey | null {
+  const now = readMasterKey(current);
+  if (now.state === "ok" && (!storedKeyId || storedKeyId === now.master.id)) return now.master;
+  const before = readMasterKey(previous);
+  if (before.state === "ok" && storedKeyId === before.master.id) return before.master;
+  return null;
+}
+
 export function keyId(key: Buffer): string {
   return createHash("sha256").update(key).digest("hex").slice(0, 12);
 }

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.22.0",
+    "version": "2.23.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.22.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.23.0",
     "notes": {
-      "en": "The app now enforces a Content-Security-Policy with a fresh nonce per request. If your Caddyfile sets Content-Security-Policy-Report-Only, remove that line. PRM_CSP=report diagnoses without blocking.",
-      "pl": "Aplikacja egzekwuje teraz Content-Security-Policy z nonce na każde żądanie. Jeśli Wasz Caddyfile ustawia Content-Security-Policy-Report-Only, usuńcie tę linię. PRM_CSP=report diagnozuje bez blokowania."
+      "en": "Rotate PRM_SECRETS_KEY and the webhook secret without an outage: PRM_SECRETS_KEY_PREVIOUS, `bun run secrets:rotate`, and a 24-hour grace for a planned webhook-secret rotation. Steps in docs/KEY-ROTATION.md.",
+      "pl": "Wymiana PRM_SECRETS_KEY i sekretu webhooka bez przestoju: PRM_SECRETS_KEY_PREVIOUS, `bun run secrets:rotate` i 24 godziny dla planowej wymiany sekretu webhooka. Kroki w docs/KEY-ROTATION.md."
     }
   },
   "messages": []

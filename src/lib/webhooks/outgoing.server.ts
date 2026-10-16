@@ -3,7 +3,12 @@ import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import { webhookEndpoints } from "../db/schema";
 import { logStep } from "../engine/log.server";
-import { decryptCredential, encryptCredential, readMasterKey } from "../credentials/crypto.server";
+import {
+  decryptCredential,
+  encryptCredential,
+  masterFor,
+  readMasterKey,
+} from "../credentials/crypto.server";
 import { t } from "@/lib/i18n";
 import {
   buildPayload,
@@ -106,8 +111,16 @@ export async function saveWebhookEndpoint(
   if (input.id && !existing) throw new WebhookError(t("Nie ma takiego odbiorcy."));
   const id = existing?.id ?? randomUUID();
 
+  // A row still under the previous key (mid-rotation) is moved to the current
+  // one here — the row's key id must describe every value in it.
+  const reencrypt = (stored: string, field: string) => {
+    if (!existing || existing.keyId === m.id) return stored;
+    const old = masterFor(existing.keyId);
+    if (!old) throw new WebhookError(t("Odbiorca zapisany innym kluczem — podaj adres ponownie."));
+    return encryptCredential(decryptCredential(stored, field, existing.keyId, old), field, m);
+  };
   let host = existing?.host ?? "";
-  let urlEnc = existing?.urlEnc ?? "";
+  let urlEnc = existing ? reencrypt(existing.urlEnc, urlName(id)) : "";
   if (input.url !== undefined && input.url.trim() !== "") {
     const check = checkWebhookUrl(input.url);
     if (!check.ok) throw new WebhookError(urlReason(check.reason));
@@ -117,7 +130,8 @@ export async function saveWebhookEndpoint(
   if (!urlEnc) throw new WebhookError(t("Podaj adres odbiorcy."));
 
   let secret: string | null = null;
-  let secretEnc = existing?.secretEnc ?? "";
+  let secretEnc =
+    existing && !input.rotateSecret ? reencrypt(existing.secretEnc, secretName(id)) : "";
   if (!existing || input.rotateSecret) {
     secret = randomBytes(32).toString("hex");
     secretEnc = encryptCredential(secret, secretName(id), m);
@@ -193,7 +207,8 @@ export async function deliverWebhook(
     .get();
   if (!row)
     throw new WebhookError(t("Odbiorca webhooka nie istnieje — wybierz go ponownie w kroku."));
-  const m = master();
+  // The row may still be under the previous key during a rotation.
+  const m = masterFor(row.keyId) ?? master();
   const url = decryptCredential(row.urlEnc, urlName(row.id), row.keyId, m);
   const secret = decryptCredential(row.secretEnc, secretName(row.id), row.keyId, m);
   const check = checkWebhookUrl(url);

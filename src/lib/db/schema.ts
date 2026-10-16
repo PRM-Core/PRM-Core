@@ -372,6 +372,13 @@ export type MetaConnectionRow = typeof metaConnections.$inferSelect;
 export const leadWebhookSettings = sqliteTable("lead_webhook_settings", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   secret: text("secret").notNull(),
+  /**
+   * The secret before the last rotation, still accepted until
+   * `previousUntil` — so rotating does not cut off the booking system and
+   * the lead sources before each of them is updated.
+   */
+  previousSecret: text("previous_secret").notNull().default(""),
+  previousUntil: integer("previous_until"),
   updatedAt: text("updated_at").notNull(),
 });
 

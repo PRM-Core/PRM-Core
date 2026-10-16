@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getWebhookSecret } from "@/lib/leads/lead-webhook.server";
+import { checkWebhookSecret } from "@/lib/leads/lead-webhook.server";
 import { createContactFromLead } from "@/lib/contacts.server";
 import { logStep } from "@/lib/engine/log.server";
 import { addNote } from "@/lib/notes/notes.server";
@@ -117,8 +117,18 @@ export const Route = createFileRoute("/api/webhooks/leads")({
     handlers: {
       POST: async ({ request }) => {
         const providedSecret = request.headers.get("x-webhook-secret") ?? "";
-        const expectedSecret = await getWebhookSecret();
-        if (!providedSecret || providedSecret !== expectedSecret) {
+        const secretCheck = await checkWebhookSecret(providedSecret);
+        if (secretCheck.ok && secretCheck.previous)
+          // Still valid for 24 h after a rotation — the sender needs the new one.
+          await logStep({
+            kind: "security",
+            message: tr(
+              "Webhook przyjęty ze starym sekretem — zaktualizuj nadawcę przed {until}, potem stary sekret przestanie działać.",
+              { until: new Date(secretCheck.previousUntil ?? 0).toISOString() },
+            ),
+            detail: { source: "lead-webhook", secret: "previous" },
+          });
+        if (!secretCheck.ok) {
           // Logged, not just refused: a series of these is either a broken
           // integration after a secret rotation or somebody probing the
           // endpoint, and the M4 supervisor can only report what was recorded.

@@ -184,14 +184,15 @@ source and fails the build for any server function without the
 sign-in. **An enforcing Content-Security-Policy** (2.22.0) — the application
 sends it with a fresh nonce per request; only its own scripts and the
 router's nonce-stamped ones run; `PRM_CSP=report` diagnoses without
-blocking.
+blocking. **Key rotation without an outage** (2.23.0) — the app reads values
+under `PRM_SECRETS_KEY_PREVIOUS` while `bun run secrets:rotate` moves them to
+the new key; the incoming webhook secret can be rotated with 24 hours of
+grace, or revoked at once after a leak (`docs/KEY-ROTATION.md`).
 
-1. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
-   credentials) and the webhook secret, without an outage.
-2. **Audit trail for administrator actions** — who changed a role, reset a
+1. **Audit trail for administrator actions** — who changed a role, reset a
    password, exported contacts, read a document. Parts are in the engine log
    today; it should be one view with retention.
-3. **Automated dependency review** in CI, and a documented response time for
+2. **Automated dependency review** in CI, and a documented response time for
    reports that arrive through private vulnerability reporting.
 
 ## What we will not build

@@ -17,6 +17,7 @@ import {
 import {
   CredentialCryptoError,
   decryptCredential,
+  masterFor,
   encryptCredential,
   readMasterKey,
 } from "./crypto.server";
@@ -84,9 +85,11 @@ async function resolve(name: CredentialName): Promise<Resolved> {
     const master = readMasterKey();
     if (master.state === "ok") {
       try {
+        // During a key rotation a row may still be under the previous key.
+        const key = masterFor(row.keyId) ?? master.master;
         return {
           source: "panel",
-          value: decryptCredential(row.ciphertext, name, row.keyId, master.master),
+          value: decryptCredential(row.ciphertext, name, row.keyId, key),
           row,
         };
       } catch (err) {
