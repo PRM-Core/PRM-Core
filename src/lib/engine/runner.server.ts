@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, eq, inArray, isNull, like, lte } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, like, lte } from "drizzle-orm";
 import { getDb } from "../db/client.server";
 import { automations, automationRuns, engineJobs, engineWaits } from "../db/schema";
 import type { EngineEventRow, EngineEventType, AutomationRunRow } from "../db/schema";
-import { pickSplitVariant } from "../automation-flow";
+import { fallbackPart, pickSplitVariant } from "../automation-flow";
 import { triggerLabel } from "../automation-catalog";
 import type { AutomationGraph, AutomationNode, DelayUnit } from "../automation-flow";
 import {
@@ -12,6 +12,7 @@ import {
   evaluatePath,
   isMessageAction,
   marketingChannel,
+  type ActionResult,
 } from "./actions.server";
 import { overMarketingCap, recordMarketingTouch } from "./marketing-cap.server";
 import { runAgentNode } from "./agent.server";
@@ -382,6 +383,8 @@ async function exitOnGoal(event: EngineEventRow): Promise<number> {
 // ── waiting for an event ────────────────────────────────────────────────────
 
 const TIMEOUT_SUFFIX = ":timeout";
+/** What a channel-fallback step waits for: an open or a click of the one e-mail it sent. */
+const EMAIL_ENGAGED = "email_engaged";
 
 /** "Pacjent odpisał", "Wizyta zarezerwowana: kardio" — what a wait step waits for. */
 function waitLabel(node: AutomationNode): string {
@@ -404,15 +407,22 @@ async function resolveWaits(event: EngineEventRow): Promise<number> {
     .where(and(eq(engineWaits.contactId, event.contactId), isNull(engineWaits.resolvedAt)));
   let resolved = 0;
   for (const w of open) {
-    if (TRIGGER_EVENT_TYPES[w.eventKey] !== event.type || event.occurredAt < w.since) continue;
-    const probe: AutomationNode = {
-      id: w.nodeId,
-      kind: "trigger",
-      position: { x: 0, y: 0 },
-      key: w.eventKey,
-      config: w.config,
-    };
-    if (!triggerMatches(probe, event)) continue;
+    if (event.occurredAt < w.since) continue;
+    if (w.eventKey === EMAIL_ENGAGED) {
+      // The fallback's own e-mail, opened or clicked — not any e-mail.
+      if (event.type !== "email.opened" && event.type !== "email.clicked") continue;
+      if (!w.config.token || event.payload?.token !== w.config.token) continue;
+    } else {
+      if (TRIGGER_EVENT_TYPES[w.eventKey] !== event.type) continue;
+      const probe: AutomationNode = {
+        id: w.nodeId,
+        kind: "trigger",
+        position: { x: 0, y: 0 },
+        key: w.eventKey,
+        config: w.config,
+      };
+      if (!triggerMatches(probe, event)) continue;
+    }
     const claimed = await db
       .update(engineWaits)
       .set({ resolvedAt: Date.now(), outcome: "event" })
@@ -444,18 +454,21 @@ async function resolveWaits(event: EngineEventRow): Promise<number> {
     }
     const node = findNode(automation.flow, w.nodeId);
     const path = [...(run.path ?? []), w.nodeId];
+    const fallback = node?.kind === "fallback";
     await logStep({
       runId: run.id,
       automationId: run.automationId,
       contactId: run.contactId,
       nodeId: w.nodeId,
       kind: "condition",
-      message: t("Doczekano się „{label}” — ścieżka „zdarzenie”.", {
-        label: node ? waitLabel(node) : w.eventKey,
-      }),
-      detail: { event: w.eventKey, branch: "event", eventType: event.type },
+      message: fallback
+        ? t("E-mail otwarty — SMS nie jest potrzebny.")
+        : t("Doczekano się „{label}” — ścieżka „zdarzenie”.", {
+            label: node ? waitLabel(node) : w.eventKey,
+          }),
+      detail: { event: w.eventKey, branch: fallback ? "out" : "event", eventType: event.type },
     });
-    const next = nextNodeId(automation.flow, w.nodeId, "event");
+    const next = nextNodeId(automation.flow, w.nodeId, fallback ? "out" : "event");
     if (!next) {
       await db.update(automationRuns).set({ path }).where(eq(automationRuns.id, run.id));
       await endRun({ ...run, path }, "completed", t("Przebieg zakończony — koniec ścieżki."));
@@ -469,6 +482,135 @@ async function resolveWaits(event: EngineEventRow): Promise<number> {
     resolved += 1;
   }
   return resolved;
+}
+
+// ── one action step ─────────────────────────────────────────────────────────
+
+/**
+ * Runs one action — for a message, everything around the send: a rejected
+ * approval, the weekly marketing cap, the trial hold, the sending window,
+ * and the counters after. "parked" means the job was held or deferred and
+ * the step must not move on; null means it was skipped and logged; otherwise
+ * the action's own result. Shared by the action step and both halves of the
+ * channel-fallback step, so every send obeys the same rules.
+ */
+async function performAction(
+  job: typeof engineJobs.$inferSelect,
+  run: AutomationRunRow,
+  automation: AutomationRow,
+  node: AutomationNode,
+  base: { runId: string; automationId: string; contactId: string; nodeId: string },
+): Promise<ActionResult | null | "parked"> {
+  const db = getDb();
+  // A message step of an automation still in its trial waits for a person.
+  if (isMessageAction(node) && job.review === "rejected") {
+    await logStep({
+      ...base,
+      kind: "skipped",
+      message: t("Wiadomość odrzucona przy zatwierdzaniu — krok pominięty, przebieg idzie dalej."),
+      detail: { action: node.key ?? "", review: "rejected" },
+    });
+    return null;
+  }
+  // The weekly cap on marketing, across every automation and campaign:
+  // past it, the step is skipped (not postponed — a backlog would only
+  // arrive later in one burst) and the run goes on. Checked before the
+  // trial hold, so nobody is asked to approve a message that cannot go.
+  const marketing = marketingChannel(node);
+  if (marketing) {
+    const over = await overMarketingCap(run.contactId);
+    if (over) {
+      await logStep({
+        ...base,
+        kind: "skipped",
+        message: t(
+          "Pominięto — pacjent dostał już {sent} wiadomości marketingowych w ciągu 7 dni (limit {cap}). Przebieg idzie dalej.",
+          { sent: over.sent, cap: over.cap },
+        ),
+        detail: { action: node.key ?? "", cap: String(over.cap) },
+      });
+      return null;
+    }
+  }
+  if (
+    isMessageAction(node) &&
+    job.review !== "approved" &&
+    automation.reviewed < automation.reviewFirst
+  ) {
+    const { holdForReview } = await import("../agent/automation-review.server");
+    const held = await holdForReview({ automation, run, jobId: job.id, node });
+    if (held) {
+      await db.update(engineJobs).set({ status: "held" }).where(eq(engineJobs.id, job.id));
+      await db
+        .update(automationRuns)
+        .set({ status: "waiting", currentNodeId: node.id })
+        .where(eq(automationRuns.id, run.id));
+      await logStep({
+        ...base,
+        kind: "agent",
+        message: t(
+          "Wiadomość czeka na zatwierdzenie — automatyzacja w okresie próbnym ({done} z {all} zatwierdzonych).",
+          { done: automation.reviewed, all: automation.reviewFirst },
+        ),
+        detail: { action: node.key ?? "", draftId: held },
+      });
+      return "parked";
+    }
+  }
+  // The sending window and the limits — the campaigns' rules, for
+  // automations too. A message that may not go now waits for its moment:
+  // the job goes back to pending with a later due time, and the claim
+  // above does not count as an attempt.
+  let gate: Awaited<ReturnType<typeof gateAutomationMessage>> | null = null;
+  if (isMessageAction(node)) {
+    gate = await gateAutomationMessage(automation.quietHours === "ignore");
+    if (!gate.send) {
+      const message = deferralMessage(gate, gate, formatActivityDate(gate.nextAt));
+      await db
+        .update(engineJobs)
+        .set({
+          status: "pending",
+          dueAt: gate.nextAt,
+          attempts: job.attempts,
+          lastError: `deferred:${gate.blockedBy}`,
+        })
+        .where(eq(engineJobs.id, job.id));
+      await db
+        .update(automationRuns)
+        .set({ status: "waiting", currentNodeId: node.id })
+        .where(eq(automationRuns.id, run.id));
+      // One line per reason, not one per tick: a queue held back by the
+      // hourly pace would otherwise write the same sentence every slot.
+      if (job.lastError !== `deferred:${gate.blockedBy}`)
+        await logStep({
+          ...base,
+          kind: "delay",
+          message,
+          detail: { action: node.key ?? "", dueAt: new Date(gate.nextAt).toISOString() },
+        });
+      return "parked";
+    }
+  }
+  const result = await executeAction(node, run.contactId, {
+    runId: run.id,
+    automationId: run.automationId,
+    nodeId: node.id,
+  });
+  if (gate && result.status === "ok") await recordMessageSent(gate);
+  if (marketing && result.status === "ok")
+    await recordMarketingTouch({
+      contactId: run.contactId,
+      channel: marketing,
+      source: "automation",
+      automationId: run.automationId,
+    });
+  await logStep({
+    ...base,
+    kind: result.status === "error" ? "error" : result.status === "skipped" ? "skipped" : "action",
+    message: result.message,
+    detail: { action: node.key ?? "", ...(result.detail ?? {}) },
+  });
+  return result;
 }
 
 // ── job → step ──────────────────────────────────────────────────────────────
@@ -573,119 +715,88 @@ async function runStep(job: typeof engineJobs.$inferSelect): Promise<void> {
     }
 
     case "action": {
-      // A message step of an automation still in its trial waits for a person.
-      if (isMessageAction(node) && job.review === "rejected") {
+      const done = await performAction(job, run, automation, node, base);
+      if (done === "parked") return;
+      if (done?.status === "error") failure = done.message;
+      if (done?.stopRun) stopRun = true;
+      break;
+    }
+
+    case "fallback": {
+      // E-mail first; SMS only if this e-mail is not opened (or clicked) in
+      // time — or if no e-mail went at all. Both sends go through
+      // performAction, so consent, the cap, the trial and the sending window
+      // apply to each exactly as to an ordinary message step.
+      const emailStep = fallbackPart(node, "email");
+      const smsStep = fallbackPart(node, "sms");
+      if (!job.idempotencyKey.endsWith(TIMEOUT_SUFFIX)) {
+        const sent = await performAction(job, run, automation, emailStep, base);
+        if (sent === "parked") return;
+        const token = sent?.status === "ok" ? sent.detail?.token : undefined;
+        const now = Date.now();
+        const until = token
+          ? now + Math.max(1, node.amount ?? 24) * DELAY_MS[node.unit ?? "hours"]
+          : now;
+        if (token)
+          await db.insert(engineWaits).values({
+            id: randomUUID(),
+            runId: run.id,
+            nodeId: node.id,
+            contactId: run.contactId,
+            eventKey: EMAIL_ENGAGED,
+            config: { token },
+            since: now,
+            until,
+          });
+        await db.update(engineJobs).set({ status: "done" }).where(eq(engineJobs.id, job.id));
+        await db
+          .update(automationRuns)
+          .set({ status: token ? "waiting" : "running", currentNodeId: node.id })
+          .where(eq(automationRuns.id, run.id));
+        await scheduleJob({
+          runId: run.id,
+          nodeId: node.id,
+          dueAt: until,
+          stepIndex: path.length - 1,
+          suffix: TIMEOUT_SUFFIX,
+        });
         await logStep({
           ...base,
-          kind: "skipped",
-          message: t(
-            "Wiadomość odrzucona przy zatwierdzaniu — krok pominięty, przebieg idzie dalej.",
-          ),
-          detail: { action: node.key ?? "", review: "rejected" },
+          kind: "delay",
+          message: token
+            ? t("E-mail wysłany — jeśli nie zostanie otwarty do {at}, pójdzie SMS.", {
+                at: formatActivityDate(until),
+              })
+            : t("E-mail nie wyszedł — od razu SMS."),
+          detail: { fallback: token ? "waiting" : "now" },
         });
-        break;
+        return;
       }
-      // The weekly cap on marketing, across every automation and campaign:
-      // past it, the step is skipped (not postponed — a backlog would only
-      // arrive later in one burst) and the run goes on. Checked before the
-      // trial hold, so nobody is asked to approve a message that cannot go.
-      const marketing = marketingChannel(node);
-      if (marketing) {
-        const over = await overMarketingCap(run.contactId);
-        if (over) {
-          await logStep({
-            ...base,
-            kind: "skipped",
-            message: t(
-              "Pominięto — pacjent dostał już {sent} wiadomości marketingowych w ciągu 7 dni (limit {cap}). Przebieg idzie dalej.",
-              { sent: over.sent, cap: over.cap },
-            ),
-            detail: { action: node.key ?? "", cap: String(over.cap) },
-          });
-          break;
-        }
-      }
-      if (
-        isMessageAction(node) &&
-        job.review !== "approved" &&
-        automation.reviewed < automation.reviewFirst
-      ) {
-        const { holdForReview } = await import("../agent/automation-review.server");
-        const held = await holdForReview({ automation, run, jobId: job.id, node });
-        if (held) {
-          await db.update(engineJobs).set({ status: "held" }).where(eq(engineJobs.id, job.id));
-          await db
-            .update(automationRuns)
-            .set({ status: "waiting", currentNodeId: node.id })
-            .where(eq(automationRuns.id, run.id));
-          await logStep({
-            ...base,
-            kind: "agent",
-            message: t(
-              "Wiadomość czeka na zatwierdzenie — automatyzacja w okresie próbnym ({done} z {all} zatwierdzonych).",
-              { done: automation.reviewed, all: automation.reviewFirst },
-            ),
-            detail: { action: node.key ?? "", draftId: held },
-          });
+      // The deadline — or no e-mail went. An open that came first wins.
+      const last = await db
+        .select()
+        .from(engineWaits)
+        .where(and(eq(engineWaits.runId, run.id), eq(engineWaits.nodeId, node.id)))
+        .orderBy(desc(engineWaits.since))
+        .limit(1)
+        .get();
+      if (last && last.resolvedAt === null) {
+        const closed = await db
+          .update(engineWaits)
+          .set({ resolvedAt: Date.now(), outcome: "timeout" })
+          .where(and(eq(engineWaits.id, last.id), isNull(engineWaits.resolvedAt)))
+          .returning({ id: engineWaits.id });
+        if (closed.length === 0) {
+          await db.update(engineJobs).set({ status: "done" }).where(eq(engineJobs.id, job.id));
           return;
         }
+      } else if (last?.outcome === "event") {
+        await db.update(engineJobs).set({ status: "done" }).where(eq(engineJobs.id, job.id));
+        return;
       }
-      // The sending window and the limits — the campaigns' rules, for
-      // automations too. A message that may not go now waits for its moment:
-      // the job goes back to pending with a later due time, and the claim
-      // above does not count as an attempt.
-      let gate: Awaited<ReturnType<typeof gateAutomationMessage>> | null = null;
-      if (isMessageAction(node)) {
-        gate = await gateAutomationMessage(automation.quietHours === "ignore");
-        if (!gate.send) {
-          const message = deferralMessage(gate, gate, formatActivityDate(gate.nextAt));
-          await db
-            .update(engineJobs)
-            .set({
-              status: "pending",
-              dueAt: gate.nextAt,
-              attempts: job.attempts,
-              lastError: `deferred:${gate.blockedBy}`,
-            })
-            .where(eq(engineJobs.id, job.id));
-          await db
-            .update(automationRuns)
-            .set({ status: "waiting", currentNodeId: node.id })
-            .where(eq(automationRuns.id, run.id));
-          // One line per reason, not one per tick: a queue held back by the
-          // hourly pace would otherwise write the same sentence every slot.
-          if (job.lastError !== `deferred:${gate.blockedBy}`)
-            await logStep({
-              ...base,
-              kind: "delay",
-              message,
-              detail: { action: node.key ?? "", dueAt: new Date(gate.nextAt).toISOString() },
-            });
-          return;
-        }
-      }
-      const result = await executeAction(node, run.contactId, {
-        runId: run.id,
-        automationId: run.automationId,
-        nodeId: node.id,
-      });
-      if (gate && result.status === "ok") await recordMessageSent(gate);
-      if (marketing && result.status === "ok")
-        await recordMarketingTouch({
-          contactId: run.contactId,
-          channel: marketing,
-          source: "automation",
-          automationId: run.automationId,
-        });
-      await logStep({
-        ...base,
-        kind:
-          result.status === "error" ? "error" : result.status === "skipped" ? "skipped" : "action",
-        message: result.message,
-        detail: { action: node.key ?? "", ...(result.detail ?? {}) },
-      });
-      if (result.status === "error") failure = result.message;
-      if (result.stopRun) stopRun = true;
+      const sms = await performAction(job, run, automation, smsStep, base);
+      if (sms === "parked") return;
+      if (sms?.status === "error") failure = sms.message;
       break;
     }
 

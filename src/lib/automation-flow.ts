@@ -10,7 +10,9 @@ export type NodeKind =
   | "path"
   | "split"
   /** Wait for an event (key + config, as a trigger), at most `amount` `unit`. */
-  | "wait";
+  | "wait"
+  /** E-mail, and an SMS if it is not opened within `amount` `unit` (config: templates, mode). */
+  | "fallback";
 
 export interface AiAgentPathDef {
   id: string;
@@ -111,6 +113,21 @@ export function outputHandles(node: AutomationNode): string[] {
   if (node.kind === "wait") return ["event", "timeout"];
   if (node.kind === "action" && node.key === "end_process") return [];
   return ["out"];
+}
+
+/** One half of a channel-fallback step, as the ordinary message action it runs. */
+export function fallbackPart(node: AutomationNode, channel: "email" | "sms"): AutomationNode {
+  const c = node.config ?? {};
+  return {
+    id: node.id,
+    kind: "action",
+    position: node.position,
+    key: channel === "email" ? "send_email" : "send_sms",
+    config:
+      channel === "email"
+        ? { template: c.emailTemplate ?? "", subject: c.subject ?? "", sendMode: c.sendMode ?? "" }
+        : { template: c.smsTemplate ?? "", sender: c.sender ?? "", sendMode: c.sendMode ?? "" },
+  };
 }
 
 export function makeBranchId(): string {
@@ -228,6 +245,9 @@ export function validateGraph(graph: AutomationGraph | null): { valid: boolean; 
   }
 
   for (const node of graph.nodes) {
+    if (node.kind === "fallback" && (!node.config?.emailTemplate || !node.config?.smsTemplate)) {
+      errors.push(tr("Krok „E-mail, a gdy nieotwarty — SMS” potrzebuje obu szablonów."));
+    }
     if (node.kind === "wait" && !node.key) {
       errors.push(tr("Krok „Czekaj na zdarzenie” nie ma wybranego zdarzenia."));
     }
@@ -238,7 +258,8 @@ export function validateGraph(graph: AutomationGraph | null): { valid: boolean; 
   // (a trigger/delay that goes nowhere, or a condition/AI-agent branch with a dead end),
   // so those must have every output handle wired up.
   for (const node of graph.nodes) {
-    if (node.kind === "action") continue;
+    // A fallback step sends, like an action: it may end a path.
+    if (node.kind === "action" || node.kind === "fallback") continue;
     for (const handle of outputHandles(node)) {
       const hasOutgoing = graph.edges.some(
         (e) => e.source === node.id && e.sourceHandle === handle,
@@ -262,7 +283,9 @@ export function validateGraph(graph: AutomationGraph | null): { valid: boolean; 
         if (e.source === id) queue.push(e.target);
       }
     }
-    const hasAction = graph.nodes.some((n) => reachable.has(n.id) && n.kind === "action");
+    const hasAction = graph.nodes.some(
+      (n) => reachable.has(n.id) && (n.kind === "action" || n.kind === "fallback"),
+    );
     if (!hasAction) {
       errors.push(tr("Automatyzacja musi zawierać przynajmniej jedną akcję."));
     }

@@ -47,3 +47,25 @@ describe("a wait step", () => {
     expect(r.valid).toBe(false);
   });
 });
+
+describe("an e-mail-then-SMS step", () => {
+  const flow = (config: Record<string, string>): AutomationGraph => ({
+    nodes: [
+      { id: "t1", kind: "trigger", position: { x: 0, y: 0 }, key: "visit_scheduled" },
+      { id: "f1", kind: "fallback", position: { x: 0, y: 0 }, amount: 24, unit: "hours", config },
+    ],
+    edges: [{ id: "e1", source: "t1", target: "f1", sourceHandle: "out" }],
+  });
+
+  test("needs both templates", () => {
+    expect(validateGraph(flow({ emailTemplate: "A" })).errors.join(" ")).toContain("obu szablonów");
+  });
+
+  test("with both, it is a complete step — a message, so the automation is valid", () => {
+    // It sends, so it counts as the automation's action, and its way out may end the path.
+    expect(validateGraph(flow({ emailTemplate: "A", smsTemplate: "B" }))).toEqual({
+      valid: true,
+      errors: [],
+    });
+  });
+});

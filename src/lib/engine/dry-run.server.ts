@@ -9,8 +9,8 @@ import {
 } from "../db/schema";
 import type { ContactRow } from "../db/schema";
 import type { AutomationGraph, AutomationNode } from "../automation-flow";
-import { pickSplitVariant } from "../automation-flow";
-import { nodeTitle } from "../automation-catalog";
+import { fallbackPart, pickSplitVariant } from "../automation-flow";
+import { delayUnitLabel, nodeTitle } from "../automation-catalog";
 import { evaluateCondition, evaluatePath, DNC_TAG, marketingChannel } from "./actions.server";
 import { snapshotId } from "./snapshots.server";
 import { resolveSmsSender } from "../sms/senders.server";
@@ -472,6 +472,24 @@ export async function dryRun(input: {
         title: nodeTitle(node),
         message: tr("Pacjent czekałby tutaj {v0} {unit}.", { v0: node.amount ?? 0, unit: unit }),
         outcome: "info",
+      });
+    } else if (node.kind === "fallback") {
+      // Both halves as the ordinary steps would preview them; the preview
+      // cannot know about the open, so it says what each half would do.
+      const email = await previewAction(fallbackPart(node, "email"), contact);
+      const sms = await previewAction(fallbackPart(node, "sms"), contact);
+      steps.push({
+        nodeId: node.id,
+        kind: node.kind,
+        title: nodeTitle(node),
+        message: tr("E-mail: {email} Jeśli nie zostanie otwarty w {amount} {unit} — SMS: {sms}", {
+          email: email.message,
+          sms: sms.message,
+          amount: node.amount ?? 24,
+          unit: delayUnitLabel(node.unit ?? "hours"),
+        }),
+        outcome:
+          email.outcome === "blocked" && sms.outcome === "blocked" ? "blocked" : email.outcome,
       });
     } else if (node.kind === "wait") {
       // The preview cannot know whether the patient will act, so it follows

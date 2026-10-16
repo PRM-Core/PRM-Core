@@ -8,6 +8,24 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.18.0] — „E-mail, a gdy nieotwarty — SMS” jako jeden krok
+
+Zapasowy kanał trzeba było budować ręcznie: wysyłka, czekanie, rozgałęzienie,
+druga wysyłka — i pilnować, żeby czekanie dotyczyło właśnie tego e-maila.
+
+- **Nowy krok** (Dodaj krok → Akcja, na górze listy): szablon e-maila,
+  szablon SMS, po ilu godzinach bez otwarcia ma pójść SMS, tryb wysyłki,
+  nadawca SMS.
+- Liczy się **otwarcie albo kliknięcie tego e-maila** (rozpoznawanego po
+  jego znaczniku), nie dowolnego. Gdy e-mail w ogóle nie wyjdzie — brak
+  adresu, brak zgody, limit marketingu — **SMS idzie od razu**.
+- Obie wiadomości przechodzą przez te same reguły co zwykłe kroki: zgody,
+  tygodniowy limit marketingu, okres próbny (każda połowa do zatwierdzenia
+  osobno), godziny i tempo wysyłki. Logika wokół wysyłki jest teraz jedną
+  funkcją silnika, wspólną dla kroku „Akcja” i obu połówek tego kroku.
+- Krok może kończyć ścieżkę i liczy się jako akcja automatyzacji; edytor
+  wymaga obu szablonów. Test na kontakcie pokazuje obie połówki.
+
 ## [2.17.0] — Krok „Wyślij do webhooka”: n8n, Make, Zapier w drugą stronę
 
 PRM Core przyjmował dane z n8n, Make i Zapiera (webhook leadów), ale nie

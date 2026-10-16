@@ -675,6 +675,40 @@ export const actionCatalog: CatalogItem[] = localized(() => [
   },
 ]);
 
+/**
+ * The channel-fallback step: an e-mail, and an SMS if that e-mail is not
+ * opened in time (or did not go at all). One step instead of a hand-built
+ * send → wait → branch → send, with the same consent, cap, trial and window
+ * rules for both messages.
+ */
+export const fallbackCatalog: CatalogItem = localized(() => ({
+  key: "email_then_sms",
+  label: t("E-mail, a gdy nieotwarty — SMS"),
+  description: t("Wysyła e-mail; jeśli nie zostanie otwarty w ustalonym czasie, wysyła SMS"),
+  icon: MessageSquare,
+  tone: "bg-sky-100 text-sky-700",
+  fields: [
+    {
+      key: "emailTemplate",
+      label: t("Szablon e-maila"),
+      type: "content-template",
+      templateKind: "email",
+    },
+    { key: "subject", label: t("Temat (opcjonalnie)"), type: "text" },
+    { key: "smsTemplate", label: t("Szablon SMS"), type: "content-template", templateKind: "sms" },
+    { key: "sender", label: t("Nadawca SMS"), type: "sms-sender" },
+    {
+      key: "sendMode",
+      label: t("Tryb wysyłki"),
+      type: "select",
+      options: ["Marketingowy", "Administracyjny"],
+    },
+  ],
+  engineHint: t(
+    "Liczy się otwarcie albo kliknięcie właśnie tego e-maila. Gdy e-mail w ogóle nie wyjdzie (brak adresu, brak zgody, limit marketingu), SMS idzie od razu. Obie wiadomości przechodzą przez te same zgody, limity, okres próbny i godziny wysyłki co zwykłe kroki. Otwarcia bywają niewidoczne (blokowane obrazki), więc część osób dostanie SMS mimo przeczytania e-maila.",
+  ),
+}));
+
 export const aiAgentCatalog: CatalogItem = localized(() => ({
   key: "ai_agent_router",
   label: t("Agent AI — inteligentny router"),
@@ -754,6 +788,13 @@ export function nodeTitle(node: AutomationNode): string {
       return node.config?.label || "Rozgałęzienie";
     case "split":
       return node.config?.label || "Split A/B";
+    case "fallback":
+      return t("E-mail „{email}”, po {amount} {unit} bez otwarcia SMS „{sms}”", {
+        email: node.config?.emailTemplate || "—",
+        sms: node.config?.smsTemplate || "—",
+        amount: node.amount ?? 24,
+        unit: delayUnitLabel(node.unit ?? "hours"),
+      });
     case "wait":
       return t("Czekaj na: {event} (najdłużej {amount} {unit})", {
         event: triggerLabel({ nodes: [{ ...node, kind: "trigger" }], edges: [] }),

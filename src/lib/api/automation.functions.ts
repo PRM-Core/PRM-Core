@@ -30,7 +30,17 @@ const splitVariantSchema = z.object({
 
 const automationNodeSchema = z.object({
   id: z.string(),
-  kind: z.enum(["trigger", "delay", "action", "condition", "aiAgent", "path", "split", "wait"]),
+  kind: z.enum([
+    "trigger",
+    "delay",
+    "action",
+    "condition",
+    "aiAgent",
+    "path",
+    "split",
+    "wait",
+    "fallback",
+  ]),
   position: positionSchema,
   key: z.string().optional(),
   config: z.record(z.string(), z.string()).optional(),

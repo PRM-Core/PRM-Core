@@ -11,6 +11,7 @@ import {
   conditionCatalog,
   actionCatalog,
   aiAgentCatalog,
+  fallbackCatalog,
   type CatalogItem,
 } from "@/lib/automation-catalog";
 import {
@@ -61,6 +62,15 @@ export function AddNodeDialog({
     kind: "delay",
     amount: 1,
     unit: "days",
+    position,
+  });
+
+  const makeFallback = (): AutomationNode => ({
+    id: nodeId("fallback"),
+    kind: "fallback",
+    config: { sendMode: "Marketingowy" },
+    amount: 24,
+    unit: "hours",
     position,
   });
 
@@ -137,6 +147,7 @@ export function AddNodeDialog({
           </TabsList>
 
           <TabsContent value="action" className="mt-4 space-y-2 max-h-[45vh] overflow-y-auto pr-1">
+            <CatalogRow item={fallbackCatalog} onClick={() => pick(makeFallback())} />
             {actionCatalog.map((item) => (
               <CatalogRow key={item.key} item={item} onClick={() => pick(makeAction(item))} />
             ))}

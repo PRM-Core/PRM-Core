@@ -23,6 +23,7 @@ import {
 import {
   triggerCatalog,
   WAIT_EVENT_KEYS,
+  fallbackCatalog,
   conditionCatalog,
   actionCatalog,
   findCatalogItem,
@@ -627,6 +628,52 @@ export function NodeInspector({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </>
+          )}
+
+          {draft && draft.kind === "fallback" && (
+            <>
+              <SheetHeader>
+                <SheetTitle>{fallbackCatalog.label}</SheetTitle>
+                <SheetDescription>{fallbackCatalog.description}</SheetDescription>
+              </SheetHeader>
+              <div className="mt-6 space-y-4 flex-1">
+                <ConfigFields
+                  fields={fallbackCatalog.fields ?? []}
+                  config={draft.config ?? {}}
+                  onChange={(config) => setDraft({ ...draft, config })}
+                />
+                <div className="flex gap-3">
+                  <div className="space-y-1.5 flex-1">
+                    <Label className="text-xs">{tr("SMS, jeśli brak otwarcia po")}</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={draft.amount ?? 24}
+                      onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) || 1 })}
+                    />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <Label className="text-xs">{tr("Jednostka")}</Label>
+                    <Select
+                      value={draft.unit ?? "hours"}
+                      onValueChange={(unit) =>
+                        setDraft({ ...draft, unit: unit as typeof draft.unit })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="minutes">{tr("minut")}</SelectItem>
+                        <SelectItem value="hours">{tr("godzin")}</SelectItem>
+                        <SelectItem value="days">{tr("dni")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <EngineHint hint={fallbackCatalog.engineHint} />
               </div>
             </>
           )}

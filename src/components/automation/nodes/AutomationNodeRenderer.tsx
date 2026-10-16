@@ -11,6 +11,7 @@ import {
   Split,
   Shuffle,
   Hourglass,
+  MessageSquare,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -60,6 +61,15 @@ function nodeVisual(node: AutomationNode) {
       kind: t("Opóźnienie"),
       title: nodeTitle(node),
       tone: "bg-amber-100 text-amber-700",
+      summary: undefined,
+    };
+  }
+  if (node.kind === "fallback") {
+    return {
+      icon: MessageSquare,
+      kind: t("E-mail → SMS"),
+      title: nodeTitle(node),
+      tone: "bg-sky-100 text-sky-700",
       summary: undefined,
     };
   }
