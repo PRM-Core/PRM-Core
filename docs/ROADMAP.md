@@ -32,6 +32,9 @@ unique key in the schema guarantees it, not careful code.
   means no SMS; no e-mail at all (no address, no consent, the cap) means
   the SMS at once. Both halves pass the same consent, cap, trial and
   sending-window rules as ordinary message steps.
+- **Re-entry rules** (since 2.19.0): per automation, a patient whose run
+  is over may enter again always (the default, as before), only once, or
+  after N days; one live run per patient holds in every case.
 - **Actions**: email, newsletter, SMS, pop-up, tags, segments, field update,
   score, funnel stage, do-not-contact, delete contact, end — and, since
   2.17.0, send to a webhook (n8n, Make, Zapier, your code): destinations and
@@ -61,9 +64,7 @@ unique key in the schema guarantees it, not careful code.
 
 ### Next
 
-1. **Re-entry rules** — whether a patient may enter the same automation again,
-   and after how long.
-2. **Queue observability** — a view of delayed, failed and dead-lettered
+1. **Queue observability** — a view of delayed, failed and dead-lettered
    steps with the reason, and a safe retry button.
 
 ## PRM_Agent — the AI layer

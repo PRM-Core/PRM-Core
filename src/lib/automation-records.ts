@@ -25,6 +25,9 @@ export interface AutomationRecord {
   quietHours?: "respect" | "ignore";
   /** What counts as success; null = none. */
   goal?: AutomationGoal | null;
+  /** May a patient enter again: always, never, or after `reentryDays`. */
+  reentry?: "always" | "never" | "after";
+  reentryDays?: number;
 }
 
 export function createInitialRecords(): AutomationRecord[] {

@@ -88,6 +88,8 @@ export const getAllAutomations = createServerFn({ method: "GET" })
       aiCallsToday: today.get(r.id) ?? 0,
       quietHours: r.quietHours,
       goal: r.goal ?? null,
+      reentry: r.reentry,
+      reentryDays: r.reentryDays,
     }));
   });
 
@@ -111,6 +113,8 @@ export const saveAutomation = createServerFn({ method: "POST" })
         })
         .nullable()
         .optional(),
+      reentry: z.enum(["always", "never", "after"]).optional(),
+      reentryDays: z.number().int().min(1).max(3650).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -118,13 +122,15 @@ export const saveAutomation = createServerFn({ method: "POST" })
     const now = new Date().toISOString();
     const existing = await db.select().from(automations).where(eq(automations.id, data.id)).get();
     // `reviewed` is never taken from the client: only an approval counts.
-    const { reviewFirst, aiCallsPerDay, quietHours, goal, ...rest } = data;
+    const { reviewFirst, aiCallsPerDay, quietHours, goal, reentry, reentryDays, ...rest } = data;
     const values = {
       ...rest,
       updatedAt: now,
       ...(aiCallsPerDay === undefined ? {} : { aiCallsPerDay }),
       ...(quietHours === undefined ? {} : { quietHours }),
       ...(goal === undefined ? {} : { goal }),
+      ...(reentry === undefined ? {} : { reentry }),
+      ...(reentryDays === undefined ? {} : { reentryDays }),
     };
     if (existing) {
       await db

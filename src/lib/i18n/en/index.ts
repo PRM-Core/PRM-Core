@@ -48,6 +48,7 @@ import { engineMarketingCap } from "./engine-marketing-cap";
 import { engineGoals } from "./engine-goals";
 import { webhooksOutgoing } from "./webhooks-outgoing";
 import { engineFallback } from "./engine-fallback";
+import { engineReentry } from "./engine-reentry";
 
 export const EN_PARTS: Record<string, Record<string, string>> = {
   shell,
@@ -94,6 +95,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineGoals,
   webhooksOutgoing,
   engineFallback,
+  engineReentry,
 };
 
 /**

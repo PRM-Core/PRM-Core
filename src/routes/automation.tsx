@@ -32,6 +32,7 @@ import {
   Copy,
   Trash2,
   Moon,
+  Repeat,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -234,6 +235,59 @@ const MESSAGE_KEYS = ["send_email", "send_newsletter", "send_sms"];
  * window (PRM Engine panel), or at any hour — for a message that is useless
  * later. The hourly and daily limits apply either way.
  */
+/**
+ * Whether a patient may go through this automation again once their run has
+ * ended: always (a reminder for every visit), only once (a welcome series),
+ * or again after N days (a survey that must not repeat too soon).
+ */
+function ReentryStrip({
+  record,
+  onChange,
+}: {
+  record: AutomationRecord;
+  onChange: (patch: Partial<AutomationRecord>) => void;
+}) {
+  const rule = record.reentry ?? "always";
+  const days = record.reentryDays ?? 30;
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs text-muted-foreground">
+      <Repeat className="h-3.5 w-3.5 shrink-0 text-primary" />
+      <span className="flex-1 min-w-[240px]">
+        {rule === "always"
+          ? tr("Pacjent może wejść ponownie, gdy jego poprzedni przebieg się zakończy.")
+          : rule === "never"
+            ? tr("Każdy pacjent przechodzi tę automatyzację tylko raz.")
+            : tr("Ponowne wejście najwcześniej {days} dni po poprzednim.", { days })}
+      </span>
+      <label className="flex items-center gap-1.5">
+        {tr("Ponowne wejście")}
+        <select
+          className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground"
+          value={rule}
+          onChange={(e) => onChange({ reentry: e.target.value as "always" | "never" | "after" })}
+        >
+          <option value="always">{tr("zawsze")}</option>
+          <option value="never">{tr("tylko raz")}</option>
+          <option value="after">{tr("po N dniach")}</option>
+        </select>
+      </label>
+      {rule === "after" && (
+        <input
+          aria-label={tr("Dni")}
+          type="number"
+          min={1}
+          max={3650}
+          className="h-7 w-20 rounded-md border border-border bg-background px-1.5 text-xs text-foreground"
+          value={days}
+          onChange={(e) =>
+            onChange({ reentryDays: Math.min(3650, Math.max(1, Number(e.target.value) || 1)) })
+          }
+        />
+      )}
+    </div>
+  );
+}
+
 function SendHoursStrip({
   record,
   onChange,
@@ -824,6 +878,10 @@ function AutomationPage() {
               <TrialStrip
                 record={currentRecord}
                 onChange={(n) => updateRecord(currentRecord.id, { reviewFirst: n })}
+              />
+              <ReentryStrip
+                record={currentRecord}
+                onChange={(patch) => updateRecord(currentRecord.id, patch)}
               />
               <GoalStrip
                 record={currentRecord}

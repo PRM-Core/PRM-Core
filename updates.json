@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.18.0",
+    "version": "2.19.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.18.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.19.0",
     "notes": {
-      "en": "A new step: an e-mail, and an SMS if that e-mail is not opened in time (or does not go at all) — with the same consent, cap, trial and sending-hour rules as any message.",
-      "pl": "Nowy krok: e-mail, a jeśli nie zostanie otwarty na czas (albo w ogóle nie wyjdzie) — SMS; z tymi samymi zgodami, limitami, okresem próbnym i godzinami wysyłki co każda wiadomość."
+      "en": "Re-entry rules per automation: a patient whose run is over may enter again always (the default, unchanged), only once, or after N days.",
+      "pl": "Zasady ponownego wejścia per automatyzacja: pacjent po zakończonym przebiegu może wejść znowu zawsze (domyślnie, bez zmian), tylko raz albo po N dniach."
     }
   },
   "messages": []

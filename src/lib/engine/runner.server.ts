@@ -22,6 +22,7 @@ import { deferralMessage } from "./send-window";
 import { formatActivityDate } from "../activity-date";
 import { takeUnprocessedEvents, markEventProcessed } from "./events.server";
 import { scanTimeTriggers } from "./time-triggers.server";
+import { reentryBlocked } from "./reentry";
 import { processDueCampaigns } from "../campaigns/campaigns.server";
 import { t } from "@/lib/i18n";
 
@@ -281,6 +282,49 @@ async function processEvent(event: EngineEventRow, active: AutomationRow[]): Pro
         }),
       });
       continue;
+    }
+
+    // Re-entry: once the last run is over, may this patient start again?
+    if (automation.reentry !== "always") {
+      const last = await db
+        .select({ startedAt: automationRuns.startedAt })
+        .from(automationRuns)
+        .where(
+          and(
+            eq(automationRuns.automationId, automation.id),
+            eq(automationRuns.contactId, event.contactId),
+          ),
+        )
+        .orderBy(desc(automationRuns.startedAt))
+        .limit(1)
+        .get();
+      const blocked = reentryBlocked(
+        automation.reentry,
+        automation.reentryDays,
+        last?.startedAt ?? null,
+        Date.now(),
+      );
+      if (blocked) {
+        await logStep({
+          automationId: automation.id,
+          contactId: event.contactId,
+          kind: "skipped",
+          message:
+            blocked.rule === "never"
+              ? t(
+                  "Zdarzenie {type} pominięte — pacjent już przeszedł tę automatyzację (tylko raz).",
+                  {
+                    type: event.type,
+                  },
+                )
+              : t("Zdarzenie {type} pominięte — ponowne wejście możliwe od {from}.", {
+                  type: event.type,
+                  from: formatActivityDate(blocked.from),
+                }),
+          detail: { reentry: automation.reentry },
+        });
+        continue;
+      }
     }
 
     const runId = randomUUID();

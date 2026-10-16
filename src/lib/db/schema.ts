@@ -769,6 +769,13 @@ export const automations = sqliteTable("automations", {
   quietHours: text("quiet_hours").notNull().default("respect").$type<"respect" | "ignore">(),
   /** What counts as success, measured per automation and per split variant; null = no goal. */
   goal: text("goal", { mode: "json" }).$type<AutomationGoal | null>(),
+  /**
+   * May a patient enter again once their run has ended: "always" (as before
+   * 2.19.0), "never" (once ever), or "after" `reentryDays` since their last
+   * entry. One live run per patient holds in every case.
+   */
+  reentry: text("reentry").notNull().default("always").$type<"always" | "never" | "after">(),
+  reentryDays: integer("reentry_days").notNull().default(30),
   updatedAt: text("updated_at").notNull(),
 });
 

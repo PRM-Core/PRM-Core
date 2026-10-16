@@ -8,6 +8,24 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.19.0] — Zasady ponownego wejścia do automatyzacji
+
+Dotąd pacjent mógł wejść do tej samej automatyzacji znowu, gdy tylko
+skończył się jego poprzedni przebieg. Dobre dla przypomnienia o każdej
+wizycie, złe dla serii powitalnej czy ankiety, która nie powinna wracać co
+tydzień.
+
+- **„Ponowne wejście”** (pasek w edytorze): **zawsze** — jak dotąd,
+  domyślnie, więc aktualizacja nic nie zmienia; **tylko raz**; albo **po N
+  dniach** od poprzedniego wejścia.
+- Zdarzenie, które nie może uruchomić przebiegu, jest pominięte z powodem
+  w dzienniku („pacjent już przeszedł tę automatyzację”, „ponowne wejście
+  możliwe od …”).
+- Zasada „jeden trwający przebieg na pacjenta” obowiązuje jak dotąd
+  w każdym ustawieniu i jest sprawdzana najpierw.
+- Migracja 0085: kolumny `reentry`, `reentry_days` w `automations`
+  (istniejące: „zawsze”).
+
 ## [2.18.0] — „E-mail, a gdy nieotwarty — SMS” jako jeden krok
 
 Zapasowy kanał trzeba było budować ręcznie: wysyłka, czekanie, rozgałęzienie,
