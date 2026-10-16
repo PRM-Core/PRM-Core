@@ -4,6 +4,8 @@ import { getDb } from "../db/client.server";
 import { webhookEndpoints } from "../db/schema";
 import { logStep } from "../engine/log.server";
 import { recordAudit } from "../audit/audit.server";
+import { isDemoMode } from "../demo/mode.server";
+import { recordDemoSend } from "../demo/outbox.server";
 import {
   decryptCredential,
   encryptCredential,
@@ -230,6 +232,11 @@ export async function deliverWebhook(
   if (!check.ok) throw new WebhookError(urlReason(check.reason));
 
   const body = JSON.stringify(buildPayload(contact, row.fields, context, now));
+  // Demo: the receiver is never called — the payload lands in the demo outbox.
+  if (isDemoMode()) {
+    await recordDemoSend({ channel: "webhook", to: `${row.name} (${row.host})`, body, now });
+    return { status: 200, host: row.host, name: row.name, fields: row.fields };
+  }
   let response: Response;
   try {
     response = await fetch(url, {

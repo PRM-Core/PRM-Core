@@ -17,6 +17,7 @@ import { Route as CareRouteImport } from './routes/care'
 import { Route as CollectRouteImport } from './routes/collect'
 import { Route as ConsentRouteImport } from './routes/consent'
 import { Route as CopilotRouteImport } from './routes/copilot'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as DoctorsRouteImport } from './routes/doctors'
 import { Route as EmailRouteImport } from './routes/email'
 import { Route as FeedsRouteImport } from './routes/feeds'
@@ -102,6 +103,11 @@ const ConsentRoute = ConsentRouteImport.update({
 const CopilotRoute = CopilotRouteImport.update({
   id: '/copilot',
   path: '/copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DoctorsRoute = DoctorsRouteImport.update({
@@ -349,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/collect': typeof CollectRoute
   '/consent': typeof ConsentRoute
   '/copilot': typeof CopilotRoute
+  '/demo': typeof DemoRoute
   '/doctors': typeof DoctorsRoute
   '/email': typeof EmailRoute
   '/feeds': typeof FeedsRoute
@@ -405,6 +412,7 @@ export interface FileRoutesByTo {
   '/collect': typeof CollectRoute
   '/consent': typeof ConsentRoute
   '/copilot': typeof CopilotRoute
+  '/demo': typeof DemoRoute
   '/doctors': typeof DoctorsRoute
   '/email': typeof EmailRoute
   '/feeds': typeof FeedsRoute
@@ -462,6 +470,7 @@ export interface FileRoutesById {
   '/collect': typeof CollectRoute
   '/consent': typeof ConsentRoute
   '/copilot': typeof CopilotRoute
+  '/demo': typeof DemoRoute
   '/doctors': typeof DoctorsRoute
   '/email': typeof EmailRoute
   '/feeds': typeof FeedsRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/collect'
     | '/consent'
     | '/copilot'
+    | '/demo'
     | '/doctors'
     | '/email'
     | '/feeds'
@@ -576,6 +586,7 @@ export interface FileRouteTypes {
     | '/collect'
     | '/consent'
     | '/copilot'
+    | '/demo'
     | '/doctors'
     | '/email'
     | '/feeds'
@@ -632,6 +643,7 @@ export interface FileRouteTypes {
     | '/collect'
     | '/consent'
     | '/copilot'
+    | '/demo'
     | '/doctors'
     | '/email'
     | '/feeds'
@@ -689,6 +701,7 @@ export interface RootRouteChildren {
   CollectRoute: typeof CollectRoute
   ConsentRoute: typeof ConsentRoute
   CopilotRoute: typeof CopilotRoute
+  DemoRoute: typeof DemoRoute
   DoctorsRoute: typeof DoctorsRoute
   EmailRoute: typeof EmailRoute
   FeedsRoute: typeof FeedsRoute
@@ -793,6 +806,13 @@ declare module '@tanstack/react-router' {
       path: '/copilot'
       fullPath: '/copilot'
       preLoaderRoute: typeof CopilotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/doctors': {
@@ -1129,6 +1149,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectRoute: CollectRoute,
   ConsentRoute: ConsentRoute,
   CopilotRoute: CopilotRoute,
+  DemoRoute: DemoRoute,
   DoctorsRoute: DoctorsRoute,
   EmailRoute: EmailRoute,
   FeedsRoute: FeedsRoute,

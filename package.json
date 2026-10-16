@@ -13,7 +13,7 @@
     "tanstack-start",
     "sqlite"
   ],
-  "version": "2.26.0",
+  "version": "2.27.0",
   "author": "PRM CORE prosta spółka akcyjna",
   "license": "MIT",
   "private": true,
@@ -43,7 +43,8 @@
     "backup": "bun scripts/backup.mjs",
     "build:oss": "cp vite.config.oss.ts vite.config.ts && bun run build",
     "sprawdz:rozdzial": "bun run scripts/sprawdz-rozdzial.ts",
-    "sprawdz:historia": "bun run scripts/sprawdz-rozdzial.ts --historia"
+    "sprawdz:historia": "bun run scripts/sprawdz-rozdzial.ts --historia",
+    "demo": "bun scripts/demo-simulator.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

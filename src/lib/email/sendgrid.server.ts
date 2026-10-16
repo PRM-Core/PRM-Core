@@ -1,6 +1,8 @@
 import process from "node:process";
 import { getCredential } from "@/lib/credentials/store.server";
 import { t } from "@/lib/i18n";
+import { isDemoMode } from "@/lib/demo/mode.server";
+import { recordDemoSend } from "@/lib/demo/outbox.server";
 
 export class SendGridError extends Error {
   constructor(
@@ -66,6 +68,23 @@ export const MAX_ATTACHMENTS_BYTES = 22 * 1024 * 1024;
 
 /** Real SendGrid v3 mail/send call. Server-only — the API key never leaves this module. */
 export async function sendEmail(input: SendEmailInput): Promise<void> {
+  // Demo: the message is recorded where it can be looked at, and goes nowhere.
+  // Checked first, before the key: a demo has no keys and must not need them.
+  if (isDemoMode()) {
+    if (!input.fromEmail) {
+      throw new SendGridError(
+        "Brak adresu nadawcy — ustaw go w Integracje > Email API > Konfiguruj.",
+      );
+    }
+    await recordDemoSend({
+      channel: "email",
+      to: input.to,
+      from: input.fromName ? `${input.fromName} <${input.fromEmail}>` : input.fromEmail,
+      subject: input.subject,
+      body: input.html,
+    });
+    return;
+  }
   const apiKey = await getCredential("SENDGRID_API_KEY");
   if (!apiKey) {
     throw new SendGridError(

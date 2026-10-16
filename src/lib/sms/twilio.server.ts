@@ -2,6 +2,8 @@ import process from "node:process";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { getCredential, getCredentials } from "@/lib/credentials/store.server";
 import { t } from "@/lib/i18n";
+import { isDemoMode } from "@/lib/demo/mode.server";
+import { recordDemoSend } from "@/lib/demo/outbox.server";
 
 export class TwilioError extends Error {
   constructor(
@@ -21,6 +23,19 @@ export interface SendSmsInput {
 
 /** Real Twilio Messages API call. Server-only — the auth token never leaves this module. */
 export async function sendSms(input: SendSmsInput): Promise<void> {
+  // Demo: recorded in the demo outbox instead of going to Twilio — see sendEmail.
+  if (isDemoMode()) {
+    if (!input.fromNumber) {
+      throw new TwilioError("Brak numeru nadawcy — ustaw go w Integracje > SMS API > Konfiguruj.");
+    }
+    await recordDemoSend({
+      channel: "sms",
+      to: input.to,
+      from: input.fromNumber,
+      body: input.body,
+    });
+    return;
+  }
   const { TWILIO_ACCOUNT_SID: accountSid, TWILIO_AUTH_TOKEN: authToken } = await getCredentials(
     "TWILIO_ACCOUNT_SID",
     "TWILIO_AUTH_TOKEN",

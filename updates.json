@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.26.0",
+    "version": "2.27.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.26.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.27.0",
     "notes": {
-      "en": "Opt-in tuned model: export the installation's approved, pseudonymised examples as a training set (identifiers re-checked, at least 200 lines), train a LoRA adapter for the local model outside the app, and enable it on PRM_Agent → Directions only if it scores no worse than the base model. One click returns to the base model; the adapter stays in the installation.",
-      "pl": "Dostrojony model (opcjonalnie): eksport zatwierdzonych, pseudonimizowanych przykładów instalacji jako zbioru uczącego (identyfikatory sprawdzane ponownie, co najmniej 200 linii), adapter LoRA dla lokalnego modelu trenowany poza aplikacją i włączany w PRM_Agent → Kierunki tylko wtedy, gdy wypada nie gorzej niż model bazowy. Jedno kliknięcie wraca do modelu bazowego; adapter zostaje w instalacji."
+      "en": "Demo mode (PRM_DEMO=1) for a public demo on simulated patients: nothing is sent — e-mail, SMS and outgoing webhooks land in a “Sent in the demo” preview — a simulator keeps leads, bookings, visits, opens and replies flowing through the real intake paths, and the data resets nightly to a seed on which every PRM_Agent list, the no-show model and the brief have something to show. Never enable it on a clinic's installation. See docs/DEMO.md.",
+      "pl": "Tryb demonstracyjny (PRM_DEMO=1) do publicznego demo na symulowanych pacjentach: nic nie jest wysyłane — e-maile, SMS-y i webhooki trafiają do podglądu „Wysłane w demo” — symulator dokłada leady, rezerwacje, wizyty, otwarcia i odpowiedzi tymi samymi wejściami co w placówce, a dane co noc wracają do zasiewu, na którym każda lista PRM_Agenta, model nieobecności i brief mają co pokazać. Nigdy na instalacji placówki. Opis: docs/DEMO.md."
     }
   },
   "messages": []

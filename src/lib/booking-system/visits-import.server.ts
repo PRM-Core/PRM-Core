@@ -294,7 +294,7 @@ async function markCancelled(
  *
  * Zwraca liczbę wyemitowanych zdarzeń (0 albo 1).
  */
-async function announceVisitState(
+export async function announceVisitState(
   visitRowId: string,
   contactId: string,
   state: string,

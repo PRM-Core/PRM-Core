@@ -8,6 +8,57 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.27.0] — Tryb demonstracyjny i symulator pacjentów
+
+Publiczne demo, w którym cały system pracuje na pacjentach, którzy nie
+istnieją: przychodzą leady, umawiane są wizyty, wizyty się kończą albo
+pacjent nie przychodzi, automatyzacje wysyłają, PRM_Agent wskazuje, kim się
+zająć, a raporty się ruszają. Nic z tego nie wychodzi poza serwer. Opis:
+`docs/DEMO.md`.
+
+- **`PRM_DEMO=1` — nic nie jest wysyłane.** Transport e-mail i SMS oraz
+  webhooki wychodzące zapisują to, co by wysłały, zamiast wołać SendGrida,
+  Twilio czy odbiorcę. Przełącznik siedzi w samych transportach, więc obejmuje
+  każdą drogę: automatyzacje, kampanie, odpowiedzi ze skrzynki, agenta i kody
+  logowania. Brak nadawcy nadal jest błędem — demo pokazuje te same
+  komunikaty, które dostałaby placówka.
+- **Pasek „Wersja demonstracyjna — dane symulowane”** nad każdą stroną
+  i ekran **„Wysłane w demo”** (`/demo`): ostatnie 100 wiadomości — e-maile
+  tak, jak zobaczyłby je pacjent, SMS-y, treść webhooków. Podgląd usuwa piksel
+  śledzący i kieruje odnośniki wprost do celu, więc oglądanie wiadomości nie
+  liczy się jako otwarcie ani kliknięcie.
+- **Symulator na zegarze silnika** (krok co `PRM_DEMO_TICK_SECONDS`, domyślnie
+  30 s): nowe leady przez wejście webhooka leadów, rezerwacje przez wejście
+  webhooka rezerwacji (usługi, lekarze, filie), wizyty zakończone albo
+  nieobecności i odwołania tak, jak zgłasza je system rezerwacji, otwarcia
+  i kliknięcia tego, co silnik naprawdę „wysłał”, odpowiedzi pacjentów
+  w skrzynce. Symulator nie zapisuje niczego za automatyzację — reagują silnik,
+  automatyzacje i PRM_Agent, jak w placówce.
+- **Nocny powrót do stanu początkowego** (`PRM_DEMO_RESET_HOUR`, domyślnie
+  3:00) i od razu na pustej bazie. Konta, sesje, ustawienia i sekrety
+  instalacji oraz dziennik działań administracyjnych zostają; reszta jest
+  czyszczona i zasiewana od nowa. **Reset odmawia pracy na bazie
+  z kontaktami, które nie wyglądają na dane przykładowe** — gdyby `PRM_DEMO`
+  trafiło na serwer placówki.
+- **Zasiew, na którym każdy ekran ma co pokazać**: ok. 190 pacjentów i leadów,
+  ponad 300 rozstrzygniętych wizyt (model nieobecności uczy się naprawdę),
+  więcej nieobecności i mniej otwarć w ostatnich 30 dniach, pacjenci do
+  recallu, po jednej wizycie, dryfujący, po wizycie bez odpowiedzi,
+  z ryzykiem nieobecności i bez telefonu — każda lista PRM_Agenta jest
+  niepusta, są rekomendacje i brief. Do tego skrzynka, baza wiedzy z lukami,
+  segmenty i sześć automatyzacji.
+- **Każda tożsamość jest syntetyczna z konstrukcji**: nazwiska z fikcyjnej
+  listy, adresy w domenie `example.test`, numery `+48 000 …`, PESEL-e
+  z celowo błędną cyfrą kontrolną. Testy sprawdzają to na dziesięciu
+  tysiącach wygenerowanych osób i na każdym kontakcie po godzinach symulacji.
+- `bun run demo -- --reset | --steps N | --loop` — reset na żądanie i godzina
+  ruchu od razu, tylko przy `PRM_DEMO=1`.
+- Przy okazji: logika webhooka leadów (`lead-intake.server.ts`) oraz
+  zapis otwarć i kliknięć (`tracking-events.server.ts`) wydzielone z tras, żeby
+  symulator szedł dokładnie tą samą drogą; zachowanie tras bez zmian.
+- Tabela podglądu (`demo_outbox`) powstaje dopiero w trybie demo — zwykła
+  instalacja jej nie ma i ta wersja nie dodaje migracji.
+
 ## [2.26.0] — Dostrojony model: adapter LoRA tej instalacji
 
 „Uczenie się z decyzji zespołu” wkłada zatwierdzone teksty do promptu, ale

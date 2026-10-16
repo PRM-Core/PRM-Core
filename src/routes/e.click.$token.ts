@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getDb } from "@/lib/db/client.server";
-import { emailEvents } from "@/lib/db/schema";
-import { emitEvent, contactIdForSendToken } from "@/lib/engine/events.server";
+import { recordEmailClick } from "@/lib/email/tracking-events.server";
 
 // Click-tracking redirect: /e/click/:token?u=<encoded target URL>. Logs a
 // "click" event (every click, unlike the de-duped open pixel — repeat
@@ -13,10 +11,6 @@ import { emitEvent, contactIdForSendToken } from "@/lib/engine/events.server";
 // visited domain itself; no third-party cookie or cross-site mechanism is
 // involved anywhere in this chain. Falls back to "/" if `u` is missing or
 // not a valid absolute URL, so a malformed link never dead-ends the click.
-
-function makeEventId(): string {
-  return `evt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 export const Route = createFileRoute("/e/click/$token")({
   server: {
@@ -35,22 +29,7 @@ export const Route = createFileRoute("/e/click/$token")({
         }
 
         try {
-          const db = getDb();
-          await db.insert(emailEvents).values({
-            id: makeEventId(),
-            token: params.token,
-            kind: "click",
-            url: redirectTo,
-            occurredAt: Date.now(),
-          });
-          const contactId = await contactIdForSendToken(params.token);
-          if (contactId) {
-            await emitEvent({
-              type: "email.clicked",
-              contactId,
-              payload: { token: params.token, url: target ?? "" },
-            });
-          }
+          await recordEmailClick(params.token, target ?? "", redirectTo);
         } catch {
           // unknown/foreign-key-violating token — still redirect
         }

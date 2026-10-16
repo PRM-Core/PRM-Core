@@ -9,6 +9,7 @@ import { purgeExpiredSegments } from "../segments/segments.server";
 import { maybeCheckForUpdates } from "../updates/check.server";
 import { maybeRunAgentNightly } from "../agent/signals.server";
 import { maybeTriageInbox } from "../agent/triage.server";
+import { maybeRunDemo } from "../demo/clock.server";
 import { t } from "@/lib/i18n";
 
 // The engine's clock. Booted from src/server.ts (the SSR entry), so it lives
@@ -64,6 +65,9 @@ export async function runTickOnce(): Promise<TickResult | null> {
     // wiadomość dla administratora, nie krok automatyzacji. Sama pilnuje
     // częstotliwości (raz na 12 h) i nigdy nie rzuca.
     await maybeCheckForUpdates();
+    // Demo mode only (PRM_DEMO=1): the nightly reset and a simulator step,
+    // before the tick, so what the simulator does is handled in the same tick.
+    await maybeRunDemo();
     if (!(await isEngineEnabled())) {
       state.lastTickAt = Date.now();
       return null;

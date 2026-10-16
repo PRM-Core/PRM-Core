@@ -20,6 +20,7 @@ import { getAiConfig, getKeyStatus, isOverDailyLimit } from "../ai/settings.serv
 import { purgeCopilotHistory } from "../ai/copilot.server";
 import { getCredential } from "@/lib/credentials/store.server";
 import { t } from "@/lib/i18n";
+import { isDemoMode } from "../demo/mode.server";
 
 // M4: the PRM_Agent watching the engine instead of driving one contact through
 // it. Everything here reads tables the engine already writes — no new
@@ -201,10 +202,13 @@ async function detectBrokenSendSteps(): Promise<InsightDraft[]> {
     }
 
     const missingKeys: string[] = [];
-    if (needs.email && !(await getCredential("SENDGRID_API_KEY")))
+    // In demo mode e-mail and SMS go to the demo outbox and need no keys.
+    const demo = isDemoMode();
+    if (needs.email && !demo && !(await getCredential("SENDGRID_API_KEY")))
       missingKeys.push("SENDGRID_API_KEY");
     if (
       needs.sms &&
+      !demo &&
       !((await getCredential("TWILIO_ACCOUNT_SID")) && (await getCredential("TWILIO_AUTH_TOKEN")))
     ) {
       missingKeys.push("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN");
