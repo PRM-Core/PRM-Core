@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.21.0",
+    "version": "2.22.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.21.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.22.0",
     "notes": {
-      "en": "Authentication by construction: a test in CI fails the build for any server function without a sign-in gate, unless it is on the public list with its reason.",
-      "pl": "Uwierzytelnianie z konstrukcji: test w CI zatrzymuje build dla funkcji serwerowej bez zamka logowania, chyba że stoi na liście publicznych z powodem."
+      "en": "The app now enforces a Content-Security-Policy with a fresh nonce per request. If your Caddyfile sets Content-Security-Policy-Report-Only, remove that line. PRM_CSP=report diagnoses without blocking.",
+      "pl": "Aplikacja egzekwuje teraz Content-Security-Policy z nonce na każde żądanie. Jeśli Wasz Caddyfile ustawia Content-Security-Policy-Report-Only, usuńcie tę linię. PRM_CSP=report diagnozuje bez blokowania."
     }
   },
   "messages": []

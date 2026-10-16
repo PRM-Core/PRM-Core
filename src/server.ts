@@ -5,6 +5,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { startEngine } from "./lib/engine/loop.server";
 import { t } from "@/lib/i18n";
 import { withRequestLocale } from "./lib/i18n/request-locale.server";
+import { withCsp } from "./lib/security/csp.server";
 
 // The PRM Engine tick loop lives in the server process, so this entry file is
 // where it belongs — it starts once, on the first evaluation of the server
@@ -132,10 +133,14 @@ export default {
 
       const handler = await getServerEntry();
       // Every request is rendered in its user's language (prm_locale cookie).
-      return await withRequestLocale(request, async () => {
-        const response = await handler.fetch(request, env, ctx);
-        return await normalizeCatastrophicSsrResponse(response);
-      });
+      // ...and with a Content-Security-Policy whose nonce the router stamps
+      // on its own inline scripts (src/lib/security/csp.ts).
+      return await withCsp(() =>
+        withRequestLocale(request, async () => {
+          const response = await handler.fetch(request, env, ctx);
+          return await normalizeCatastrophicSsrResponse(response);
+        }),
+      );
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

@@ -8,6 +8,30 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.22.0] — Content-Security-Policy egzekwowana, z nonce na każde żądanie
+
+Polityka treści była dotąd w Caddyfile w trybie „tylko zgłaszaj”
+i z `'unsafe-inline'` dla skryptów — czyli nie chroniła przed niczym.
+
+- **Aplikacja sama wysyła `Content-Security-Policy`** z każdą stroną HTML,
+  z nonce losowanym dla każdego żądania. Wykonać mogą się tylko skrypty
+  aplikacji i te, które router oznaczył tym nonce (stan strony). Wstrzyknięty
+  `<script>` w nazwisku pacjenta albo w wiadomości jest martwym tekstem.
+  Style inline zostają dozwolone — ustawia je biblioteka interfejsu, a styl
+  nie odczyta strony ani nie wyśle danych tak jak skrypt.
+- Sprawdzone na buildzie produkcyjnym w przeglądarce: kilkanaście ekranów
+  (pulpit, kontakty, raporty, PRM_Agent, skrzynka, ustawienia, wysyłki,
+  studio, e-mail, automatyzacje) — zero naruszeń polityki, interfejs działa
+  po hydracji.
+- Strona błędu: przycisk „Try again” z `onclick` (który polityka by
+  zablokowała) zamieniony na zwykły odnośnik.
+- **`PRM_CSP`** w `.env`: `enforce` (domyślnie w produkcji), `report`
+  (tylko zgłasza — do diagnozy), `off`. W trybie deweloperskim nagłówka nie
+  ma, bo Vite wstrzykuje własne skrypty bez nonce.
+- `Caddyfile.example` nie ustawia już CSP — nie zna nonce, a dwa nagłówki
+  zawęziłyby politykę do części wspólnej. **Instalacje z własnym Caddyfile:
+  usuńcie linię `Content-Security-Policy-Report-Only`.**
+
 ## [2.21.0] — Uwierzytelnianie z konstrukcji: kontrola w CI
 
 Każda funkcja serwerowa to publiczny adres, którego identyfikator jest

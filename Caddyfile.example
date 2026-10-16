@@ -50,18 +50,13 @@ crm.przyklad.pl {
 		-Server
 	}
 
-	# ── polityka treści, na razie w trybie zgłaszania ─────────────────────────
+	# ── polityka treści: wysyła ją aplikacja ──────────────────────────────────
 	#
-	# **Report-Only celowo.** Ostra polityka potrafi wyciąć własne skrypty
-	# aplikacji i wywalić interfejs; wprowadzanie jej bez obserwacji byłoby
-	# wymianą jednego ryzyka na większe. W tym trybie przeglądarka
-	# **niczego nie blokuje**, tylko zgłasza, co by zablokowała — po kilku dniach
-	# pracy widać, co realnie trzeba dopuścić, i wtedy zamienia się nagłówek na
-	# `Content-Security-Policy` bez niespodzianek.
-	#
-	# `frame-ancestors 'none'` powiela X-Frame-Options dla nowszych przeglądarek,
-	# które tamtego już nie czytają.
-	header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+	# Od 2.22.0 nagłówek `Content-Security-Policy` ustawia sama aplikacja, z
+	# nonce losowanym dla każdego żądania (src/lib/security/csp.ts): tylko
+	# skrypty aplikacji i te z nonce mogą się wykonać. Caddy nie zna nonce, więc
+	# tu nagłówka CSP nie ma — dwa nagłówki zawęziłyby politykę do części
+	# wspólnej. Diagnoza bez blokowania: PRM_CSP=report w .env.
 
 	# ── log dostępowy ─────────────────────────────────────────────────────────
 	#

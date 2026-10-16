@@ -181,17 +181,17 @@ Done: **authentication by construction** (2.21.0) — a test in CI reads the
 source and fails the build for any server function without the
 `requireUser` / `allowReporter` middleware, unless it is on
 `src/lib/api/public-server-fns.ts` with the reason it must answer before
-sign-in.
+sign-in. **An enforcing Content-Security-Policy** (2.22.0) — the application
+sends it with a fresh nonce per request; only its own scripts and the
+router's nonce-stamped ones run; `PRM_CSP=report` diagnoses without
+blocking.
 
-1. **Enforce the Content-Security-Policy.** `Caddyfile.example` ships it in
-   Report-Only with `'unsafe-inline'`; the goal is nonces for our own scripts
-   and an enforcing header. _(help wanted)_
-2. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
+1. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
    credentials) and the webhook secret, without an outage.
-3. **Audit trail for administrator actions** — who changed a role, reset a
+2. **Audit trail for administrator actions** — who changed a role, reset a
    password, exported contacts, read a document. Parts are in the engine log
    today; it should be one view with retention.
-4. **Automated dependency review** in CI, and a documented response time for
+3. **Automated dependency review** in CI, and a documented response time for
    reports that arrive through private vulnerability reporting.
 
 ## What we will not build
