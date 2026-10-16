@@ -18,8 +18,11 @@ export interface BriefInput {
   model: { mode: "trained" | "prior"; samples: number } | null;
   /** How the agent itself is doing: its model's skill, what it has learned, what waits for a decision. */
   development?: {
+    /** Skill against the base rate on visits outside the training; null = not measured. */
     skill: number | null;
     previousSkill: number | null;
+    /** What the skill was measured on: the held-out visits, and predicted vs observed no-shows there. */
+    check?: { visits: number; predicted: number; observed: number } | null;
     examples: number;
     directionsPending: number;
     directionsEnabled: number;
@@ -141,15 +144,32 @@ export function buildBrief(input: BriefInput): string {
     const d = input.development;
     lines.push("");
     lines.push(t("Jak rozwija się agent"));
-    if (d.skill !== null && input.model?.mode === "trained") {
-      const prev =
-        d.previousSkill === null ? "" : ` (${t("wczoraj {v}", { v: pct(d.previousSkill) })})`;
-      lines.push(
-        t("- Model nieobecności: o {v} lepszy niż sama częstość bazowa{prev}.", {
-          v: pct(d.skill),
-          prev,
-        }),
-      );
+    // Only the number measured on visits the model did not learn from; on
+    // its own training visits any model looks better than it is.
+    if (input.model?.mode === "trained") {
+      if (d.skill !== null && d.check) {
+        const prev =
+          d.previousSkill === null ? "" : ` (${t("wczoraj {v}", { v: pct(d.previousSkill) })})`;
+        lines.push(
+          d.skill > 0
+            ? t(
+                "- Model nieobecności, sprawdzony na {n} najnowszych wizytach spoza nauki: o {v} lepszy niż sama częstość bazowa{prev}.",
+                { n: d.check.visits, v: pct(d.skill), prev },
+              )
+            : t(
+                "- Model nieobecności, sprawdzony na {n} najnowszych wizytach spoza nauki: nie jest lepszy niż sama częstość bazowa{prev}.",
+                { n: d.check.visits, prev },
+              ),
+        );
+        lines.push(
+          t("- Przewidywał na nich średnio {p} nieobecności, było {o}.", {
+            p: pct(d.check.predicted),
+            o: pct(d.check.observed),
+          }),
+        );
+      } else {
+        lines.push(t("- Model nieobecności: za mało danych do oceny na wizytach spoza nauki."));
+      }
     }
     lines.push(
       d.examples > 0

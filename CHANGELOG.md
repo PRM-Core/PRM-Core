@@ -8,6 +8,34 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.28.1] — Jakość modelu nieobecności mierzona na wizytach spoza nauki
+
+„Model nieobecności: o 17% lepszy niż sama częstość bazowa” było liczone na
+tych samych wizytach, na których model się uczył — taka liczba z natury
+zawyża jego jakość. Na losowych etykietach (nie ma się czego nauczyć)
+80 wizyt dawało w ten sposób „o 16% lepszy”.
+
+- **Sprawdzian na wizytach, których model nie widział.** Co noc kopia
+  modelu uczy się na starszych 75% rozstrzygniętych wizyt i jest oceniana
+  na najnowszych 25%, wobec częstości bazowej z tych starszych wizyt.
+  Do tego prosta kalibracja: średnio przewidziany odsetek nieobecności
+  wobec faktycznego na tych samych wizytach. Model, który ocenia
+  nadchodzące wizyty, nadal uczy się na całej historii.
+- **Za mało danych — bez liczby.** Gdy wśród najnowszych wizyt jest mniej
+  niż 5 nieobecności albo 5 odbytych wizyt (lub starsza część nie wystarcza
+  do nauki), brief i pulpit mówią „za mało danych do oceny”. Model gorszy
+  od częstości bazowej jest opisany słowami („nie jest lepszy”), nie ujemnym
+  procentem. Progi `MIN_SAMPLES` / `MIN_PER_CLASS` bez zmian.
+- **Brief i karta PRM_Agent na pulpicie** podają, na ilu najnowszych
+  wizytach spoza nauki zmierzono wynik. Sygnał ma nowy klucz
+  `model.no_show_heldout_skill`; dawny `model.no_show_skill` (mierzony na
+  danych uczących) nie jest z nim porównywany, więc pierwszej nocy po
+  aktualizacji brief nie pokaże wartości „wczoraj”.
+- Testy na danych syntetycznych: wynik liczy kopia, która nie widziała
+  ocenianych wizyt (przeliczony ręcznie, odwrócenie ich etykiet nie zmienia
+  wag kopii), a model, który tylko zapamiętał historię, wypada na niej
+  dobrze i gorzej niż częstość bazowa poza nią.
+
 ## [2.28.0] — Każda funkcja AI na modelu lokalnym
 
 Wszystko, co kiedyś działało na modelu w chmurze, działa teraz na modelu

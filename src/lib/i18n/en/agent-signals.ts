@@ -35,6 +35,11 @@ export const agentSignals: Record<string, string> = {
   "jest telefon": "has a phone number",
   "kontakt od dawna w bazie": "long in the base",
   "model nauczony na {n} wizytach": "model trained on {n} visits",
+  "jakość: za mało danych do oceny": "quality: too little data to assess",
+  "na {n} wizytach spoza nauki o {v} lepszy niż sama częstość":
+    "on {n} visits outside the training, {v} better than the base rate",
+  "na {n} wizytach spoza nauki nie lepszy niż sama częstość":
+    "on {n} visits outside the training, no better than the base rate",
   nauczony: "trained",
   "nauczony na {m} wizytach": "trained on {m} visits",
   "nie piątek": "not a Friday",

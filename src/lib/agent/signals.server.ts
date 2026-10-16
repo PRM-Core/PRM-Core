@@ -17,7 +17,13 @@ import {
 import { effectiveState } from "../booking-system/status";
 import { warsawDay, warsawMinuteOfDay } from "../visits/warsaw-time";
 import { logStep } from "../engine/log.server";
-import { scoreNoShow, trainNoShow, type NoShowModel, type VisitFeatures } from "./predict/no-show";
+import {
+  scoreNoShow,
+  trainNoShow,
+  type NoShowExample,
+  type NoShowModel,
+  type VisitFeatures,
+} from "./predict/no-show";
 import { recommendFromSignals } from "./drafts.server";
 import { t } from "@/lib/i18n";
 
@@ -343,6 +349,9 @@ export async function computeSignals(now = Date.now()): Promise<AgentSignalRow[]
   return rows;
 }
 
+/** The no-show model's skill on visits outside its training (see `recordModelSkill`). */
+export const MODEL_SKILL_KEY = "model.no_show_heldout_skill";
+
 /** Train the no-show model on decided visits and score the upcoming ones. */
 export async function trainAndScoreNoShow(now = Date.now()): Promise<NoShowModel> {
   const db = getDb();
@@ -361,12 +370,17 @@ export async function trainAndScoreNoShow(now = Date.now()): Promise<NoShowModel
   for (const v of visits) byContact.set(v.contactId, [...(byContact.get(v.contactId) ?? []), v]);
   const person = new Map(people.map((p) => [p.id, p]));
 
-  const examples: { features: VisitFeatures; label: 0 | 1 }[] = [];
+  const examples: NoShowExample[] = [];
   for (const v of visits) {
     const label = outcome(v, now);
     const c = person.get(v.contactId);
     if (label === null || !c) continue;
-    examples.push({ features: visitFeatures(v, c, byContact.get(v.contactId) ?? [], now), label });
+    examples.push({
+      features: visitFeatures(v, c, byContact.get(v.contactId) ?? [], now),
+      label,
+      // The held-out check needs the history in time order.
+      at: v.startsAt as number,
+    });
   }
   const model = trainNoShow(examples);
   await db
@@ -418,7 +432,8 @@ export async function runAgentNightly(
 ): Promise<{ signals: number; model: NoShowModel; recommendations: number }> {
   const rows = await computeSignals(now);
   const model = await trainAndScoreNoShow(now);
-  rows.push(await recordModelSkill(model, now));
+  const skill = await recordModelSkill(model, now);
+  if (skill) rows.push(skill);
   // Directions first: an enabled one may add to the recommendations.
   const { proposeDirections } = await import("./directions.server");
   await proposeDirections(now);
@@ -445,23 +460,26 @@ export async function runAgentNightly(
 }
 
 /**
- * How much better than the base rate the no-show model is tonight, as a
- * signal with yesterday's value beside it — the agent's own report card.
- * 0 = no better than the base rate (or no model yet); 1 = perfect.
+ * How much better than the base rate the no-show model is tonight, measured
+ * on the most recent visits it was not trained on, as a signal with the last
+ * such value beside it — the agent's own report card. 0 = no better than the
+ * base rate, below 0 = worse, 1 = perfect. No row when there is no model or
+ * too little data to measure it: the brief then says so instead of a number.
+ *
+ * The key is new in 2.28.1: the old `model.no_show_skill` was measured on the
+ * training visits and is not compared with this one.
  */
-async function recordModelSkill(model: NoShowModel, now: number): Promise<AgentSignalRow> {
+async function recordModelSkill(model: NoShowModel, now: number): Promise<AgentSignalRow | null> {
+  const check = model.mode === "trained" ? model.heldOut : null;
+  if (!check) return null;
   const db = getDb();
   const day = warsawDay(now);
-  const skill =
-    model.mode === "trained" && model.priorLogLoss > 0
-      ? Math.max(0, 1 - model.logLoss / model.priorLogLoss)
-      : 0;
   const yesterday = await db
     .select({ value: agentSignals.value })
     .from(agentSignals)
     .where(
       and(
-        eq(agentSignals.key, "model.no_show_skill"),
+        eq(agentSignals.key, MODEL_SKILL_KEY),
         eq(agentSignals.dimension, ""),
         lt(agentSignals.day, day),
       ),
@@ -472,12 +490,17 @@ async function recordModelSkill(model: NoShowModel, now: number): Promise<AgentS
   const row: AgentSignalRow = {
     id: randomUUID(),
     day,
-    key: "model.no_show_skill",
+    key: MODEL_SKILL_KEY,
     dimension: "",
-    value: skill,
+    value: check.skill,
     previous: yesterday?.value ?? null,
-    count: model.samples,
-    detail: { mode: model.mode },
+    count: check.samples,
+    detail: {
+      mode: model.mode,
+      trainedOn: check.trainedOn,
+      meanPredicted: check.meanPredicted,
+      observedRate: check.observedRate,
+    },
     computedAt: now,
   };
   await db.insert(agentSignals).values(row);

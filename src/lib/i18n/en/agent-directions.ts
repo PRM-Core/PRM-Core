@@ -4,8 +4,14 @@ export const agentDirections: Record<string, string> = {
     "- The agent has no approved examples to learn from yet.",
   "- Kierunki rozwoju czekające na decyzję administratora: {n} (PRM_Agent → Kierunki).":
     "- Directions of development awaiting the administrator's decision: {n} (PRM_Agent → Directions).",
-  "- Model nieobecności: o {v} lepszy niż sama częstość bazowa{prev}.":
-    "- No-show model: {v} better than the base rate alone{prev}.",
+  "- Model nieobecności, sprawdzony na {n} najnowszych wizytach spoza nauki: o {v} lepszy niż sama częstość bazowa{prev}.":
+    "- No-show model, checked on the {n} most recent visits it was not trained on: {v} better than the base rate alone{prev}.",
+  "- Model nieobecności, sprawdzony na {n} najnowszych wizytach spoza nauki: nie jest lepszy niż sama częstość bazowa{prev}.":
+    "- No-show model, checked on the {n} most recent visits it was not trained on: no better than the base rate alone{prev}.",
+  "- Model nieobecności: za mało danych do oceny na wizytach spoza nauki.":
+    "- No-show model: too little data to assess it on visits it was not trained on.",
+  "- Przewidywał na nich średnio {p} nieobecności, było {o}.":
+    "- On them it predicted {p} no-shows on average; there were {o}.",
   "- Włączone kierunki rozwoju: {n}; nic nie czeka na decyzję.":
     "- Directions enabled: {n}; nothing awaits a decision.",
   "Agent nie ma jeszcze propozycji. Pojawią się, gdy będzie miał podstawy — np. serwer modelu w sieci placówki, pierwszy zatwierdzony draft albo lukę w danych.":

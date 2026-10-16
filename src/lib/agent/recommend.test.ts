@@ -133,4 +133,42 @@ describe("buildBrief", () => {
     expect(text).toContain("120");
     expect(text).toMatch(/bez zatwierdzenia/);
   });
+
+  const withSkill = (
+    skill: number | null,
+    check: { visits: number; predicted: number; observed: number } | null,
+  ) =>
+    buildBrief({
+      day: "2026-10-13",
+      signals: [],
+      recommendations: [],
+      risks: [],
+      model: { mode: "trained", samples: 230 },
+      development: {
+        skill,
+        previousSkill: null,
+        check,
+        examples: 0,
+        directionsPending: 0,
+        directionsEnabled: 0,
+      },
+    });
+
+  test("the model's skill is the one measured on visits outside its training", () => {
+    const text = withSkill(0.12, { visits: 57, predicted: 0.08, observed: 0.07 });
+    expect(text).toContain("sprawdzony na 57 najnowszych wizytach spoza nauki: o 12% lepszy");
+    expect(text).toContain("średnio 8% nieobecności, było 7%");
+  });
+
+  test("no better than the base rate is said in words, not as a negative percentage", () => {
+    const text = withSkill(-0.2, { visits: 20, predicted: 0.3, observed: 0.25 });
+    expect(text).toContain("nie jest lepszy niż sama częstość bazowa");
+    expect(text).not.toContain("-20%");
+  });
+
+  test("with too little to measure it says so instead of a number", () => {
+    const text = withSkill(null, null);
+    expect(text).toContain("za mało danych do oceny");
+    expect(text).not.toMatch(/lepszy niż/);
+  });
 });

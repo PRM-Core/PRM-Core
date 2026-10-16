@@ -9,7 +9,7 @@ import {
 } from "../db/schema";
 import { buildBrief } from "./brief";
 import { polishBrief } from "./language.server";
-import { latestSignals } from "./signals.server";
+import { latestSignals, MODEL_SKILL_KEY } from "./signals.server";
 import { countDirections, countExamples } from "./directions.server";
 import { latestEvaluation } from "./eval/run.server";
 
@@ -43,7 +43,8 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
     db.select().from(agentModels).where(eq(agentModels.id, "no-show")).get(),
   ]);
   const params = (model?.params ?? null) as { mode?: "trained" | "prior" } | null;
-  const skill = latest.rows.find((r) => r.key === "model.no_show_skill" && r.dimension === "");
+  const skill = latest.rows.find((r) => r.key === MODEL_SKILL_KEY && r.dimension === "");
+  const skillDetail = (skill?.detail ?? {}) as { meanPredicted?: number; observedRate?: number };
   const [directions, examples, evaluation] = await Promise.all([
     countDirections(),
     countExamples(),
@@ -67,6 +68,13 @@ export async function composeBrief(): Promise<{ day: string; text: string } | nu
     development: {
       skill: skill ? skill.value : null,
       previousSkill: skill?.previous ?? null,
+      check: skill
+        ? {
+            visits: skill.count,
+            predicted: skillDetail.meanPredicted ?? 0,
+            observed: skillDetail.observedRate ?? 0,
+          }
+        : null,
       examples,
       directionsPending: directions.pending,
       directionsEnabled: directions.enabled,

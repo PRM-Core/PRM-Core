@@ -36,7 +36,13 @@ export interface AgentOverview {
   computed: { day: string; computedAt: number } | null;
   signals: AgentSignalView[];
   risks: AgentRiskView[];
-  model: { mode: "trained" | "prior"; samples: number; baseRate: number } | null;
+  model: {
+    mode: "trained" | "prior";
+    samples: number;
+    baseRate: number;
+    /** Skill on the most recent visits outside the training; null = too little data to say. */
+    heldOut: { skill: number; samples: number } | null;
+  } | null;
   /** Directions of development waiting for the administrator. */
   directionsPending: number;
 }
@@ -76,6 +82,7 @@ async function overview(): Promise<AgentOverview> {
   const params = (model?.params ?? null) as {
     mode?: "trained" | "prior";
     baseRate?: number;
+    heldOut?: { skill: number; samples: number } | null;
   } | null;
 
   return {
@@ -107,7 +114,15 @@ async function overview(): Promise<AgentOverview> {
       .filter((r) => r.visitId),
     model:
       model && params
-        ? { mode: params.mode ?? "prior", samples: model.samples, baseRate: params.baseRate ?? 0 }
+        ? {
+            mode: params.mode ?? "prior",
+            samples: model.samples,
+            baseRate: params.baseRate ?? 0,
+            // Models stored before 2.28.1 have no check: shown as not measured.
+            heldOut: params.heldOut
+              ? { skill: params.heldOut.skill, samples: params.heldOut.samples }
+              : null,
+          }
         : null,
   };
 }

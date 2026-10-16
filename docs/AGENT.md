@@ -373,9 +373,14 @@ The agent improves inside the installation, on the installation's data, and
 asks a person only about _what it may start doing_:
 
 - **It trains itself.** The no-show model is retrained every night on the
-  clinic's own visits; its skill against the base rate is a signal with
-  yesterday's value beside it (`model.no_show_skill`), and the brief reports
-  it. Signals, thresholds and lists follow the data with no training at all.
+  clinic's own visits. Its skill against the base rate is measured on visits
+  it did not learn from — a copy trained on the older 75% of the decided
+  visits, scored on the most recent 25% — and is a signal with yesterday's
+  value beside it (`model.no_show_heldout_skill`, since 2.28.1; before that
+  it was measured on the training visits and overstated). The brief and the
+  dashboard report it with the number of visits it was measured on, or "too
+  little data to assess" when the recent visits hold fewer than five of
+  either outcome. Signals, thresholds and lists follow the data with no training at all.
 - **It learns from decisions.** Three kinds, all kept in `agent_examples`
   and used only with the "learn from the team's decisions" direction
   enabled (since 2.3.0):

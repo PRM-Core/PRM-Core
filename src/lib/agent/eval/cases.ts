@@ -190,6 +190,7 @@ const QUIET_BRIEF = buildBrief({
   development: {
     skill: 0.21,
     previousSkill: 0.19,
+    check: { visits: 57, predicted: 0.07, observed: 0.06 },
     examples: 3,
     directionsPending: 0,
     directionsEnabled: 2,
@@ -237,6 +238,7 @@ const BAD_WEEK_BRIEF = buildBrief({
   development: {
     skill: 0.17,
     previousSkill: 0.21,
+    check: { visits: 57, predicted: 0.1, observed: 0.16 },
     examples: 0,
     directionsPending: 3,
     directionsEnabled: 0,

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.28.0",
+    "version": "2.28.1",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.28.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.28.1",
     "notes": {
-      "en": "Every AI feature on a local model, Bielik 11B included: tools travel in the prompt with replies held to a JSON schema when the model has none, the Creative Studio codes from the description when the model cannot see images, and visit dates are no longer masked as phone numbers before reaching the model. An empty PRM_SECURITY_REPORT_LIMIT_USD no longer switches the model off in the security report. See docs/AGENT.md, section 7.1.",
-      "pl": "Każda funkcja AI na modelu lokalnym, także na Bieliku 11B: gdy model nie ma narzędzi, idą w prompcie, a odpowiedź trzyma schemat JSON; studio kreacji koduje z opisu, gdy model nie widzi obrazów; daty wizyt nie są już maskowane jako numery telefonów, zanim trafią do modelu. Pusta zmienna PRM_SECURITY_REPORT_LIMIT_USD nie wyłącza już modelu w raporcie bezpieczeństwa. Opis: docs/AGENT.md, sekcja 7.1."
+      "en": "The no-show model's quality is now measured on recent visits it was not trained on, against the base rate of the older ones, with a calibration check. The old figure was measured on the training visits and overstated the model; with too little data the brief and the dashboard say so instead of giving a number.",
+      "pl": "Jakość modelu nieobecności jest teraz mierzona na najnowszych wizytach, na których model się nie uczył, wobec częstości bazowej starszych wizyt, z kontrolą kalibracji. Dawna liczba była liczona na danych uczących i zawyżała jakość modelu; przy zbyt małej liczbie danych brief i pulpit mówią to wprost zamiast podawać liczbę."
     }
   },
   "messages": []

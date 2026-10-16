@@ -20,6 +20,17 @@ import { intlLocale, t } from "@/lib/i18n";
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
+/** The model's quality as measured on recent visits it did not learn from — never on its own training. */
+function heldOutLabel(h: { skill: number; samples: number } | null): string {
+  if (!h) return t("jakość: za mało danych do oceny");
+  return h.skill > 0
+    ? t("na {n} wizytach spoza nauki o {v} lepszy niż sama częstość", {
+        n: h.samples,
+        v: pct(h.skill),
+      })
+    : t("na {n} wizytach spoza nauki nie lepszy niż sama częstość", { n: h.samples });
+}
+
 function Trend({
   value,
   previous,
@@ -213,12 +224,15 @@ export function AgentSignalsCard() {
               <div className="text-xs font-medium mb-2 flex items-center justify-between">
                 <span>{t("Nadchodzące wizyty najbardziej zagrożone nieobecnością")}</span>
                 {data.model && (
-                  <span className="text-[11px] text-muted-foreground font-normal">
+                  <span className="text-[11px] text-muted-foreground font-normal text-right">
                     {data.model.mode === "trained"
                       ? t("model nauczony na {n} wizytach", { n: data.model.samples })
                       : t("za mało historii ({n} wizyt) — pokazana częstość bazowa", {
                           n: data.model.samples,
                         })}
+                    {data.model.mode === "trained" && (
+                      <span className="block">{heldOutLabel(data.model.heldOut)}</span>
+                    )}
                   </span>
                 )}
               </div>

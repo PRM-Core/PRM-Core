@@ -9,6 +9,12 @@
  *
  * With too little history the model declines to train and the score is the
  * base rate for everyone — an honest "we do not know yet", flagged as such.
+ *
+ * Its quality is measured on visits it did not learn from: a copy is trained
+ * on the older visits and scored on the most recent quarter, against the base
+ * rate of those same older visits. The model that scores tomorrow's visits is
+ * then trained on everything. A model that only memorised its history looks
+ * good on that history and no better than the base rate here.
  */
 
 export interface VisitFeatures {
@@ -62,6 +68,24 @@ export function featureVector(f: VisitFeatures): number[] {
   ];
 }
 
+/** How the model did on visits it never saw — the number worth reporting. */
+export interface HeldOutCheck {
+  /** The most recent visits, kept out of the training for the check. */
+  samples: number;
+  positives: number;
+  /** Older visits the checked copy was trained on. */
+  trainedOn: number;
+  /** Log-loss on the held-out visits — lower is better. */
+  logLoss: number;
+  /** Log-loss of the older visits' base rate on the same held-out visits. */
+  priorLogLoss: number;
+  /** 1 − logLoss / priorLogLoss: 0 = no better than the base rate, below 0 = worse. */
+  skill: number;
+  /** Calibration in the large: the mean predicted no-show rate against the observed one. */
+  meanPredicted: number;
+  observedRate: number;
+}
+
 export interface NoShowModel {
   kind: "no-show";
   /** `prior` when there was not enough history to learn from. */
@@ -73,13 +97,27 @@ export interface NoShowModel {
   bias: number;
   means: number[];
   stds: number[];
-  /** Log-loss on the training set — lower is better; the base-rate model scores `priorLogLoss`. */
+  /**
+   * Log-loss on the training set — lower is better; the base-rate model
+   * scores `priorLogLoss`. Optimistic by construction: report `heldOut`.
+   */
   logLoss: number;
   priorLogLoss: number;
+  /** Quality on visits outside the training; null = too little data to say. */
+  heldOut: HeldOutCheck | null;
 }
 
 export const MIN_SAMPLES = 40;
 export const MIN_PER_CLASS = 5;
+/** The share of the most recent visits held out of training for the check. */
+export const HOLDOUT_SHARE = 0.25;
+
+/** A labelled past visit; `at` (the visit's start) orders the history, oldest first. */
+export interface NoShowExample {
+  features: VisitFeatures;
+  label: 0 | 1;
+  at?: number;
+}
 
 const sigmoid = (z: number) => 1 / (1 + Math.exp(-z));
 const clamp = (p: number) => Math.min(1 - 1e-6, Math.max(1e-6, p));
@@ -87,9 +125,56 @@ const clamp = (p: number) => Math.min(1 - 1e-6, Math.max(1e-6, p));
 /**
  * Train on labelled past visits. `label` is 1 for a no-show, 0 for a visit
  * that happened; cancelled visits are not examples of either and must not be
- * passed in.
+ * passed in. Without `at` the order given is taken as oldest first.
  */
-export function trainNoShow(examples: { features: VisitFeatures; label: 0 | 1 }[]): NoShowModel {
+export function trainNoShow(examples: NoShowExample[]): NoShowModel {
+  const model = fit(examples);
+  return { ...model, heldOut: model.mode === "trained" ? checkHeldOut(examples) : null };
+}
+
+/**
+ * Train on the older visits, score the most recent `HOLDOUT_SHARE` of them.
+ * Null when either side is too small to say anything: the older part must be
+ * enough to train on, and the held-out part must hold `MIN_PER_CLASS` of each
+ * outcome.
+ */
+export function checkHeldOut(examples: NoShowExample[]): HeldOutCheck | null {
+  const ordered = examples
+    .map((e, i) => ({ e, i }))
+    .sort((a, b) => (a.e.at ?? 0) - (b.e.at ?? 0) || a.i - b.i)
+    .map((x) => x.e);
+  const cut = ordered.length - Math.floor(ordered.length * HOLDOUT_SHARE);
+  const older = ordered.slice(0, cut);
+  const recent = ordered.slice(cut);
+  const positives = recent.filter((e) => e.label === 1).length;
+  if (positives < MIN_PER_CLASS || recent.length - positives < MIN_PER_CLASS) return null;
+  const model = fit(older);
+  if (model.mode !== "trained") return null;
+
+  const prior = clamp(model.baseRate);
+  let logLoss = 0;
+  let priorLogLoss = 0;
+  let predicted = 0;
+  for (const e of recent) {
+    const p = clamp(scoreNoShow(model, e.features).probability);
+    logLoss -= Math.log(e.label === 1 ? p : 1 - p);
+    priorLogLoss -= Math.log(e.label === 1 ? prior : 1 - prior);
+    predicted += p;
+  }
+  const n = recent.length;
+  return {
+    samples: n,
+    positives,
+    trainedOn: older.length,
+    logLoss: logLoss / n,
+    priorLogLoss: priorLogLoss / n,
+    skill: 1 - logLoss / priorLogLoss,
+    meanPredicted: predicted / n,
+    observedRate: positives / n,
+  };
+}
+
+function fit(examples: NoShowExample[]): NoShowModel {
   const n = examples.length;
   const positives = examples.filter((e) => e.label === 1).length;
   const baseRate = n > 0 ? positives / n : 0;
@@ -113,6 +198,7 @@ export function trainNoShow(examples: { features: VisitFeatures; label: 0 | 1 }[
     stds: new Array(dims).fill(1),
     logLoss: priorLogLoss,
     priorLogLoss,
+    heldOut: null,
   };
   if (n < MIN_SAMPLES || positives < MIN_PER_CLASS || n - positives < MIN_PER_CLASS) return prior;
 
