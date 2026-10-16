@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { getDb } from "../../db/client.server";
 import { agentEvaluations, type AgentEvaluationRow } from "../../db/schema";
 import { logStep } from "../../engine/log.server";
@@ -20,15 +20,18 @@ export type EvalRun = { ok: true; row: AgentEvaluationRow } | { ok: false; error
 export async function runEvaluation(input: {
   startedBy: string;
   cases?: EvalCase[];
+  /** A model on the same server instead of the one in force (the base or the tuned one). */
+  model?: string;
   now?: number;
 }): Promise<EvalRun> {
   const gate = await modelGate();
   if (!gate.ok) return { ok: false, error: gate.reason };
+  const model = input.model || gate.config.model;
   const cases = input.cases ?? EVAL_CASES;
   const now = input.now ?? Date.now();
   const report: AgentEvaluationRow["report"] = [];
   for (const c of cases) {
-    const r = await askModel(c.system, c.user, c.maxTokens, `eval:${c.id}`);
+    const r = await askModel(c.system, c.user, c.maxTokens, `eval:${c.id}`, model);
     if (!r.ok) {
       report.push({
         id: c.id,
@@ -48,6 +51,7 @@ export async function runEvaluation(input: {
         c.retry(output, verdict.reason),
         c.maxTokens,
         `eval:${c.id}`,
+        model,
       );
       if (again.ok) {
         output = again.text;
@@ -66,7 +70,7 @@ export async function runEvaluation(input: {
   const row: AgentEvaluationRow = {
     id: randomUUID(),
     runAt: now,
-    model: `${gate.config.providerId}/${gate.config.model}`,
+    model: `${gate.config.providerId}/${model}`,
     total: report.length,
     passed: report.filter((r) => r.ok).length,
     report,
@@ -90,6 +94,18 @@ export async function latestEvaluation(): Promise<AgentEvaluationRow | null> {
   const row = await getDb()
     .select()
     .from(agentEvaluations)
+    .orderBy(desc(agentEvaluations.runAt))
+    .limit(1)
+    .get();
+  return row ?? null;
+}
+
+/** The latest run against one model — `local/<name>`, as the run stores it. */
+export async function latestEvaluationOf(model: string): Promise<AgentEvaluationRow | null> {
+  const row = await getDb()
+    .select()
+    .from(agentEvaluations)
+    .where(eq(agentEvaluations.model, model))
     .orderBy(desc(agentEvaluations.runAt))
     .limit(1)
     .get();

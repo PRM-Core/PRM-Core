@@ -36,6 +36,16 @@ const PHONE = /(?<![\w+])\+?(?:\d[\s.-]?){8,14}\d(?!\w)/g;
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** The stem a name is matched by — `null` for a name too short to match. */
+export function nameStem(word: string): string | null {
+  const w = word.trim();
+  if (w.length < 3) return null;
+  return /[aeiouyąęó]$/i.test(w) && w.length >= 4 ? w.slice(0, -1) : w;
+}
+
+/** Letters a declined name may add to its stem. */
+export const NAME_ENDING_MAX = 4;
+
 /**
  * A name as it appears in Polish text — declined. "Kowalska" is also
  * "Kowalskiej" and "Kowalską"; "Anna" is "Anny", "Annie", "Annę". The match
@@ -45,10 +55,9 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  */
 function wholeWord(words: string[] | undefined): RegExp | null {
   const parts = (words ?? [])
-    .map((w) => w.trim())
-    .filter((w) => w.length >= 3)
-    .map((w) => (/[aeiouyąęó]$/i.test(w) && w.length >= 4 ? w.slice(0, -1) : w))
-    .map((w) => `${escapeRe(w)}\\p{L}{0,4}`);
+    .map(nameStem)
+    .filter((w): w is string => w !== null)
+    .map((w) => `${escapeRe(w)}\\p{L}{0,${NAME_ENDING_MAX}}`);
   if (parts.length === 0) return null;
   // Unicode-aware word boundaries: a letter must not sit on either side.
   return new RegExp(`(?<!\\p{L})(?:${parts.join("|")})(?!\\p{L})`, "giu");

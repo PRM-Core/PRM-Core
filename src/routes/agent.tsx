@@ -51,6 +51,9 @@ import {
   getAgentLog,
   getAgentEvaluation,
   runAgentEvaluation,
+  getAdapterComparison,
+  runAdapterComparison,
+  type AdapterComparisonView,
   type AgentDirectionView,
   type AgentEvaluationView,
   getAgentDrafts,
@@ -1121,6 +1124,12 @@ function DirectionsTab({
     try {
       const r = await decideAgentDirection({ data: { key, decision } });
       if (!r.ok) toast.error(t("Nie udało się zapisać decyzji"), { description: r.error });
+      else if (key === "tuned_model")
+        toast.success(
+          decision === "enable"
+            ? t("Agent używa teraz modelu dostrojonego.")
+            : t("Agent wrócił do modelu bazowego."),
+        );
       else
         toast.success(
           decision === "enable"
@@ -1169,12 +1178,25 @@ function DirectionsTab({
                     <Compass className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                     <span>
                       {t("Dlaczego teraz: {why}", { why: d.why })}
-                      {Object.entries(d.evidence)
-                        .filter(([, v]) => v)
-                        .map(([k, v]) => ` · ${k}: ${v}`)
-                        .join("")}
+                      {d.key !== "tuned_model" &&
+                        Object.entries(d.evidence)
+                          .filter(([, v]) => v)
+                          .map(([k, v]) => ` · ${k}: ${v}`)
+                          .join("")}
                     </span>
                   </p>
+                  {d.key === "tuned_model" && (
+                    <TunedModelPanel
+                      // Reloaded with each decision: which model is in use follows it.
+                      key={`${d.status}-${d.decidedAt ?? 0}`}
+                      isAdmin={isAdmin}
+                      decided={d.status !== "proposed" ? d.evidence : null}
+                      onRan={onChange}
+                    />
+                  )}
+                  {d.key === "tuned_model" && d.note && d.decidedBy === "PRM_Agent" && (
+                    <p className="text-[11px] text-amber-600">{d.note}</p>
+                  )}
                   <p className="text-[11px] text-muted-foreground">
                     {d.decidedAt
                       ? t("Decyzja: {who}, {when}", {
@@ -1203,8 +1225,16 @@ function DirectionsTab({
                           disabled={busy === d.key}
                           onClick={() => void decide(d.key, "decline")}
                         >
-                          <X className="h-3.5 w-3.5" />{" "}
-                          {d.status === "enabled" ? t("Wyłącz") : t("Odrzuć")}
+                          {d.key === "tuned_model" && d.status === "enabled" ? (
+                            <Undo2 className="h-3.5 w-3.5" />
+                          ) : (
+                            <X className="h-3.5 w-3.5" />
+                          )}{" "}
+                          {d.key === "tuned_model" && d.status === "enabled"
+                            ? t("Wróć do modelu bazowego")
+                            : d.status === "enabled"
+                              ? t("Wyłącz")
+                              : t("Odrzuć")}
                         </Button>
                       )}
                     </div>
@@ -1214,6 +1244,114 @@ function DirectionsTab({
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The tuned model's gate: the last score of the base model and of the model
+ * with this installation's adapter, side by side, and the button that runs
+ * both. Enabling is refused on the server unless the tuned one is no worse.
+ */
+function TunedModelPanel({
+  isAdmin,
+  decided,
+  onRan,
+}: {
+  isAdmin: boolean;
+  /** The scores recorded with the last decision, when there was one. */
+  decided: Record<string, string> | null;
+  onRan: () => Promise<void>;
+}) {
+  const [data, setData] = useState<AdapterComparisonView | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(
+    () =>
+      getAdapterComparison()
+        .then(setData)
+        .catch(() => setData(null)),
+    [],
+  );
+  useEffect(() => {
+    void load();
+  }, [load]);
+  if (!data) return null;
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const r = await runAdapterComparison();
+      if (!r.ok) {
+        toast.error(t("Porównanie nie zostało uruchomione"), { description: r.error });
+        return;
+      }
+      toast.success(
+        r.result.ok
+          ? t("Porównanie zakończone: model dostrojony nie wypada gorzej — można go włączyć.")
+          : t("Porównanie zakończone: {reason}", { reason: r.result.reason }),
+      );
+      await load();
+      await onRan();
+    } catch (err) {
+      toast.error(t("Porównanie nie zostało uruchomione"), { description: String(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cell = (label: string, model: string, s: AdapterComparisonView["base"]) => (
+    <div className="rounded-md border border-border/60 p-2">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="text-lg font-semibold">{s ? `${s.passed}/${s.total}` : "—"}</div>
+      <div className="text-[11px] text-muted-foreground break-all">
+        {model || "—"}
+        {s ? ` · ${when(s.runAt, true)}` : ""}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-2 rounded-md bg-muted/40 p-3">
+      <div className="grid grid-cols-2 gap-2">
+        {cell(t("Model bazowy"), data.baseModel, data.base)}
+        {cell(t("Model dostrojony"), data.tunedModel, data.tuned)}
+      </div>
+      <p className={`text-xs ${data.ok ? "text-success" : "text-muted-foreground"}`}>
+        {data.ok
+          ? t("Model dostrojony wypada nie gorzej niż bazowy — można go włączyć.")
+          : data.reason}
+      </p>
+      {decided?.base && decided.tuned && (
+        <p className="text-[11px] text-muted-foreground">
+          {t("Wyniki zapisane przy decyzji: bazowy {base}, dostrojony {tuned}.", {
+            base: decided.base,
+            tuned: decided.tuned,
+          })}
+        </p>
+      )}
+      <p className="text-[11px] text-muted-foreground">
+        {data.active ? t("W użyciu: model dostrojony.") : t("W użyciu: model bazowy.")}{" "}
+        {t(
+          "Adapter jest wytrenowany na danych tej placówki i zostaje w tej instalacji — nie jest udostępniany innym placówkom ani wysyłany poza serwer modelu.",
+        )}
+      </p>
+      {isAdmin && data.configured && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          disabled={busy || !data.language.available}
+          title={data.language.available ? "" : data.language.reason}
+          onClick={() => void run()}
+        >
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <FlaskConical className="h-3.5 w-3.5" />
+          )}
+          {t("Porównaj modele")}
+        </Button>
       )}
     </div>
   );

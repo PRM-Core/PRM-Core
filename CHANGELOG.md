@@ -8,6 +8,67 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.26.0] — Dostrojony model: adapter LoRA tej instalacji
+
+„Uczenie się z decyzji zespołu” wkłada zatwierdzone teksty do promptu, ale
+wag modelu nie zmienia. Teraz instalacja, która zebrała dość decyzji, może
+wytrenować na nich adapter LoRA dla lokalnego modelu (Bielik 11B) — poza
+aplikacją, w sieci placówki — i przełączyć się na niego dopiero wtedy, gdy
+w sprawdzianie wypada nie gorzej niż model bazowy. Produkt nie pobiera
+modelu ani narzędzi i niczego nie trenuje sam.
+
+- **`bun run agent:export-training -- --out <katalog>`** zapisuje zbiór
+  uczący z `agent_examples`: zatwierdzone teksty draftów (sparowane z ich
+  draftem — cel, odbiorcy, szablon reguły) i poprawione przez rejestrację
+  oceny wiadomości, jako linie czatu w kształcie, który produkt naprawdę
+  wysyła (prompt systemowy, prompt użytkownika, odpowiedź zespołu).
+  Pliki `train.jsonl`, `valid.jsonl` (~10%, stały podział) i
+  `manifest.json` (tylko liczby), z prawami `0600`. Odmawia zapisu
+  wewnątrz katalogu aplikacji; `--dry-run` tylko liczy.
+- **Pseudonimizacja sprawdzana jeszcze raz przy eksporcie.** Linia, w której
+  to, co napisał człowiek, wciąż zawiera e-mail, telefon, PESEL,
+  pseudonim kontaktu (`#a1b2c3`), numer `PRM-…` albo nazwisko któregokolwiek
+  kontaktu instalacji (także odmienione), jest odrzucana — nie
+  poprawiana. Odrzucane są też teksty, które nie przeszłyby dzisiejszych
+  reguł draftu (dawka, link, liczba). Liczba odrzuceń według powodu trafia
+  do wyniku i do manifestu.
+- **Minimum 200 przykładów** (`--min`): poniżej nic nie jest zapisywane
+  (kod wyjścia 1) — adapter z tak małego zbioru uczy się przypadku, nie
+  stylu placówki.
+- **Nowy kierunek PRM_Agent „Dostrojony model”.** Proponowany, gdy na
+  serwerze modelu w sieci placówki zarejestrowano drugi model z adapterem
+  (`PRM_AI_LOCAL_ADAPTER_MODEL`). Karta w PRM_Agent → Kierunki pokazuje
+  wyniki obu modeli obok siebie; „Porównaj modele” (albo
+  `bun run agent:eval -- --compare`) uruchamia sprawdzian na bazowym i na
+  dostrojonym. Włączenie jest odrzucane, jeśli oba nie przeszły tych
+  samych przypadków albo dostrojony zdał ich mniej; oba wyniki zapisują się
+  przy decyzji i w dzienniku. Po włączeniu wszystkie funkcje językowe
+  używają modelu dostrojonego.
+- **Jedno kliknięcie wraca do modelu bazowego** („Wróć do modelu
+  bazowego”). Agent wraca też sam, gdy nowszy sprawdzian pokaże model
+  dostrojony gorszym — powrót jest zawsze dozwolony, włączenie czeka na
+  człowieka. Usunięcie zmiennej z `.env` też przywraca model bazowy.
+- **Adapter zostaje w instalacji.** Powstaje z pseudonimizowanych tekstów
+  związanych z pacjentami tej placówki, więc jest traktowany jak baza: nie
+  jest wysyłany do repozytorium modeli ani udostępniany innym placówkom.
+  Mówią to ekran, dokumentacja i manifest zbioru.
+- **Przepis w `docs/AGENT.md`, sekcja 12**: MLX (QLoRA) na Apple Silicon
+  i PEFT na karcie NVIDIA, szacowana pamięć i czas dla modelu 11B, lista
+  plików do pobrania z rozmiarami oraz rejestracja modelu na serwerze.
+  Uwaga: obecny serwer Ollama odrzuca `ADAPTER` w Modelfile („LoRA adapters
+  are no longer supported”), więc przepis dla Ollamy scala adapter z modelem
+  (`mlx_lm.fuse` → GGUF → `llama-quantize` → `FROM`); vLLM
+  (`--lora-modules`) i serwer llama.cpp (`--lora`) ładują adapter bez
+  scalania.
+- `draftUserPrompt` pomija linię szablonu, gdy szablonu nie ma (nowy draft
+  zawsze go ma; linia ucząca z nadpisanym szablonem — nie).
+- Migracji brak: kierunek to nowa wartość w istniejącej tabeli.
+- Sprawdzone: typy, lint, testy eksportu na syntetycznych przykładach
+  (w tym odmowa linii z nazwiskiem, telefonem, e-mailem i pseudonimem,
+  próg minimum, prawa plików, odmowa zapisu w katalogu aplikacji) i testy
+  bramki (gorszy wynik, różne zestawy przypadków, zapis obu wyników,
+  powrót do modelu bazowego). Prawdziwego treningu nie uruchamiano.
+
 ## [2.25.1] — Poprawki bezpieczeństwa zależności
 
 Pierwszy przebieg `bun audit` znalazł w zależnościach 47 podatności,

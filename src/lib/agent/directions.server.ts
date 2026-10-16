@@ -13,7 +13,8 @@ import {
 import { localEndpoint, aiMode } from "../ai/boundary.server";
 import { logStep } from "../engine/log.server";
 import { deriveDirections, DIRECTIONS, type DevelopmentState } from "./directions";
-import { latestEvaluation } from "./eval/run.server";
+import { latestEvaluation, latestEvaluationOf } from "./eval/run.server";
+import { adapterGate, gateEvidence, type AdapterGate, type EvalScore } from "./adapter";
 import type { Recommendation } from "./recommend";
 import { t } from "@/lib/i18n";
 
@@ -47,17 +48,86 @@ export async function developmentState(): Promise<DevelopmentState> {
       .get(),
   ]);
   const evaluation = await latestEvaluation();
+  const comparison = e.adapterModel ? await adapterComparison() : null;
+  const score = (s: EvalScore | null) => (s ? { passed: s.passed, total: s.total } : null);
   return {
     localModel: aiMode() === "local" && !!e.url && !!e.model && e.hostClass !== "public",
     evaluation: evaluation ? { passed: evaluation.passed, total: evaluation.total } : null,
+    adapter: comparison
+      ? { base: score(comparison.gate.base), tuned: score(comparison.gate.tuned) }
+      : null,
     approvals: (approvals?.n ?? 0) + (otherDecisions?.n ?? 0),
     contacts: people?.n ?? 0,
     withoutPhone: people?.withoutPhone ?? 0,
   };
 }
 
+// ── the tuned model: the base model with this installation's adapter ────────
+
+export interface AdapterComparison {
+  /** A model with the adapter is named in .env (PRM_AI_LOCAL_ADAPTER_MODEL). */
+  configured: boolean;
+  baseModel: string;
+  tunedModel: string;
+  gate: AdapterGate;
+}
+
+const asScore = (r: Awaited<ReturnType<typeof latestEvaluationOf>>): EvalScore | null =>
+  r
+    ? {
+        model: r.model,
+        passed: r.passed,
+        total: r.total,
+        runAt: r.runAt,
+        caseIds: r.report.map((c) => c.id),
+      }
+    : null;
+
+/** The last run of the harness against each model, and whether the tuned one may be used. */
+export async function adapterComparison(): Promise<AdapterComparison> {
+  const e = localEndpoint();
+  const [base, tuned] = await Promise.all([
+    e.model ? latestEvaluationOf(`local/${e.model}`) : null,
+    e.adapterModel ? latestEvaluationOf(`local/${e.adapterModel}`) : null,
+  ]);
+  return {
+    configured: !!e.adapterModel,
+    baseModel: e.model,
+    tunedModel: e.adapterModel,
+    gate: adapterGate(asScore(base), asScore(tuned)),
+  };
+}
+
+/**
+ * A newer run can show the tuned model worse than the base — a retrained
+ * adapter, a new set of cases. Then the agent goes back to the base model
+ * by itself: returning is always allowed, only enabling waits for a person.
+ */
+async function recheckTunedModel(now: number): Promise<void> {
+  if (!(await isEnabled("tuned_model"))) return;
+  const c = await adapterComparison();
+  if (!c.configured || c.gate.ok) return;
+  await getDb()
+    .update(agentDirections)
+    .set({
+      status: "declined",
+      evidence: gateEvidence(c.gate),
+      decidedBy: "PRM_Agent",
+      decidedAt: now,
+      note: c.gate.reason,
+      updatedAt: now,
+    })
+    .where(eq(agentDirections.key, "tuned_model"));
+  await logStep({
+    kind: "agent",
+    message: t("PRM_Agent wraca do modelu bazowego: {reason}", { reason: c.gate.reason }),
+    detail: { source: "agent-direction", key: "tuned_model", ...gateEvidence(c.gate) },
+  });
+}
+
 /** Propose what tonight's state supports; refresh the evidence of what still waits. Decided rows are left alone. */
 export async function proposeDirections(now = Date.now()): Promise<DirectionKey[]> {
+  await recheckTunedModel(now);
   const db = getDb();
   const wanted = deriveDirections(await developmentState());
   const existing = new Map(
@@ -107,12 +177,27 @@ export async function decideDirection(input: {
   const now = input.now ?? Date.now();
   if (!(input.key in DIRECTIONS)) return { ok: false, error: t("Nie ma takiego kierunku.") };
   const status = input.decision === "enable" ? "enabled" : "declined";
+  // The tuned model is enabled only through the gate, and the decision
+  // keeps both scores it was taken on.
+  let evidence: Record<string, string> | undefined;
+  if (input.key === "tuned_model" && status === "enabled") {
+    const c = await adapterComparison();
+    if (!c.configured)
+      return {
+        ok: false,
+        error: t(
+          "Nie ma modelu z adapterem — ustaw PRM_AI_LOCAL_ADAPTER_MODEL (docs/AGENT.md, sekcja 12).",
+        ),
+      };
+    if (!c.gate.ok) return { ok: false, error: c.gate.reason };
+    evidence = gateEvidence(c.gate);
+  }
   await db
     .insert(agentDirections)
     .values({
       key: input.key,
       status,
-      evidence: null,
+      evidence: evidence ?? null,
       proposedAt: now,
       decidedBy: input.decidedBy,
       decidedAt: now,
@@ -123,6 +208,7 @@ export async function decideDirection(input: {
       target: agentDirections.key,
       set: {
         status,
+        ...(evidence ? { evidence } : {}),
         decidedBy: input.decidedBy,
         decidedAt: now,
         note: input.note ?? "",

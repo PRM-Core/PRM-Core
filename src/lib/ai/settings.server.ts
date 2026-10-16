@@ -1,6 +1,6 @@
 import { and, eq, gte, like, sql } from "drizzle-orm";
 import { getDb } from "../db/client.server";
-import { aiSettings, automations, engineLog } from "../db/schema";
+import { agentDirections, aiSettings, automations, engineLog } from "../db/schema";
 import type { AiProviderId } from "../db/schema";
 import { localProvider } from "./local.server";
 import { aiMode, localEndpoint } from "./boundary.server";
@@ -99,12 +99,31 @@ export interface ResolvedAiConfig {
   mode: AiMode;
 }
 
+/**
+ * The model name in force: the base model, or the same model with this
+ * installation's adapter when one is registered and the administrator
+ * enabled the "tuned model" direction (after the evaluation gate). Read
+ * straight from the table — the direction module sits above this one.
+ */
+export async function activeLocalModel(): Promise<{ model: string; tuned: boolean }> {
+  const e = localEndpoint();
+  if (!e.adapterModel) return { model: e.model, tuned: false };
+  const row = await getDb()
+    .select({ status: agentDirections.status })
+    .from(agentDirections)
+    .where(eq(agentDirections.key, "tuned_model"))
+    .get();
+  return row?.status === "enabled"
+    ? { model: e.adapterModel, tuned: true }
+    : { model: e.model, tuned: false };
+}
+
 /** The provider in force: the local adapter in `local`, the explaining stub in `off`. */
 export async function getAiConfig(): Promise<ResolvedAiConfig> {
   const row = await getOrCreateRow();
   const mode = aiMode();
   const dailyLimitUsd = row?.dailyLimitUsd ?? 5;
-  const model = localEndpoint().model;
+  const { model } = await activeLocalModel();
   if (mode === "local")
     return {
       provider: withRedaction(localProvider),

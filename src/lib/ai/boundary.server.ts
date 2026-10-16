@@ -23,6 +23,12 @@ export interface LocalEndpoint {
   host: string;
   hostClass: HostClass;
   model: string;
+  /**
+   * The same model with this installation's LoRA adapter, registered on the
+   * same server (`PRM_AI_LOCAL_ADAPTER_MODEL`). Used only with the "tuned
+   * model" direction enabled. Empty when there is none.
+   */
+  adapterModel: string;
   apiKey?: string;
   allowlist: string[];
 }
@@ -41,6 +47,7 @@ export function localEndpoint(): LocalEndpoint {
     host,
     hostClass: url && isInsidePerimeter(url, allowlist) ? hostClass(host, allowlist) : "public",
     model: (process.env.PRM_AI_LOCAL_MODEL ?? "").trim(),
+    adapterModel: (process.env.PRM_AI_LOCAL_ADAPTER_MODEL ?? "").trim(),
     apiKey: (process.env.PRM_AI_LOCAL_KEY ?? "").trim() || undefined,
     allowlist,
   };

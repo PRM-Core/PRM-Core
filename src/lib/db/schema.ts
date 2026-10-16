@@ -2172,7 +2172,8 @@ export type DirectionKey =
   | "brief_by_model"
   | "triage_by_model"
   | "learn_from_approvals"
-  | "collect_phones";
+  | "collect_phones"
+  | "tuned_model";
 export type DirectionStatus = "proposed" | "enabled" | "declined";
 
 export const agentDirections = sqliteTable("agent_directions", {

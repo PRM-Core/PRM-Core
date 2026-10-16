@@ -28,6 +28,7 @@ import { booking } from "./booking";
 import { docplanner } from "./docplanner";
 import { accounts } from "./accounts";
 import { agentBoundary } from "./agent-boundary";
+import { agentAdapter } from "./agent-adapter";
 import { agentDirections } from "./agent-directions";
 import { agentEval } from "./agent-eval";
 import { agentLanguage } from "./agent-language";
@@ -78,6 +79,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   docplanner,
   accounts,
   agentBoundary,
+  agentAdapter,
   agentDirections,
   agentEval,
   agentLanguage,

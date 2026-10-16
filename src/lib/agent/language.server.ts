@@ -115,11 +115,13 @@ export async function askModel(
   user: string,
   maxTokens: number,
   feature: string,
+  /** A model on the same server instead of the one in force — the base or the tuned one, for the comparison. */
+  model?: string,
 ): Promise<Rewrite> {
   const gate = await modelGate();
   if (!gate.ok) return gate;
   return ask(
-    gate.config,
+    model ? { ...gate.config, model } : gate.config,
     system,
     user,
     maxTokens,

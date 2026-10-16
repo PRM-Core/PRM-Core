@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.25.1",
+    "version": "2.26.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.25.1",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.26.0",
     "notes": {
-      "en": "Security update of dependencies: fixes 6 critical and 41 high advisories, including a reflected XSS in TanStack Start server-function responses and a deserialisation flaw in seroval. Update every installation.",
-      "pl": "Aktualizacja bezpieczeństwa zależności: usuwa 6 krytycznych i 41 wysokich podatności, w tym odbity XSS w odpowiedziach funkcji serwerowych TanStack Start i błąd deserializacji w seroval. Zaktualizujcie każdą instalację."
+      "en": "Opt-in tuned model: export the installation's approved, pseudonymised examples as a training set (identifiers re-checked, at least 200 lines), train a LoRA adapter for the local model outside the app, and enable it on PRM_Agent → Directions only if it scores no worse than the base model. One click returns to the base model; the adapter stays in the installation.",
+      "pl": "Dostrojony model (opcjonalnie): eksport zatwierdzonych, pseudonimizowanych przykładów instalacji jako zbioru uczącego (identyfikatory sprawdzane ponownie, co najmniej 200 linii), adapter LoRA dla lokalnego modelu trenowany poza aplikacją i włączany w PRM_Agent → Kierunki tylko wtedy, gdy wypada nie gorzej niż model bazowy. Jedno kliknięcie wraca do modelu bazowego; adapter zostaje w instalacji."
     }
   },
   "messages": []

@@ -364,3 +364,171 @@ asks a person only about _what it may start doing_:
   appears on the network changes nothing until someone says so.
 - **It reports on itself.** The brief's last section says how the model is
   doing, how many examples it has, and what waits for a decision.
+- **It can be tuned on its own decisions** (since 2.26.0, opt-in): the
+  base model's weights never change by themselves; an installation may
+  train a LoRA adapter on its examples outside the application, and the
+  administrator switches to it only through the evaluation gate — section 12.
+
+## 12. A tuned model: a LoRA adapter per installation (since 2.26.0)
+
+"Learning from the team's decisions" (section 11) puts the latest approved
+texts into the prompt; the model's weights stay as they were downloaded.
+An installation that has gathered enough decisions can go one step further
+and train a **LoRA adapter** — a small set of extra weights on top of the
+base model — on those same examples. The product does the parts that touch
+patient-related data and the decision; the training itself runs outside the
+application, on a machine inside the clinic's network, by hand.
+
+**The adapter belongs to one installation.** It is derived from
+pseudonymised, patient-related text of that clinic, so it is treated like
+the database: trained inside the installation's network, stored next to
+the database, never uploaded (no `--upload-repo`, no model hub), never
+copied to another clinic, never shipped with the product. A clinic that
+wants a tuned model trains its own. The screen says so, and so does
+`manifest.json` next to every exported set.
+
+### 12.1 Export — `bun run agent:export-training`
+
+```bash
+bun run agent:export-training -- --dry-run                      # counts only
+bun run agent:export-training -- --out /data/adapter-training   # writes the set
+```
+
+- Reads `agent_examples` of kinds `draft` (the final text of an approved
+  draft, paired with its draft: title, audience, the rule's template) and
+  `triage` (a message the front desk re-triaged, pseudonymised when it was
+  stored, with the team's verdict). Dismissals are numbers and are left out.
+- Each example becomes one chat line in the shape the product really sends:
+  the production system prompt, the production user prompt, and the team's
+  answer as the assistant turn (a triage answer is the JSON the parser reads,
+  with a reason built from the verdict). Few-shot examples are not repeated
+  inside the prompt — the adapter is meant to carry the style instead.
+- **Every line is checked again for identifiers** and refused, not cleaned,
+  when anything a person wrote still contains one: an e-mail address, a
+  phone number or a PESEL by shape; a contact pseudonym (`#a1b2c3`) or a
+  patient number (`PRM-…`); a surname of any contact of the installation,
+  in a declined form too ("Kowalskiej" for "Kowalska"). Surnames count when
+  capitalised and not a word of the product's own prompt, so a patient
+  called Zima does not refuse every line that says "zimą". First names alone
+  are not treated as identifiers. Lines an approved text would fail today's
+  draft rules with (a dose, a link, a number) are refused too.
+- Below **200 lines** (`--min` to change it) nothing is written and the
+  script exits with 1: an adapter from fewer examples learns chance, not a
+  house style. The count of refused lines by reason is printed and stored.
+- Writes `train.jsonl`, `valid.jsonl` (about 10%, the same examples on the
+  same side every time) and `manifest.json` (counts only, no text), each
+  with permissions `0600`. It refuses to write inside the application
+  directory: a file in the checkout is one `git add` away from a public
+  repository. Delete the set when the adapter is trained.
+
+### 12.2 Training — outside the application
+
+Nothing below is installed or run by the product. Numbers marked
+_estimate_ are not measured on this product yet; the first real run should
+replace them here, as section 7 did for inference.
+
+**Downloads** (once, on the training machine):
+
+| What                                                                | Size                                     |
+| ------------------------------------------------------------------- | ---------------------------------------- |
+| Bielik 11B v2.3 Instruct, Hugging Face weights (bf16 safetensors)   | ~22 GB                                   |
+| the same converted to MLX 4-bit (`mlx_lm.convert -q`, made locally) | ~6 GB on disk, no download               |
+| `mlx-lm[train]` (Python, Apple Silicon)                             | a few hundred MB with MLX                |
+| llama.cpp (source; `llama-quantize`, `convert_hf_to_gguf.py`)       | ~100 MB of source, built locally         |
+| GPU route instead: PyTorch with CUDA, `transformers`, `peft`        | ~3–5 GB of wheels, plus the same weights |
+
+**Apple Silicon — MLX (QLoRA).** `mlx_lm.lora` trains with QLoRA when the
+model it is given is quantized, reads the chat format of the export
+directly, and with `--mask-prompt` counts the loss on the answer only:
+
+```bash
+python -m venv ~/mlx && . ~/mlx/bin/activate && pip install "mlx-lm[train]"
+mlx_lm.convert --hf-path speakleash/Bielik-11B-v2.3-Instruct -q --mlx-path ~/models/bielik-11b-4bit
+mlx_lm.lora --model ~/models/bielik-11b-4bit --train --data /data/adapter-training \
+  --mask-prompt --batch-size 1 --grad-accumulation-steps 4 --num-layers 16 \
+  --grad-checkpoint --iters 500 --adapter-path /data/adapter-bielik
+```
+
+- `--iters` ≈ lines × epochs ÷ batch size: 1,000 lines for two epochs at
+  batch 1 is 2,000. Watch the validation loss it prints; stop when it rises.
+- Memory (_estimate_): ~6 GB of 4-bit weights plus activations — about
+  9–12 GB peak at batch 1 with gradient checkpointing. A 16 GB Mac is the
+  floor (stop Ollama while training, `--num-layers 8` if it swaps); 32 GB
+  is comfortable.
+- Time (_estimate_): a line of the export is ~400–500 tokens, most of it
+  the system prompt. MLX's own guide gives ~250 tokens/s for a 7B model on
+  an M1 Max; an 11B model on a base M2 is several times slower. Expect
+  roughly 20–45 minutes for 200 lines and 2–4 hours for 1,000 lines over two
+  epochs on a 16 GB M2; under an hour on an M-series Max.
+
+**NVIDIA GPU — PEFT (QLoRA).** The same JSONL works with `transformers`,
+`peft` and `trl` (`SFTTrainer` reads `messages`), or with Unsloth: 4-bit
+base, LoRA rank 16 on the attention and MLP projections, the model's own
+chat template. _Estimate:_ 12–16 GB of VRAM at 4 bits (a 24 GB card such as
+an RTX 3090/4090 or an L4 is enough), 15–30 minutes for 1,000 lines over
+two epochs; LoRA on bf16 weights needs ~30 GB or more. The result is a PEFT
+adapter directory (`adapter_config.json`, `adapter_model.safetensors`).
+
+### 12.3 Registering the tuned model on the model server
+
+The product only needs a **second model name on the same server**,
+`PRM_AI_LOCAL_ADAPTER_MODEL`; how the server builds it is up to the server.
+
+- **Ollama.** Older Ollama releases accepted `ADAPTER` in a Modelfile on
+  top of the base (`FROM SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M` +
+  `ADAPTER ./adapter.gguf`), and the Modelfile parser still knows the word —
+  but the current server refuses it ("LoRA adapters are no longer
+  supported", checked against Ollama's source on 2026-10-16). Check your
+  version with a test `ollama create` before relying on it. The route that
+  works with any version is to **fuse** the adapter into the base and
+  import the result as a model of its own:
+
+  ```bash
+  mlx_lm.fuse --model ~/models/bielik-11b-4bit --adapter-path /data/adapter-bielik \
+    --de-quantize --export-gguf --gguf-path /data/bielik-prm-f16.gguf   # fp16, Mistral-type: supported
+  llama-quantize /data/bielik-prm-f16.gguf /data/bielik-prm-Q4_K_M.gguf Q4_K_M
+  ollama show --modelfile SpeakLeash/bielik-11b-v2.3-instruct:Q4_K_M > Modelfile
+  # replace the FROM line with: FROM /data/bielik-prm-Q4_K_M.gguf  (keep TEMPLATE and PARAMETER)
+  ollama create bielik-prm -f Modelfile
+  ```
+
+  GGUF export from `mlx_lm.fuse` is for Mistral-, Mixtral- and Llama-type
+  models in fp16 — Bielik is Mistral-type; a model trained at 4 bits is
+  de-quantized on the way (`mlx_lm.fuse --help` lists the flags of the
+  installed version). The fused model is a full copy (~6.7 GB at Q4_K_M) and carries the
+  adapter's knowledge: keep it under the same rules as the adapter. For a
+  PEFT adapter, merge it with `peft` (`merge_and_unload`), then
+  `convert_hf_to_gguf.py` and `llama-quantize` as above. With the default
+  `OLLAMA_MAX_LOADED_MODELS=1` the base and the tuned model take turns in
+  memory; the comparison loads each once.
+
+- **vLLM** (GPU) serves a PEFT adapter under its own name without fusing:
+  `--enable-lora --lora-modules bielik-prm=/data/adapter-bielik`.
+- **llama.cpp server** loads a GGUF LoRA (`convert_lora_to_gguf.py
+/data/adapter-bielik --base <base model config dir>`) with `--lora`.
+
+Then in `.env`: `PRM_AI_LOCAL_ADAPTER_MODEL=bielik-prm`, next to
+`PRM_AI_LOCAL_MODEL`, which stays the base model.
+
+### 12.4 The gate and the switch
+
+- The "Dostrojony model" direction is proposed when the second name is set
+  and the model server is inside the perimeter; its card on PRM_Agent →
+  Kierunki shows the last score of each model side by side.
+- **Porównaj modele** (or `bun run agent:eval -- --compare`) runs the full
+  harness against the base model and then the tuned one; both runs are
+  stored in `agent_evaluations` under their own model names.
+- **Włącz** is refused unless both models were run on the same set of cases
+  and the tuned one passed **no fewer** cases. The two scores are recorded
+  with the decision (`agent_directions.evidence`: `base`, `tuned` and both
+  model names) and in the engine log.
+- Enabled, every language feature — drafts, the brief, triage, replies,
+  the copilot — uses the tuned model; the gates of each direction, the
+  pseudonymisation and the checks in code are unchanged.
+- **Wróć do modelu bazowego** is one click and needs no evaluation. The
+  agent also goes back by itself when a newer run shows the tuned model
+  worse (a retrained adapter, new cases in an update) — returning is always
+  allowed, enabling waits for a person. Removing the variable from `.env`
+  falls back to the base model as well.
+- After retraining under the same name, run the comparison again before
+  trusting the old score: the gate compares the last runs it has.

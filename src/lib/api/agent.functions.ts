@@ -421,6 +421,7 @@ export const decideAgentDirection = createServerFn({ method: "POST" })
         "triage_by_model",
         "learn_from_approvals",
         "collect_phones",
+        "tuned_model",
       ]),
       decision: z.enum(["enable", "decline"]),
       note: z.string().max(500).optional(),
@@ -508,6 +509,81 @@ export const runAgentEvaluation = createServerFn({ method: "POST" })
     const { proposeDirections } = await import("../agent/directions.server");
     await proposeDirections();
     return { ok: true as const, result: evaluationView(r.row) };
+  });
+
+// ── the tuned model ─────────────────────────────────────────────────────────
+
+export interface AdapterScoreView {
+  model: string;
+  passed: number;
+  total: number;
+  runAt: number;
+}
+
+export interface AdapterComparisonView {
+  /** A model with this installation's adapter is named in .env. */
+  configured: boolean;
+  /** The tuned model is the one in force now. */
+  active: boolean;
+  baseModel: string;
+  tunedModel: string;
+  base: AdapterScoreView | null;
+  tuned: AdapterScoreView | null;
+  /** May be enabled; otherwise `reason` says why not. */
+  ok: boolean;
+  reason: string;
+  language: LanguageState;
+}
+
+async function adapterComparisonView(): Promise<AdapterComparisonView> {
+  const { adapterComparison } = await import("../agent/directions.server");
+  const { activeLocalModel } = await import("../ai/settings.server");
+  const c = await adapterComparison();
+  const score = (s: (typeof c.gate)["base"]): AdapterScoreView | null =>
+    s ? { model: s.model, passed: s.passed, total: s.total, runAt: s.runAt } : null;
+  return {
+    configured: c.configured,
+    active: (await activeLocalModel()).tuned,
+    baseModel: c.baseModel,
+    tunedModel: c.tunedModel,
+    base: score(c.gate.base),
+    tuned: score(c.gate.tuned),
+    ok: c.gate.ok,
+    reason: c.gate.reason,
+    language: await languageState(),
+  };
+}
+
+export const getAdapterComparison = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async (): Promise<AdapterComparisonView> => adapterComparisonView());
+
+/** The harness against the base model, then against the tuned one — the gate's two scores. */
+export const runAdapterComparison = createServerFn({ method: "POST" })
+  .middleware([requireUser])
+  .handler(async () => {
+    const { getSessionUser } = await import("../auth/session.server");
+    const user = await getSessionUser();
+    if (!user || user.role !== "admin")
+      throw new Error(t("Sprawdzian modelu uruchamia administrator."));
+    const { localEndpoint } = await import("../ai/boundary.server");
+    const e = localEndpoint();
+    if (!e.adapterModel)
+      return {
+        ok: false as const,
+        error: t(
+          "Nie ma modelu z adapterem — ustaw PRM_AI_LOCAL_ADAPTER_MODEL (docs/AGENT.md, sekcja 12).",
+        ),
+      };
+    const { runEvaluation } = await import("../agent/eval/run.server");
+    const who = `${user.firstName} ${user.lastName}`.trim() || user.email;
+    for (const model of [e.model, e.adapterModel]) {
+      const r = await runEvaluation({ startedBy: who, model });
+      if (!r.ok) return { ok: false as const, error: r.error };
+    }
+    const { proposeDirections } = await import("../agent/directions.server");
+    await proposeDirections();
+    return { ok: true as const, result: await adapterComparisonView() };
   });
 
 // ── automations on trial ────────────────────────────────────────────────────

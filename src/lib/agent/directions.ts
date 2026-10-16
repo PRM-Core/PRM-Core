@@ -57,6 +57,15 @@ export const DIRECTIONS: Record<DirectionKey, DirectionInfo> = localized(() => (
     ),
     why: t("Co najmniej jedna piąta kontaktów nie ma numeru telefonu."),
   },
+  tuned_model: {
+    title: t("Dostrojony model"),
+    what: t(
+      "Funkcje językowe agenta przechodzą na model z adapterem LoRA wytrenowanym na zatwierdzonych przykładach tej placówki. Włączyć można tylko wtedy, gdy w sprawdzianie wypada nie gorzej niż model bazowy — oba wyniki zostają zapisane przy decyzji; jedno kliknięcie wraca do modelu bazowego. Adapter powstaje i zostaje w tej instalacji: nie jest udostępniany innym placówkom.",
+    ),
+    why: t(
+      "Na serwerze modelu w sieci placówki zarejestrowano model z adapterem tej instalacji (PRM_AI_LOCAL_ADAPTER_MODEL).",
+    ),
+  },
 }));
 
 export const DIRECTION_KEYS: DirectionKey[] = [
@@ -65,6 +74,7 @@ export const DIRECTION_KEYS: DirectionKey[] = [
   "triage_by_model",
   "learn_from_approvals",
   "collect_phones",
+  "tuned_model",
 ];
 
 /** What the agent knows about its own situation tonight. */
@@ -77,6 +87,11 @@ export interface DevelopmentState {
   withoutPhone: number;
   /** The last run of the evaluation harness against the model in reach. */
   evaluation?: { passed: number; total: number } | null;
+  /** A model with this installation's adapter on the same server, with both models' last scores. */
+  adapter?: {
+    base: { passed: number; total: number } | null;
+    tuned: { passed: number; total: number } | null;
+  } | null;
 }
 
 export const PHONE_GAP_SHARE = 0.2;
@@ -95,6 +110,14 @@ export function deriveDirections(
     out.push({ key: "drafts_by_model", evidence });
     out.push({ key: "brief_by_model", evidence });
     out.push({ key: "triage_by_model", evidence });
+  }
+  if (s.localModel && s.adapter) {
+    const score = (e: { passed: number; total: number } | null) =>
+      e ? `${e.passed}/${e.total}` : t("nie uruchomiono — uruchom porównanie");
+    out.push({
+      key: "tuned_model",
+      evidence: { base: score(s.adapter.base), tuned: score(s.adapter.tuned) },
+    });
   }
   if (s.approvals >= 1)
     out.push({ key: "learn_from_approvals", evidence: { approvals: String(s.approvals) } });
