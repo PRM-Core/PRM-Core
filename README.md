@@ -95,9 +95,8 @@ system. **This is where help matters most**, and it is well scoped:
   visit sync, and practice management systems used in Poland and beyond. Full
   list with priorities: [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md#integrations-we-would-love-to-see).
 
-Beyond connectors, [docs/ROADMAP.md](docs/ROADMAP.md) lists what is next in
-security (dependency review in CI) and in PRM_Agent (a clinic server through the evaluation
-harness).
+Beyond connectors, [docs/ROADMAP.md](docs/ROADMAP.md) lists what is next for
+PRM_Agent (a clinic server through the evaluation harness).
 
 Pick one, open an issue with the **Medical system connector** form, and say
 hi. Not a developer? Clinics that can test against a sandbox, and recipes for

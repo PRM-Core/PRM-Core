@@ -49,6 +49,36 @@ jobs:
           bun install --no-frozen-lockfile
           bun run build
 
+  # Dependency review. `bun audit` checks every installed package against the
+  # npm advisory database and fails on high and critical findings; on a pull
+  # request, GitHub's dependency review also blocks a newly added dependency
+  # with a known vulnerability or an unexpected licence. Dependabot
+  # (.github/dependabot.yml) opens the updates.
+  dependencies:
+    name: Dependency review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --no-frozen-lockfile
+
+      - name: Known vulnerabilities (high and critical fail the build)
+        run: bun audit --audit-level=high
+
+      - name: New dependencies in this pull request
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
   docker:
     name: Docker image
     runs-on: ubuntu-latest

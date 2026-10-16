@@ -175,7 +175,8 @@ the rest.
 
 ## Security
 
-Security work is not a phase; these are the open items.
+Security work is not a phase. Everything listed here is in; new items arrive
+as issues or private reports (`SECURITY.md`).
 
 Done: **authentication by construction** (2.21.0) — a test in CI reads the
 source and fails the build for any server function without the
@@ -190,10 +191,10 @@ the new key; the incoming webhook secret can be rotated with 24 hours of
 grace, or revoked at once after a leak (`docs/KEY-ROTATION.md`). **An audit trail of administrative actions**
 (2.24.0) — accounts added and deleted, password resets, contact exports,
 patients' documents opened, credentials, webhooks: one view under Settings →
-Security, kept for `PRM_AUDIT_RETENTION_DAYS` (365) and then purged.
-
-1. **Automated dependency review** in CI, and a documented response time for
-   reports that arrive through private vulnerability reporting.
+Security, kept for `PRM_AUDIT_RETENTION_DAYS` (365) and then purged. **Dependency review** (2.25.0) — `bun audit` in CI fails on
+high and critical advisories, pull requests go through GitHub's dependency
+review, Dependabot opens weekly updates, and `SECURITY.md` commits to
+response times for private reports.
 
 ## What we will not build
 

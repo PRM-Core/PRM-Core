@@ -1,0 +1,18 @@
+# Weekly dependency updates, grouped so they arrive as a few pull requests
+# rather than dozens. CI (tests, the authentication check, the dependency
+# review) runs on each of them before anyone merges.
+version: 2
+updates:
+  - package-ecosystem: "bun"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

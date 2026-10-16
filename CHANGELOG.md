@@ -8,6 +8,19 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.25.0] — Przegląd zależności w CI i czasy odpowiedzi na zgłoszenia
+
+- **CI → „Dependency review”**: `bun audit` sprawdza każdą zainstalowaną
+  paczkę w bazie ostrzeżeń npm i zatrzymuje build przy podatności wysokiej
+  albo krytycznej; w pull requeście przegląd zależności GitHuba blokuje
+  nowo dodaną zależność ze znaną podatnością.
+- **Dependabot** (`.github/dependabot.yml`): co tydzień aktualizacje paczek
+  (drobne zebrane w jeden pull request) i akcji GitHuba.
+- **`SECURITY.md`**: potwierdzenie zgłoszenia w 3 dni robocze, ocena i plan
+  w 10, poprawki krytyczne i wysokie wydawane od razu po przygotowaniu (cel:
+  14 dni od oceny), po polsku i po angielsku.
+- Lista bezpieczeństwa z roadmapy jest zrealizowana w całości.
+
 ## [2.24.0] — Dziennik działań administracyjnych
 
 Kto dodał konto, zresetował hasło, wyeksportował kontakty albo otworzył

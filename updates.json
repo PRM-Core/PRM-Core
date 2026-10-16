@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.24.0",
+    "version": "2.25.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.24.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.25.0",
     "notes": {
-      "en": "An audit trail of administrative actions under Settings → Security (accounts, password resets, contact exports, patients' documents, credentials, webhooks), kept for PRM_AUDIT_RETENTION_DAYS. Temporary passwords now come from a cryptographic generator.",
-      "pl": "Dziennik działań administracyjnych w Ustawienia → Bezpieczeństwo (konta, resety haseł, eksport kontaktów, dokumenty pacjentów, klucze, webhooki), przechowywany PRM_AUDIT_RETENTION_DAYS dni. Hasła tymczasowe losowane teraz generatorem kryptograficznym."
+      "en": "Dependency review in CI (bun audit, GitHub's dependency review on pull requests), weekly Dependabot updates, and response times for private vulnerability reports in SECURITY.md.",
+      "pl": "Przegląd zależności w CI (bun audit, przegląd zależności GitHuba w pull requestach), cotygodniowe aktualizacje Dependabota i czasy odpowiedzi na poufne zgłoszenia w SECURITY.md."
     }
   },
   "messages": []
