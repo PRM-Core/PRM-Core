@@ -9,199 +9,64 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StudioRouteImport } from './routes/studio'
-import { Route as SmsRouteImport } from './routes/sms'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SendRouteImport } from './routes/send'
-import { Route as SegmentsRouteImport } from './routes/segments'
-import { Route as ReportsRouteImport } from './routes/reports'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PrmTrackerDotjsRouteImport } from './routes/prm-tracker[.]js'
-import { Route as PopupActiveRouteImport } from './routes/popup-active'
-import { Route as PopupRouteImport } from './routes/popup'
-import { Route as PhoneContactsRouteImport } from './routes/phone-contacts'
-import { Route as NewsletterRouteImport } from './routes/newsletter'
-import { Route as MediaRouteImport } from './routes/media'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as IntegrationsRouteImport } from './routes/integrations'
-import { Route as InboxRouteImport } from './routes/inbox'
-import { Route as HealthRouteImport } from './routes/health'
-import { Route as FunnelsRouteImport } from './routes/funnels'
-import { Route as FeedsRouteImport } from './routes/feeds'
-import { Route as EmailRouteImport } from './routes/email'
-import { Route as DoctorsRouteImport } from './routes/doctors'
-import { Route as CopilotRouteImport } from './routes/copilot'
-import { Route as ConsentRouteImport } from './routes/consent'
-import { Route as CollectRouteImport } from './routes/collect'
-import { Route as CareRouteImport } from './routes/care'
-import { Route as CampaignsRouteImport } from './routes/campaigns'
-import { Route as AutomationRouteImport } from './routes/automation'
-import { Route as AgentRouteImport } from './routes/agent'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
-import { Route as UnsubscribeTokenRouteImport } from './routes/unsubscribe.$token'
-import { Route as ResetHaslaTokenRouteImport } from './routes/reset-hasla.$token'
-import { Route as MediaFileIdRouteImport } from './routes/media-file.$id'
-import { Route as DocumentsIdRouteImport } from './routes/documents.$id'
-import { Route as ContactsIdRouteImport } from './routes/contacts.$id'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AgentRouteImport } from './routes/agent'
+import { Route as AutomationRouteImport } from './routes/automation'
+import { Route as CampaignsRouteImport } from './routes/campaigns'
+import { Route as CareRouteImport } from './routes/care'
+import { Route as CollectRouteImport } from './routes/collect'
+import { Route as ConsentRouteImport } from './routes/consent'
+import { Route as CopilotRouteImport } from './routes/copilot'
+import { Route as DoctorsRouteImport } from './routes/doctors'
+import { Route as EmailRouteImport } from './routes/email'
+import { Route as FeedsRouteImport } from './routes/feeds'
+import { Route as FunnelsRouteImport } from './routes/funnels'
+import { Route as HealthRouteImport } from './routes/health'
+import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as IntegrationsRouteImport } from './routes/integrations'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as MediaRouteImport } from './routes/media'
+import { Route as NewsletterRouteImport } from './routes/newsletter'
+import { Route as PhoneContactsRouteImport } from './routes/phone-contacts'
+import { Route as PopupRouteImport } from './routes/popup'
+import { Route as PopupActiveRouteImport } from './routes/popup-active'
+import { Route as PrmTrackerDotjsRouteImport } from './routes/prm-tracker[.]js'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ReportsRouteImport } from './routes/reports'
+import { Route as SegmentsRouteImport } from './routes/segments'
+import { Route as SendRouteImport } from './routes/send'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SmsRouteImport } from './routes/sms'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as EOpenTokenRouteImport } from './routes/e.open.$token'
-import { Route as EClickTokenRouteImport } from './routes/e.click.$token'
-import { Route as ApiWebhooksMetaLeadsRouteImport } from './routes/api.webhooks.meta-leads'
-import { Route as ApiWebhooksLeadsRouteImport } from './routes/api.webhooks.leads'
-import { Route as ApiWebhooksInboundSmsRouteImport } from './routes/api.webhooks.inbound-sms'
-import { Route as ApiWebhooksHearingTestRouteImport } from './routes/api.webhooks.hearing-test'
-import { Route as ApiWebhooksBookingRouteImport } from './routes/api.webhooks.booking'
-import { Route as ApiSurveysSubmitRouteImport } from './routes/api.surveys.submit'
-import { Route as ApiPopupsShownRouteImport } from './routes/api.popups.shown'
-import { Route as ApiPopupsEventRouteImport } from './routes/api.popups.event'
-import { Route as ApiMetaCallbackRouteImport } from './routes/api.meta.callback'
-import { Route as ApiFormsSubmitRouteImport } from './routes/api.forms.submit'
-import { Route as ApiCanvaCallbackRouteImport } from './routes/api.canva.callback'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as ContactsIndexRouteImport } from './routes/contacts.index'
+import { Route as ContactsIdRouteImport } from './routes/contacts.$id'
+import { Route as DocumentsIdRouteImport } from './routes/documents.$id'
+import { Route as MediaFileIdRouteImport } from './routes/media-file.$id'
+import { Route as ResetHaslaTokenRouteImport } from './routes/reset-hasla.$token'
+import { Route as UnsubscribeTokenRouteImport } from './routes/unsubscribe.$token'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
-import { Route as ApiWebhooksSendgridEventsSecretRouteImport } from './routes/api.webhooks.sendgrid-events.$secret'
+import { Route as ApiCanvaCallbackRouteImport } from './routes/api.canva.callback'
+import { Route as ApiFormsSubmitRouteImport } from './routes/api.forms.submit'
+import { Route as ApiMetaCallbackRouteImport } from './routes/api.meta.callback'
+import { Route as ApiPopupsEventRouteImport } from './routes/api.popups.event'
+import { Route as ApiPopupsShownRouteImport } from './routes/api.popups.shown'
+import { Route as ApiSurveysSubmitRouteImport } from './routes/api.surveys.submit'
+import { Route as ApiWebhooksBookingRouteImport } from './routes/api.webhooks.booking'
+import { Route as ApiWebhooksHearingTestRouteImport } from './routes/api.webhooks.hearing-test'
+import { Route as ApiWebhooksInboundSmsRouteImport } from './routes/api.webhooks.inbound-sms'
+import { Route as ApiWebhooksLeadsRouteImport } from './routes/api.webhooks.leads'
+import { Route as ApiWebhooksMetaLeadsRouteImport } from './routes/api.webhooks.meta-leads'
+import { Route as EClickTokenRouteImport } from './routes/e.click.$token'
+import { Route as EOpenTokenRouteImport } from './routes/e.open.$token'
 import { Route as ApiWebhooksInboundEmailSecretRouteImport } from './routes/api.webhooks.inbound-email.$secret'
+import { Route as ApiWebhooksSendgridEventsSecretRouteImport } from './routes/api.webhooks.sendgrid-events.$secret'
 
-const StudioRoute = StudioRouteImport.update({
-  id: '/studio',
-  path: '/studio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SmsRoute = SmsRouteImport.update({
-  id: '/sms',
-  path: '/sms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SendRoute = SendRouteImport.update({
-  id: '/send',
-  path: '/send',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SegmentsRoute = SegmentsRouteImport.update({
-  id: '/segments',
-  path: '/segments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReportsRoute = ReportsRouteImport.update({
-  id: '/reports',
-  path: '/reports',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrmTrackerDotjsRoute = PrmTrackerDotjsRouteImport.update({
-  id: '/prm-tracker.js',
-  path: '/prm-tracker.js',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PopupActiveRoute = PopupActiveRouteImport.update({
-  id: '/popup-active',
-  path: '/popup-active',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PopupRoute = PopupRouteImport.update({
-  id: '/popup',
-  path: '/popup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PhoneContactsRoute = PhoneContactsRouteImport.update({
-  id: '/phone-contacts',
-  path: '/phone-contacts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NewsletterRoute = NewsletterRouteImport.update({
-  id: '/newsletter',
-  path: '/newsletter',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MediaRoute = MediaRouteImport.update({
-  id: '/media',
-  path: '/media',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const IntegrationsRoute = IntegrationsRouteImport.update({
-  id: '/integrations',
-  path: '/integrations',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InboxRoute = InboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FunnelsRoute = FunnelsRouteImport.update({
-  id: '/funnels',
-  path: '/funnels',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeedsRoute = FeedsRouteImport.update({
-  id: '/feeds',
-  path: '/feeds',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailRoute = EmailRouteImport.update({
-  id: '/email',
-  path: '/email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DoctorsRoute = DoctorsRouteImport.update({
-  id: '/doctors',
-  path: '/doctors',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CopilotRoute = CopilotRouteImport.update({
-  id: '/copilot',
-  path: '/copilot',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConsentRoute = ConsentRouteImport.update({
-  id: '/consent',
-  path: '/consent',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CollectRoute = CollectRouteImport.update({
-  id: '/collect',
-  path: '/collect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CareRoute = CareRouteImport.update({
-  id: '/care',
-  path: '/care',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CampaignsRoute = CampaignsRouteImport.update({
-  id: '/campaigns',
-  path: '/campaigns',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AutomationRoute = AutomationRouteImport.update({
-  id: '/automation',
-  path: '/automation',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AgentRoute = AgentRouteImport.update({
@@ -209,34 +74,161 @@ const AgentRoute = AgentRouteImport.update({
   path: '/agent',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AutomationRoute = AutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampaignsRoute = CampaignsRouteImport.update({
+  id: '/campaigns',
+  path: '/campaigns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CareRoute = CareRouteImport.update({
+  id: '/care',
+  path: '/care',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectRoute = CollectRouteImport.update({
+  id: '/collect',
+  path: '/collect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConsentRoute = ConsentRouteImport.update({
+  id: '/consent',
+  path: '/consent',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CopilotRoute = CopilotRouteImport.update({
+  id: '/copilot',
+  path: '/copilot',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DoctorsRoute = DoctorsRouteImport.update({
+  id: '/doctors',
+  path: '/doctors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailRoute = EmailRouteImport.update({
+  id: '/email',
+  path: '/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedsRoute = FeedsRouteImport.update({
+  id: '/feeds',
+  path: '/feeds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FunnelsRoute = FunnelsRouteImport.update({
+  id: '/funnels',
+  path: '/funnels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegrationsRoute = IntegrationsRouteImport.update({
+  id: '/integrations',
+  path: '/integrations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MediaRoute = MediaRouteImport.update({
+  id: '/media',
+  path: '/media',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterRoute = NewsletterRouteImport.update({
+  id: '/newsletter',
+  path: '/newsletter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PhoneContactsRoute = PhoneContactsRouteImport.update({
+  id: '/phone-contacts',
+  path: '/phone-contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PopupRoute = PopupRouteImport.update({
+  id: '/popup',
+  path: '/popup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PopupActiveRoute = PopupActiveRouteImport.update({
+  id: '/popup-active',
+  path: '/popup-active',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrmTrackerDotjsRoute = PrmTrackerDotjsRouteImport.update({
+  id: '/prm-tracker.js',
+  path: '/prm-tracker.js',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SegmentsRoute = SegmentsRouteImport.update({
+  id: '/segments',
+  path: '/segments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SendRoute = SendRouteImport.update({
+  id: '/send',
+  path: '/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SmsRoute = SmsRouteImport.update({
+  id: '/sms',
+  path: '/sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ContactsIndexRoute = ContactsIndexRouteImport.update({
   id: '/contacts/',
   path: '/contacts/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UnsubscribeTokenRoute = UnsubscribeTokenRouteImport.update({
-  id: '/unsubscribe/$token',
-  path: '/unsubscribe/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetHaslaTokenRoute = ResetHaslaTokenRouteImport.update({
-  id: '/reset-hasla/$token',
-  path: '/reset-hasla/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MediaFileIdRoute = MediaFileIdRouteImport.update({
-  id: '/media-file/$id',
-  path: '/media-file/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DocumentsIdRoute = DocumentsIdRouteImport.update({
-  id: '/documents/$id',
-  path: '/documents/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactsIdRoute = ContactsIdRouteImport.update({
@@ -244,81 +236,24 @@ const ContactsIdRoute = ContactsIdRouteImport.update({
   path: '/contacts/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const EOpenTokenRoute = EOpenTokenRouteImport.update({
-  id: '/e/open/$token',
-  path: '/e/open/$token',
+const DocumentsIdRoute = DocumentsIdRouteImport.update({
+  id: '/documents/$id',
+  path: '/documents/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EClickTokenRoute = EClickTokenRouteImport.update({
-  id: '/e/click/$token',
-  path: '/e/click/$token',
+const MediaFileIdRoute = MediaFileIdRouteImport.update({
+  id: '/media-file/$id',
+  path: '/media-file/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiWebhooksMetaLeadsRoute = ApiWebhooksMetaLeadsRouteImport.update({
-  id: '/api/webhooks/meta-leads',
-  path: '/api/webhooks/meta-leads',
+const ResetHaslaTokenRoute = ResetHaslaTokenRouteImport.update({
+  id: '/reset-hasla/$token',
+  path: '/reset-hasla/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiWebhooksLeadsRoute = ApiWebhooksLeadsRouteImport.update({
-  id: '/api/webhooks/leads',
-  path: '/api/webhooks/leads',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiWebhooksInboundSmsRoute = ApiWebhooksInboundSmsRouteImport.update({
-  id: '/api/webhooks/inbound-sms',
-  path: '/api/webhooks/inbound-sms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiWebhooksHearingTestRoute = ApiWebhooksHearingTestRouteImport.update({
-  id: '/api/webhooks/hearing-test',
-  path: '/api/webhooks/hearing-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiWebhooksBookingRoute = ApiWebhooksBookingRouteImport.update({
-  id: '/api/webhooks/booking',
-  path: '/api/webhooks/booking',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiSurveysSubmitRoute = ApiSurveysSubmitRouteImport.update({
-  id: '/api/surveys/submit',
-  path: '/api/surveys/submit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPopupsShownRoute = ApiPopupsShownRouteImport.update({
-  id: '/api/popups/shown',
-  path: '/api/popups/shown',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPopupsEventRoute = ApiPopupsEventRouteImport.update({
-  id: '/api/popups/event',
-  path: '/api/popups/event',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiMetaCallbackRoute = ApiMetaCallbackRouteImport.update({
-  id: '/api/meta/callback',
-  path: '/api/meta/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiFormsSubmitRoute = ApiFormsSubmitRouteImport.update({
-  id: '/api/forms/submit',
-  path: '/api/forms/submit',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCanvaCallbackRoute = ApiCanvaCallbackRouteImport.update({
-  id: '/api/canva/callback',
-  path: '/api/canva/callback',
+const UnsubscribeTokenRoute = UnsubscribeTokenRouteImport.update({
+  id: '/unsubscribe/$token',
+  path: '/unsubscribe/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
@@ -327,16 +262,81 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiWebhooksSendgridEventsSecretRoute =
-  ApiWebhooksSendgridEventsSecretRouteImport.update({
-    id: '/api/webhooks/sendgrid-events/$secret',
-    path: '/api/webhooks/sendgrid-events/$secret',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+const ApiCanvaCallbackRoute = ApiCanvaCallbackRouteImport.update({
+  id: '/api/canva/callback',
+  path: '/api/canva/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFormsSubmitRoute = ApiFormsSubmitRouteImport.update({
+  id: '/api/forms/submit',
+  path: '/api/forms/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMetaCallbackRoute = ApiMetaCallbackRouteImport.update({
+  id: '/api/meta/callback',
+  path: '/api/meta/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPopupsEventRoute = ApiPopupsEventRouteImport.update({
+  id: '/api/popups/event',
+  path: '/api/popups/event',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPopupsShownRoute = ApiPopupsShownRouteImport.update({
+  id: '/api/popups/shown',
+  path: '/api/popups/shown',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSurveysSubmitRoute = ApiSurveysSubmitRouteImport.update({
+  id: '/api/surveys/submit',
+  path: '/api/surveys/submit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksBookingRoute = ApiWebhooksBookingRouteImport.update({
+  id: '/api/webhooks/booking',
+  path: '/api/webhooks/booking',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksHearingTestRoute = ApiWebhooksHearingTestRouteImport.update({
+  id: '/api/webhooks/hearing-test',
+  path: '/api/webhooks/hearing-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksInboundSmsRoute = ApiWebhooksInboundSmsRouteImport.update({
+  id: '/api/webhooks/inbound-sms',
+  path: '/api/webhooks/inbound-sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksLeadsRoute = ApiWebhooksLeadsRouteImport.update({
+  id: '/api/webhooks/leads',
+  path: '/api/webhooks/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiWebhooksMetaLeadsRoute = ApiWebhooksMetaLeadsRouteImport.update({
+  id: '/api/webhooks/meta-leads',
+  path: '/api/webhooks/meta-leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EClickTokenRoute = EClickTokenRouteImport.update({
+  id: '/e/click/$token',
+  path: '/e/click/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EOpenTokenRoute = EOpenTokenRouteImport.update({
+  id: '/e/open/$token',
+  path: '/e/open/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiWebhooksInboundEmailSecretRoute =
   ApiWebhooksInboundEmailSecretRouteImport.update({
     id: '/api/webhooks/inbound-email/$secret',
     path: '/api/webhooks/inbound-email/$secret',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiWebhooksSendgridEventsSecretRoute =
+  ApiWebhooksSendgridEventsSecretRouteImport.update({
+    id: '/api/webhooks/sendgrid-events/$secret',
+    path: '/api/webhooks/sendgrid-events/$secret',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -739,200 +739,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/studio': {
-      id: '/studio'
-      path: '/studio'
-      fullPath: '/studio'
-      preLoaderRoute: typeof StudioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sms': {
-      id: '/sms'
-      path: '/sms'
-      fullPath: '/sms'
-      preLoaderRoute: typeof SmsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/send': {
-      id: '/send'
-      path: '/send'
-      fullPath: '/send'
-      preLoaderRoute: typeof SendRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/segments': {
-      id: '/segments'
-      path: '/segments'
-      fullPath: '/segments'
-      preLoaderRoute: typeof SegmentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reports': {
-      id: '/reports'
-      path: '/reports'
-      fullPath: '/reports'
-      preLoaderRoute: typeof ReportsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/prm-tracker.js': {
-      id: '/prm-tracker.js'
-      path: '/prm-tracker.js'
-      fullPath: '/prm-tracker.js'
-      preLoaderRoute: typeof PrmTrackerDotjsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/popup-active': {
-      id: '/popup-active'
-      path: '/popup-active'
-      fullPath: '/popup-active'
-      preLoaderRoute: typeof PopupActiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/popup': {
-      id: '/popup'
-      path: '/popup'
-      fullPath: '/popup'
-      preLoaderRoute: typeof PopupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/phone-contacts': {
-      id: '/phone-contacts'
-      path: '/phone-contacts'
-      fullPath: '/phone-contacts'
-      preLoaderRoute: typeof PhoneContactsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/newsletter': {
-      id: '/newsletter'
-      path: '/newsletter'
-      fullPath: '/newsletter'
-      preLoaderRoute: typeof NewsletterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/media': {
-      id: '/media'
-      path: '/media'
-      fullPath: '/media'
-      preLoaderRoute: typeof MediaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/integrations': {
-      id: '/integrations'
-      path: '/integrations'
-      fullPath: '/integrations'
-      preLoaderRoute: typeof IntegrationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/inbox': {
-      id: '/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof InboxRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/funnels': {
-      id: '/funnels'
-      path: '/funnels'
-      fullPath: '/funnels'
-      preLoaderRoute: typeof FunnelsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/feeds': {
-      id: '/feeds'
-      path: '/feeds'
-      fullPath: '/feeds'
-      preLoaderRoute: typeof FeedsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email': {
-      id: '/email'
-      path: '/email'
-      fullPath: '/email'
-      preLoaderRoute: typeof EmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/doctors': {
-      id: '/doctors'
-      path: '/doctors'
-      fullPath: '/doctors'
-      preLoaderRoute: typeof DoctorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/copilot': {
-      id: '/copilot'
-      path: '/copilot'
-      fullPath: '/copilot'
-      preLoaderRoute: typeof CopilotRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/consent': {
-      id: '/consent'
-      path: '/consent'
-      fullPath: '/consent'
-      preLoaderRoute: typeof ConsentRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/collect': {
-      id: '/collect'
-      path: '/collect'
-      fullPath: '/collect'
-      preLoaderRoute: typeof CollectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/care': {
-      id: '/care'
-      path: '/care'
-      fullPath: '/care'
-      preLoaderRoute: typeof CareRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/campaigns': {
-      id: '/campaigns'
-      path: '/campaigns'
-      fullPath: '/campaigns'
-      preLoaderRoute: typeof CampaignsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/automation': {
-      id: '/automation'
-      path: '/automation'
-      fullPath: '/automation'
-      preLoaderRoute: typeof AutomationRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/agent': {
@@ -942,60 +753,200 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/automation': {
+      id: '/automation'
+      path: '/automation'
+      fullPath: '/automation'
+      preLoaderRoute: typeof AutomationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contacts/': {
-      id: '/contacts/'
-      path: '/contacts'
-      fullPath: '/contacts/'
-      preLoaderRoute: typeof ContactsIndexRouteImport
+    '/campaigns': {
+      id: '/campaigns'
+      path: '/campaigns'
+      fullPath: '/campaigns'
+      preLoaderRoute: typeof CampaignsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/unsubscribe/$token': {
-      id: '/unsubscribe/$token'
-      path: '/unsubscribe/$token'
-      fullPath: '/unsubscribe/$token'
-      preLoaderRoute: typeof UnsubscribeTokenRouteImport
+    '/care': {
+      id: '/care'
+      path: '/care'
+      fullPath: '/care'
+      preLoaderRoute: typeof CareRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/reset-hasla/$token': {
-      id: '/reset-hasla/$token'
-      path: '/reset-hasla/$token'
-      fullPath: '/reset-hasla/$token'
-      preLoaderRoute: typeof ResetHaslaTokenRouteImport
+    '/collect': {
+      id: '/collect'
+      path: '/collect'
+      fullPath: '/collect'
+      preLoaderRoute: typeof CollectRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/media-file/$id': {
-      id: '/media-file/$id'
-      path: '/media-file/$id'
-      fullPath: '/media-file/$id'
-      preLoaderRoute: typeof MediaFileIdRouteImport
+    '/consent': {
+      id: '/consent'
+      path: '/consent'
+      fullPath: '/consent'
+      preLoaderRoute: typeof ConsentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/documents/$id': {
-      id: '/documents/$id'
-      path: '/documents/$id'
-      fullPath: '/documents/$id'
-      preLoaderRoute: typeof DocumentsIdRouteImport
+    '/copilot': {
+      id: '/copilot'
+      path: '/copilot'
+      fullPath: '/copilot'
+      preLoaderRoute: typeof CopilotRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contacts/$id': {
-      id: '/contacts/$id'
-      path: '/contacts/$id'
-      fullPath: '/contacts/$id'
-      preLoaderRoute: typeof ContactsIdRouteImport
+    '/doctors': {
+      id: '/doctors'
+      path: '/doctors'
+      fullPath: '/doctors'
+      preLoaderRoute: typeof DoctorsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/email': {
+      id: '/email'
+      path: '/email'
+      fullPath: '/email'
+      preLoaderRoute: typeof EmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feeds': {
+      id: '/feeds'
+      path: '/feeds'
+      fullPath: '/feeds'
+      preLoaderRoute: typeof FeedsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funnels': {
+      id: '/funnels'
+      path: '/funnels'
+      fullPath: '/funnels'
+      preLoaderRoute: typeof FunnelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integrations': {
+      id: '/integrations'
+      path: '/integrations'
+      fullPath: '/integrations'
+      preLoaderRoute: typeof IntegrationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/media': {
+      id: '/media'
+      path: '/media'
+      fullPath: '/media'
+      preLoaderRoute: typeof MediaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/newsletter': {
+      id: '/newsletter'
+      path: '/newsletter'
+      fullPath: '/newsletter'
+      preLoaderRoute: typeof NewsletterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/phone-contacts': {
+      id: '/phone-contacts'
+      path: '/phone-contacts'
+      fullPath: '/phone-contacts'
+      preLoaderRoute: typeof PhoneContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/popup': {
+      id: '/popup'
+      path: '/popup'
+      fullPath: '/popup'
+      preLoaderRoute: typeof PopupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/popup-active': {
+      id: '/popup-active'
+      path: '/popup-active'
+      fullPath: '/popup-active'
+      preLoaderRoute: typeof PopupActiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/prm-tracker.js': {
+      id: '/prm-tracker.js'
+      path: '/prm-tracker.js'
+      fullPath: '/prm-tracker.js'
+      preLoaderRoute: typeof PrmTrackerDotjsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/segments': {
+      id: '/segments'
+      path: '/segments'
+      fullPath: '/segments'
+      preLoaderRoute: typeof SegmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/send': {
+      id: '/send'
+      path: '/send'
+      fullPath: '/send'
+      preLoaderRoute: typeof SendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sms': {
+      id: '/sms'
+      path: '/sms'
+      fullPath: '/sms'
+      preLoaderRoute: typeof SmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -1005,95 +956,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/e/open/$token': {
-      id: '/e/open/$token'
-      path: '/e/open/$token'
-      fullPath: '/e/open/$token'
-      preLoaderRoute: typeof EOpenTokenRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/e/click/$token': {
-      id: '/e/click/$token'
-      path: '/e/click/$token'
-      fullPath: '/e/click/$token'
-      preLoaderRoute: typeof EClickTokenRouteImport
+    '/contacts/': {
+      id: '/contacts/'
+      path: '/contacts'
+      fullPath: '/contacts/'
+      preLoaderRoute: typeof ContactsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/meta-leads': {
-      id: '/api/webhooks/meta-leads'
-      path: '/api/webhooks/meta-leads'
-      fullPath: '/api/webhooks/meta-leads'
-      preLoaderRoute: typeof ApiWebhooksMetaLeadsRouteImport
+    '/contacts/$id': {
+      id: '/contacts/$id'
+      path: '/contacts/$id'
+      fullPath: '/contacts/$id'
+      preLoaderRoute: typeof ContactsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/leads': {
-      id: '/api/webhooks/leads'
-      path: '/api/webhooks/leads'
-      fullPath: '/api/webhooks/leads'
-      preLoaderRoute: typeof ApiWebhooksLeadsRouteImport
+    '/documents/$id': {
+      id: '/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof DocumentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/inbound-sms': {
-      id: '/api/webhooks/inbound-sms'
-      path: '/api/webhooks/inbound-sms'
-      fullPath: '/api/webhooks/inbound-sms'
-      preLoaderRoute: typeof ApiWebhooksInboundSmsRouteImport
+    '/media-file/$id': {
+      id: '/media-file/$id'
+      path: '/media-file/$id'
+      fullPath: '/media-file/$id'
+      preLoaderRoute: typeof MediaFileIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/hearing-test': {
-      id: '/api/webhooks/hearing-test'
-      path: '/api/webhooks/hearing-test'
-      fullPath: '/api/webhooks/hearing-test'
-      preLoaderRoute: typeof ApiWebhooksHearingTestRouteImport
+    '/reset-hasla/$token': {
+      id: '/reset-hasla/$token'
+      path: '/reset-hasla/$token'
+      fullPath: '/reset-hasla/$token'
+      preLoaderRoute: typeof ResetHaslaTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/booking': {
-      id: '/api/webhooks/booking'
-      path: '/api/webhooks/booking'
-      fullPath: '/api/webhooks/booking'
-      preLoaderRoute: typeof ApiWebhooksBookingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/surveys/submit': {
-      id: '/api/surveys/submit'
-      path: '/api/surveys/submit'
-      fullPath: '/api/surveys/submit'
-      preLoaderRoute: typeof ApiSurveysSubmitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/popups/shown': {
-      id: '/api/popups/shown'
-      path: '/api/popups/shown'
-      fullPath: '/api/popups/shown'
-      preLoaderRoute: typeof ApiPopupsShownRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/popups/event': {
-      id: '/api/popups/event'
-      path: '/api/popups/event'
-      fullPath: '/api/popups/event'
-      preLoaderRoute: typeof ApiPopupsEventRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/meta/callback': {
-      id: '/api/meta/callback'
-      path: '/api/meta/callback'
-      fullPath: '/api/meta/callback'
-      preLoaderRoute: typeof ApiMetaCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/forms/submit': {
-      id: '/api/forms/submit'
-      path: '/api/forms/submit'
-      fullPath: '/api/forms/submit'
-      preLoaderRoute: typeof ApiFormsSubmitRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/canva/callback': {
-      id: '/api/canva/callback'
-      path: '/api/canva/callback'
-      fullPath: '/api/canva/callback'
-      preLoaderRoute: typeof ApiCanvaCallbackRouteImport
+    '/unsubscribe/$token': {
+      id: '/unsubscribe/$token'
+      path: '/unsubscribe/$token'
+      fullPath: '/unsubscribe/$token'
+      preLoaderRoute: typeof UnsubscribeTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -1103,11 +1012,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/webhooks/sendgrid-events/$secret': {
-      id: '/api/webhooks/sendgrid-events/$secret'
-      path: '/api/webhooks/sendgrid-events/$secret'
-      fullPath: '/api/webhooks/sendgrid-events/$secret'
-      preLoaderRoute: typeof ApiWebhooksSendgridEventsSecretRouteImport
+    '/api/canva/callback': {
+      id: '/api/canva/callback'
+      path: '/api/canva/callback'
+      fullPath: '/api/canva/callback'
+      preLoaderRoute: typeof ApiCanvaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/forms/submit': {
+      id: '/api/forms/submit'
+      path: '/api/forms/submit'
+      fullPath: '/api/forms/submit'
+      preLoaderRoute: typeof ApiFormsSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/meta/callback': {
+      id: '/api/meta/callback'
+      path: '/api/meta/callback'
+      fullPath: '/api/meta/callback'
+      preLoaderRoute: typeof ApiMetaCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/popups/event': {
+      id: '/api/popups/event'
+      path: '/api/popups/event'
+      fullPath: '/api/popups/event'
+      preLoaderRoute: typeof ApiPopupsEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/popups/shown': {
+      id: '/api/popups/shown'
+      path: '/api/popups/shown'
+      fullPath: '/api/popups/shown'
+      preLoaderRoute: typeof ApiPopupsShownRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/surveys/submit': {
+      id: '/api/surveys/submit'
+      path: '/api/surveys/submit'
+      fullPath: '/api/surveys/submit'
+      preLoaderRoute: typeof ApiSurveysSubmitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/booking': {
+      id: '/api/webhooks/booking'
+      path: '/api/webhooks/booking'
+      fullPath: '/api/webhooks/booking'
+      preLoaderRoute: typeof ApiWebhooksBookingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/hearing-test': {
+      id: '/api/webhooks/hearing-test'
+      path: '/api/webhooks/hearing-test'
+      fullPath: '/api/webhooks/hearing-test'
+      preLoaderRoute: typeof ApiWebhooksHearingTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/inbound-sms': {
+      id: '/api/webhooks/inbound-sms'
+      path: '/api/webhooks/inbound-sms'
+      fullPath: '/api/webhooks/inbound-sms'
+      preLoaderRoute: typeof ApiWebhooksInboundSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/leads': {
+      id: '/api/webhooks/leads'
+      path: '/api/webhooks/leads'
+      fullPath: '/api/webhooks/leads'
+      preLoaderRoute: typeof ApiWebhooksLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/meta-leads': {
+      id: '/api/webhooks/meta-leads'
+      path: '/api/webhooks/meta-leads'
+      fullPath: '/api/webhooks/meta-leads'
+      preLoaderRoute: typeof ApiWebhooksMetaLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/e/click/$token': {
+      id: '/e/click/$token'
+      path: '/e/click/$token'
+      fullPath: '/e/click/$token'
+      preLoaderRoute: typeof EClickTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/e/open/$token': {
+      id: '/e/open/$token'
+      path: '/e/open/$token'
+      fullPath: '/e/open/$token'
+      preLoaderRoute: typeof EOpenTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/inbound-email/$secret': {
@@ -1115,6 +1108,13 @@ declare module '@tanstack/react-router' {
       path: '/api/webhooks/inbound-email/$secret'
       fullPath: '/api/webhooks/inbound-email/$secret'
       preLoaderRoute: typeof ApiWebhooksInboundEmailSecretRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/webhooks/sendgrid-events/$secret': {
+      id: '/api/webhooks/sendgrid-events/$secret'
+      path: '/api/webhooks/sendgrid-events/$secret'
+      fullPath: '/api/webhooks/sendgrid-events/$secret'
+      preLoaderRoute: typeof ApiWebhooksSendgridEventsSecretRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

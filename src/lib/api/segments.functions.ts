@@ -128,9 +128,8 @@ export const getSegmentDefinitionMembers = createServerFn({ method: "POST" })
       limit: z.number().int().min(1).max(200).default(50),
     }),
   )
-  .handler(
-    async ({ data }): Promise<{ members: SegmentMember[]; total: number }> =>
-      previewSegmentMembers(data.definition, data.offset, data.limit),
+  .handler(async ({ data }): Promise<{ members: SegmentMember[]; total: number }> =>
+    previewSegmentMembers(data.definition, data.offset, data.limit),
   );
 
 /**
@@ -177,8 +176,8 @@ export const askSegmentAssistant = createServerFn({ method: "POST" })
 /** Newsletter and Email messages a "opened / clicked" condition can point at. */
 export const getEmailMessageOptions = createServerFn({ method: "GET" })
   .middleware([allowReporter])
-  .handler(
-    async (): Promise<{ id: string; name: string; kind: string }[]> => listEmailMessageOptions(),
+  .handler(async (): Promise<{ id: string; name: string; kind: string }[]> =>
+    listEmailMessageOptions(),
   );
 
 /** Fields the clinic added, offered in the builder alongside the built-in ones. */

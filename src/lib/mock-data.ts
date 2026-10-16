@@ -1,12 +1,5 @@
 export type ActivityType =
-  | "signup"
-  | "sms"
-  | "email"
-  | "open"
-  | "click"
-  | "visit"
-  | "note"
-  | "page_visit";
+  "signup" | "sms" | "email" | "open" | "click" | "visit" | "note" | "page_visit";
 
 export interface Activity {
   id: string;

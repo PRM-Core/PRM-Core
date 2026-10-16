@@ -1,3 +1,4 @@
+import type { SafeUser } from "@/lib/auth/session.server";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -53,7 +54,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   return (
@@ -122,7 +123,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/favicon.svg" },
     ],
   }),
-  beforeLoad: async ({ location }) => {
+  // The parameter is typed by hand, with only what is used: left to inference,
+  // its type would come from the router's registered type, which is built
+  // from this very route — a cycle the type checker resolves to `never`, and
+  // with it the `user` every screen reads from the root context.
+  beforeLoad: async ({
+    location,
+  }: {
+    location: { pathname: string };
+  }): Promise<{ user: SafeUser | null }> => {
     const user = await getCurrentUser();
     const isPublicRoute =
       PUBLIC_ROUTES.includes(location.pathname) ||

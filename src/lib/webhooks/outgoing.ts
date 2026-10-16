@@ -29,8 +29,7 @@ export const WEBHOOK_FIELDS = [
 export type WebhookField = (typeof WEBHOOK_FIELDS)[number];
 
 export type UrlCheck =
-  | { ok: true; host: string }
-  | { ok: false; reason: "invalid" | "insecure" | "credentials" };
+  { ok: true; host: string } | { ok: false; reason: "invalid" | "insecure" | "credentials" };
 
 /**
  * May an automation post to this address? HTTPS anywhere; plain HTTP only to

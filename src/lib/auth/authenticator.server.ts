@@ -157,8 +157,7 @@ export async function totpEnabled(userId: string): Promise<boolean> {
 }
 
 export type TotpLoginResult =
-  | { ok: true; usedRecovery: boolean; recoveryLeft: number }
-  | { ok: false; error: string };
+  { ok: true; usedRecovery: boolean; recoveryLeft: number } | { ok: false; error: string };
 
 /**
  * Sprawdzenie kodu przy logowaniu — z aplikacji albo zapasowego.

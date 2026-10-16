@@ -75,8 +75,8 @@ export const removeConsentDef = createServerFn({ method: "POST" })
 export const getContactExtraConsents = createServerFn({ method: "GET" })
   .middleware([allowReporter])
   .inputValidator(z.object({ contactId: z.string() }))
-  .handler(
-    async ({ data }): Promise<Record<string, boolean>> => getContactConsents(data.contactId),
+  .handler(async ({ data }): Promise<Record<string, boolean>> =>
+    getContactConsents(data.contactId),
   );
 
 /** Sets consents from the contact card. Source is recorded as a manual edit. */

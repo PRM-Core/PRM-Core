@@ -1785,13 +1785,7 @@ export type KnowledgeGapRow = typeof knowledgeGaps.$inferSelect;
 export type InboxChannel = "email" | "sms" | "form" | "survey";
 export type TriageUrgency = "high" | "normal" | "low";
 export type TriageTopic =
-  | "appointment"
-  | "cancellation"
-  | "results"
-  | "prescription"
-  | "complaint"
-  | "billing"
-  | "other";
+  "appointment" | "cancellation" | "results" | "prescription" | "complaint" | "billing" | "other";
 export type TriageOwner = "reception" | "doctor" | "billing" | "manager";
 export type InboxDirection = "in" | "out";
 export type InboxThreadStatus = "open" | "closed";

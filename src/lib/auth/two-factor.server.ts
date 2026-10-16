@@ -244,8 +244,7 @@ async function sendCode(phone: string, code: string): Promise<void> {
 }
 
 export type VerifyResult =
-  | { ok: true; userId: string }
-  | { ok: false; error: string; exhausted?: boolean };
+  { ok: true; userId: string } | { ok: false; error: string; exhausted?: boolean };
 
 /**
  * Sprawdza kod. Każde niepowodzenie kosztuje próbę, także wyzwanie przeterminowane

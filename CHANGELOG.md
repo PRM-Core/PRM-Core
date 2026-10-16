@@ -8,6 +8,32 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.25.1] — Poprawki bezpieczeństwa zależności
+
+Pierwszy przebieg `bun audit` znalazł w zależnościach 47 podatności,
+w tym 6 krytycznych. Najpoważniejsze dotyczyły każdej działającej
+instalacji: odbity XSS w odpowiedziach funkcji serwerowych TanStack Start
+oraz błąd deserializacji w `seroval`, który dekoduje dane funkcji
+serwerowych. Po aktualizacji zostały 2 (średnia i niska, w starym
+`esbuild` używanym tylko przy budowaniu) — poniżej progu CI.
+
+- **Zaktualizowane w obecnych zakresach wersji** (`bun update`, plik
+  `bun.lock` przebudowany, więc także zależności pośrednie).
+- **TanStack Start przypięty na 1.168.61** (z `react-router` 1.170.42
+  i `router-plugin` 1.168.43): to ostatnie wydanie dla Vite 7, już
+  z poprawkami bezpieczeństwa. Wersja 1.169 wymaga Vite 8 — przejście na
+  nie to osobna zmiana wersji głównej. Dependabot zaproponuje ją jako pull
+  request, a CI pokaże, czy przechodzi.
+- `@modelcontextprotocol/sdk` wymuszony na 1.32.1 (`overrides`):
+  `@lovable.dev/mcp-js` przypinał podatną 1.28.0.
+- Nowa wersja routera: typ kontekstu trasy głównej (zalogowany
+  użytkownik) wymagał jawnego typu parametru w `beforeLoad`; komponent
+  błędu dostaje błąd jako `unknown`. Kod sformatowany nową wersją
+  Prettiera.
+- Sprawdzone: typy, lint, 493 testy, oba buildy, build produkcyjny
+  w przeglądarce z egzekwowaną polityką CSP (nonce na każdym skrypcie,
+  zero naruszeń na kilkunastu ekranach).
+
 ## [2.25.0] — Przegląd zależności w CI i czasy odpowiedzi na zgłoszenia
 
 - **CI → „Dependency review”**: `bun audit` sprawdza każdą zainstalowaną

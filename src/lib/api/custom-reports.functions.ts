@@ -75,8 +75,8 @@ export const duplicateCustomReport = createServerFn({ method: "POST" })
 export const runCustomReportWidget = createServerFn({ method: "POST" })
   .middleware([allowReporter])
   .inputValidator(z.object({ widget: z.unknown(), range: rangeSchema }))
-  .handler(
-    async ({ data }): Promise<WidgetData> => runWidget({ widget: data.widget, range: data.range }),
+  .handler(async ({ data }): Promise<WidgetData> =>
+    runWidget({ widget: data.widget, range: data.range }),
   );
 
 export const getCustomReportFilterValues = createServerFn({ method: "POST" })
@@ -84,7 +84,6 @@ export const getCustomReportFilterValues = createServerFn({ method: "POST" })
   .inputValidator(
     z.object({ source: z.string().max(40), dimension: z.string().max(40), range: rangeSchema }),
   )
-  .handler(
-    async ({ data }): Promise<{ value: string; label: string; count: number }[]> =>
-      listFilterValues(data),
+  .handler(async ({ data }): Promise<{ value: string; label: string; count: number }[]> =>
+    listFilterValues(data),
   );

@@ -48,8 +48,8 @@ export const enrichContact = createServerFn({ method: "POST" })
 export const linkContactWithSystem = createServerFn({ method: "POST" })
   .middleware([requireUser])
   .inputValidator(z.object({ contactId: z.string(), patientId: z.number().int().positive() }))
-  .handler(
-    async ({ data }): Promise<EnrichResult> => linkContactToSystem(data.contactId, data.patientId),
+  .handler(async ({ data }): Promise<EnrichResult> =>
+    linkContactToSystem(data.contactId, data.patientId),
   );
 
 /** Stan harmonogramu systemu rezerwacji — do kafelka w panelu PRM Engine. */

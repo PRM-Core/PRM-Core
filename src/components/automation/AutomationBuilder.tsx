@@ -89,15 +89,13 @@ function rfToGraph(nodes: Node[], edges: Edge[]): AutomationGraph {
       ...(n.data as { node: AutomationNode }).node,
       position: n.position,
     })),
-    edges: edges.map(
-      (e): AutomationEdge => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        sourceHandle: e.sourceHandle ?? undefined,
-        label: typeof e.label === "string" ? e.label : undefined,
-      }),
-    ),
+    edges: edges.map((e): AutomationEdge => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle ?? undefined,
+      label: typeof e.label === "string" ? e.label : undefined,
+    })),
   };
 }
 
@@ -331,15 +329,13 @@ function AutomationCanvas({
     setDeleteTargetId(null);
   };
 
-  const graphEdges = edges.map(
-    (e): AutomationEdge => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      sourceHandle: e.sourceHandle ?? undefined,
-      label: typeof e.label === "string" ? e.label : undefined,
-    }),
-  );
+  const graphEdges = edges.map((e): AutomationEdge => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle ?? undefined,
+    label: typeof e.label === "string" ? e.label : undefined,
+  }));
   const canvasContextValue = {
     edges: graphEdges,
     contactCounts: nodeStats,

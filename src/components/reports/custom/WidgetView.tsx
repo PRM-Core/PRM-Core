@@ -422,8 +422,8 @@ function DataTable({ data }: { data: WidgetData }) {
   const dims = data.columns.filter((c) => c.role === "dimension");
   const measureCols = data.columns.filter((c) => c.role === "measure");
   const series = data.series
-    ? orderValues(data.series.map((s) => s.value)).map(
-        (v) => data.series!.find((s) => s.value === v)!,
+    ? orderValues(data.series.map((s) => s.value)).map((v) =>
+        data.series!.find((s) => s.value === v)!,
       )
     : null;
   const valueCols = series

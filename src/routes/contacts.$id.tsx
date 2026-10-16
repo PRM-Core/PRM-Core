@@ -593,8 +593,7 @@ function ContactDetail() {
         ...messages.map((m) => ({
           id: `msg-${m.id}`,
           type: (m.direction === "in" ? "message_in" : "message_out") as
-            | "message_in"
-            | "message_out",
+            "message_in" | "message_out",
           title: m.body.length > 200 ? `${m.body.slice(0, 199)}…` : m.body,
           description:
             m.direction === "in"

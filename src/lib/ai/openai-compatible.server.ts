@@ -15,8 +15,7 @@ import { t } from "@/lib/i18n";
  */
 
 type ChatContentPart =
-  | { type: "text"; text: string }
-  | { type: "image_url"; image_url: { url: string } };
+  { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
 
 interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool";

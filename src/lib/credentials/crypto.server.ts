@@ -39,9 +39,7 @@ export interface MasterKey {
 
 /** Wynik odczytu `PRM_SECRETS_KEY`: klucz, brak albo zły format. */
 export type MasterKeyState =
-  | { state: "ok"; master: MasterKey }
-  | { state: "missing" }
-  | { state: "invalid" };
+  { state: "ok"; master: MasterKey } | { state: "missing" } | { state: "invalid" };
 
 export function readMasterKey(raw = process.env.PRM_SECRETS_KEY): MasterKeyState {
   const value = (raw ?? "").trim();

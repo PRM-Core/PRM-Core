@@ -66,9 +66,7 @@ async function call<T>(path: string, params: Record<string, string>): Promise<T>
 
   const res = await fetch(url, { method: "GET" });
   const body = (await res.json().catch(() => null)) as
-    | { error?: { message?: string; code?: number } }
-    | T
-    | null;
+    { error?: { message?: string; code?: number } } | T | null;
 
   if (!res.ok) {
     const err = (body as { error?: { message?: string; code?: number } } | null)?.error;

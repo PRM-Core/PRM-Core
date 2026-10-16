@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.25.0",
+    "version": "2.25.1",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.25.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.25.1",
     "notes": {
-      "en": "Dependency review in CI (bun audit, GitHub's dependency review on pull requests), weekly Dependabot updates, and response times for private vulnerability reports in SECURITY.md.",
-      "pl": "Przegląd zależności w CI (bun audit, przegląd zależności GitHuba w pull requestach), cotygodniowe aktualizacje Dependabota i czasy odpowiedzi na poufne zgłoszenia w SECURITY.md."
+      "en": "Security update of dependencies: fixes 6 critical and 41 high advisories, including a reflected XSS in TanStack Start server-function responses and a deserialisation flaw in seroval. Update every installation.",
+      "pl": "Aktualizacja bezpieczeństwa zależności: usuwa 6 krytycznych i 41 wysokich podatności, w tym odbity XSS w odpowiedziach funkcji serwerowych TanStack Start i błąd deserializacji w seroval. Zaktualizujcie każdą instalację."
     }
   },
   "messages": []
