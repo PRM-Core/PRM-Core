@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { allowReporter, requireUser } from "./require-user";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { getDb } from "../db/client.server";
@@ -336,6 +337,7 @@ export const getCurrentUser = createServerFn({ method: "GET" }).handler(
 );
 
 export const changePassword = createServerFn({ method: "POST" })
+  .middleware([allowReporter])
   .inputValidator(
     z.object({
       currentPassword: z.string().min(1),
@@ -366,6 +368,7 @@ export const changePassword = createServerFn({ method: "POST" })
   });
 
 export const changeName = createServerFn({ method: "POST" })
+  .middleware([allowReporter])
   .inputValidator(
     z.object({
       firstName: z.string().min(1),
@@ -399,6 +402,7 @@ export const changeName = createServerFn({ method: "POST" })
  * zmienił, wszystkie „ten komputer już przeszedł weryfikację” tracą podstawę.
  */
 export const changePhone = createServerFn({ method: "POST" })
+  .middleware([allowReporter])
   .inputValidator(
     z.object({
       phone: z.string().trim().max(32),
@@ -443,6 +447,7 @@ export const changePhone = createServerFn({ method: "POST" })
  * literówkę w numerze nie powinien wyrzucać nikogo z pracy w połowie zadania.
  */
 export const adminSetUserPhone = createServerFn({ method: "POST" })
+  .middleware([requireUser])
   .inputValidator(z.object({ userId: z.string().min(1), phone: z.string().trim().max(32) }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     await requireAdmin();
@@ -473,6 +478,7 @@ export const adminSetUserPhone = createServerFn({ method: "POST" })
  * dokładnie tym, czego się nie chce.
  */
 export const adminResetPassword = createServerFn({ method: "POST" })
+  .middleware([requireUser])
   .inputValidator(z.object({ userId: z.string().min(1) }))
   .handler(async ({ data }): Promise<{ tempPassword: string }> => {
     await requireAdmin();
@@ -497,6 +503,7 @@ export const adminResetPassword = createServerFn({ method: "POST" })
  * i sprzątanie sesji są w `delete-account.server.ts`.
  */
 export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireUser])
   .inputValidator(z.object({ userId: z.string().min(1) }))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const admin = await requireAdmin();
@@ -524,8 +531,9 @@ function generateTempPassword(): string {
   return out;
 }
 
-export const listUsers = createServerFn({ method: "GET" }).handler(
-  async (): Promise<SafeUser[]> => {
+export const listUsers = createServerFn({ method: "GET" })
+  .middleware([allowReporter])
+  .handler(async (): Promise<SafeUser[]> => {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
       throw new Error(t("Musisz być zalogowany."));
@@ -533,10 +541,10 @@ export const listUsers = createServerFn({ method: "GET" }).handler(
     const db = getDb();
     const rows = await db.select().from(users);
     return rows.map(({ passwordHash: _passwordHash, ...safeUser }) => safeUser);
-  },
-);
+  });
 
 export const addUser = createServerFn({ method: "POST" })
+  .middleware([requireUser])
   .inputValidator(
     z.object({
       firstName: z.string().min(1),

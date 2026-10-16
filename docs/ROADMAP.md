@@ -177,20 +177,21 @@ the rest.
 
 Security work is not a phase; these are the open items.
 
-1. **Authentication by construction** — a check in CI that every server
-   function either uses the `requireUser` / `allowReporter` middleware or is
-   on an explicit public allowlist. Today the guarantee is convention plus a
-   runtime probe against a deployed instance
-   (`scripts/sprawdz-bezpieczenstwo.sh`). _(help wanted)_
-2. **Enforce the Content-Security-Policy.** `Caddyfile.example` ships it in
+Done: **authentication by construction** (2.21.0) — a test in CI reads the
+source and fails the build for any server function without the
+`requireUser` / `allowReporter` middleware, unless it is on
+`src/lib/api/public-server-fns.ts` with the reason it must answer before
+sign-in.
+
+1. **Enforce the Content-Security-Policy.** `Caddyfile.example` ships it in
    Report-Only with `'unsafe-inline'`; the goal is nonces for our own scripts
    and an enforcing header. _(help wanted)_
-3. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
+2. **Key rotation runbook** — rotating `PRM_SECRETS_KEY` (re-encrypting stored
    credentials) and the webhook secret, without an outage.
-4. **Audit trail for administrator actions** — who changed a role, reset a
+3. **Audit trail for administrator actions** — who changed a role, reset a
    password, exported contacts, read a document. Parts are in the engine log
    today; it should be one view with retention.
-5. **Automated dependency review** in CI, and a documented response time for
+4. **Automated dependency review** in CI, and a documented response time for
    reports that arrive through private vulnerability reporting.
 
 ## What we will not build

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.20.0",
+    "version": "2.21.0",
     "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.20.0",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.21.0",
     "notes": {
-      "en": "A step queue in PRM Engine: scheduled, deferred, awaiting approval, failed (with the reason) and cut-off steps, and a safe retry for failed ones.",
-      "pl": "Kolejka kroków w PRM Engine: zaplanowane, odłożone, czekające na zatwierdzenie, nieudane (z powodem) i przerwane kroki oraz bezpieczne ponowienie nieudanych."
+      "en": "Authentication by construction: a test in CI fails the build for any server function without a sign-in gate, unless it is on the public list with its reason.",
+      "pl": "Uwierzytelnianie z konstrukcji: test w CI zatrzymuje build dla funkcji serwerowej bez zamka logowania, chyba że stoi na liście publicznych z powodem."
     }
   },
   "messages": []

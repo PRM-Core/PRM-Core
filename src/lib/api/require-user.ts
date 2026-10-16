@@ -21,9 +21,10 @@ import { t } from "@/lib/i18n";
  * rozpoznaje go po nazwie i na tej podstawie wycina kod serwera z pakietu
  * przeglądarki. Opakowanie go we własną funkcję psuje budowanie: `node:crypto` ląduje w kodzie klienta.
  *
- * **Co zostaje bez zamka**: wyłącznie `auth.functions.ts` — logowanie musi
- * działać, zanim istnieje sesja. Każde inne odstępstwo widać po braku
- * `.middleware([requireUser])`.
+ * **Co zostaje bez zamka**: tylko funkcje z listy `PUBLIC_SERVER_FNS`
+ * (`public-server-fns.ts`), każda z powodem — logowanie, reset hasła, język
+ * na ekranie logowania. Test `auth-by-construction.test.ts` w CI odrzuca
+ * każdą inną funkcję serwerową bez `requireUser` albo `allowReporter`.
  */
 export const requireUser = createMiddleware({ type: "function" }).server(async ({ next }) => {
   const { getSessionUser } = await import("@/lib/auth/session.server");

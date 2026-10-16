@@ -53,6 +53,9 @@ CI runs the boundary check, tests and the production build.
 - Server code in `*.server.ts`; `*.functions.ts` contains only `createServerFn`.
   Every server function is a public HTTP endpoint — protect it with
   `requireUser` (or `allowReporter` for read-only) and check roles on the server.
+  A test in CI (`src/lib/api/auth-by-construction.test.ts`) fails the build
+  for any server function without one of them, unless it is listed with its
+  reason in `src/lib/api/public-server-fns.ts`.
 - Database changes only through a new, additive migration
   (`bunx drizzle-kit generate`). Never `drizzle-kit push`.
 - Every UI text goes through `t()` from `@/lib/i18n` — screens, toasts, emails,

@@ -8,6 +8,27 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.21.0] — Uwierzytelnianie z konstrukcji: kontrola w CI
+
+Każda funkcja serwerowa to publiczny adres, którego identyfikator jest
+w kodzie strony jeszcze przed zalogowaniem. To, że każda ma zamek, było
+dotąd konwencją plus sondą uruchamianą ręcznie przeciw działającej
+instalacji.
+
+- **Test w CI** (`src/lib/api/auth-by-construction.test.ts`) czyta kod
+  źródłowy i zatrzymuje build, gdy jakakolwiek funkcja serwerowa nie ma
+  `requireUser` albo `allowReporter` i nie stoi na liście publicznych.
+  Zatrzymuje go też, gdy lista ma wpis nieaktualny.
+- **Lista publicznych z powodami** (`src/lib/api/public-server-fns.ts`):
+  logowanie, drugi składnik, wylogowanie, „kto jest zalogowany”, reset
+  hasła, rejestracja pierwszego administratora, język na ekranie logowania.
+  Dopisanie funkcji do tej listy jest decyzją o bezpieczeństwie i wymaga
+  podania powodu.
+- Osiem funkcji kont, które sprawdzały sesję ręcznie wewnątrz (zmiana
+  hasła, nazwy i telefonu, lista użytkowników, funkcje administratora),
+  dostało zamek w middleware — sprawdzenia administratora wewnątrz
+  zostały.
+
 ## [2.20.0] — Kolejka kroków: co czeka, co poszło nie tak, bezpieczne ponowienie
 
 Nieudany krok było widać tylko w dzienniku, wśród setek innych wpisów,
