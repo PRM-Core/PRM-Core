@@ -306,6 +306,28 @@ minute. The facts are right; the reading of them is an 11B model's — it
 can still miscount a tool's result, which is why the answer names the tool
 it used.
 
+The patient summary does not make reception wait (since 2.29.0). The last
+one is kept per patient (`contact_summaries`) with a fingerprint of the
+facts, the model and the prompt version, and the card shows it at once with
+the time it was made; when the facts no longer match, the card says so and
+"Podsumuj ponownie" writes a new one. A background pass on the engine clock
+writes summaries ahead for patients with a visit today or tomorrow whose
+fingerprint changed: one per pass, two minutes apart, not while someone is
+waiting for the model on a card, and only up to 80% of the daily limit. It
+is started from the tick, not awaited, so automations do not wait a minute
+behind it. The facts are a short extract — the latest 5 visits, notes and
+6 messages with totals beside them, page visits counted by address — with
+today's date at the end, so a question right after a summary reuses the
+prompt the server has already read. Measured on Bielik 11B Q4, M2 16 GB,
+synthetic long record: 7,298 → 3,447 prompt tokens, 508–878 → 346–400
+answer tokens, 138–205 s → 64–108 s per summary (the spread is the
+laptop's memory pressure), and a follow-up question 122 s → 24 s. A summary
+is a copy of the record: it is deleted with the patient (the card's delete
+and the `delete_contact` action) and by the supervisor sweep after 30 days
+or once its patient is gone. The answer is not streamed: the provider
+layer returns a whole completion, and streaming would need a second path
+through the local adapter, the redaction wrapper and the server function.
+
 ## 8. How we know it holds
 
 - **Egress test**: in `local` mode, every prompt builder is run against a

@@ -22,8 +22,6 @@ export const localModel: Record<string, string> = {
   "Parametry (JSON Schema)": "Parameters (JSON Schema)",
   "W SKRÓCIE (policzone przez system z całej historii, pewne):":
     "IN BRIEF (counted by the system from the whole history, certain):",
-  "WIZYTY MINIONE — najnowsze pierwsze, do 20 ({length}):":
-    "PAST VISITS — newest first, up to 20 ({length}):",
   "WIZYTY ZAPLANOWANE — przyszłe, najbliższa pierwsza ({length}):":
     "BOOKED VISITS — upcoming, nearest first ({length}):",
   "Wynik narzędzia {name}:\n{content}": "Result of the tool {name}:\n{content}",

@@ -9,8 +9,6 @@ export const server: Record<string, string> = {
   "domeny/domen": "domains",
 
   // AI: contact agent
-  "Napisz zwięzłe podsumowanie tego pacjenta dla osoby z recepcji, która za chwilę z nim rozmawia.\n\nStruktura:\n**Kim jest** — 2–3 zdania.\n**Historia** — co się realnie wydarzyło (wizyty, wiadomości, wysyłki).\n**Na co uważać** — brakujące zgody, brakujące dane, sygnały ostrzegawcze.\n**Proponowany następny krok** — jeden, wynikający z faktów i możliwy w ramach zgód.\n\nJeśli danych jest mało, napisz to wprost zamiast rozbudowywać domysły.":
-    "Write a concise summary of this patient for a receptionist who is about to talk to them. Answer in English.\n\nStructure:\n**Who they are** — 2–3 sentences.\n**History** — what actually happened (visits, messages, sends).\n**Watch out for** — missing consents, missing data, warning signs.\n**Suggested next step** — one, following from the facts and possible within the consents.\n\nIf there is little data, say so plainly instead of building on guesses.",
   "Brak klucza API dostawcy {providerId} — uzupełnij go w Integracje → Klucze i dane dostępowe albo zmień dostawcę w Ustawieniach → PRM_Agent.":
     "No API key for provider {providerId} — add it in Integrations → Keys and credentials or change the provider in Settings → PRM_Agent.",
   "Nie znaleziono pacjenta.": "Patient not found.",

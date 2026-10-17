@@ -617,6 +617,13 @@
       "when": 1792131674162,
       "tag": "0087_audit_log",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "6",
+      "when": 1792176618082,
+      "tag": "0088_contact_summaries",
+      "breakpoints": true
     }
   ]
 }

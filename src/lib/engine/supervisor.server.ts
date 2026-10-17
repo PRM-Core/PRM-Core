@@ -18,6 +18,7 @@ import { validateGraph } from "../automation-flow";
 import type { AutomationGraph } from "../automation-flow";
 import { getAiConfig, getKeyStatus, isOverDailyLimit } from "../ai/settings.server";
 import { purgeCopilotHistory } from "../ai/copilot.server";
+import { purgeSummaries } from "../ai/summary-cache.server";
 import { getCredential } from "@/lib/credentials/store.server";
 import { t } from "@/lib/i18n";
 import { isDemoMode } from "../demo/mode.server";
@@ -779,6 +780,8 @@ export async function maybeRunSupervisor(): Promise<void> {
     // Copilot transcripts quote patient data, so they expire on their own
     // schedule alongside the engine's operational tables.
     await purgeCopilotHistory();
+    // So do the card's cached PRM_Agent summaries (30 days, or the patient gone).
+    await purgeSummaries();
   } catch (err) {
     console.error(t("[PRM Engine] nadzorca nie dokończył przeglądu"), err);
   }

@@ -281,8 +281,6 @@ export const server3: Record<string, string> = {
     "A backup code was used. {recoveryLeft} left.",
   "W ostatniej dobie: {total} żądań, {notFound} odmów 404, ":
     "In the last 24 hours: {total} requests, {notFound} 404 rejections, ",
-  "WEJŚCIA NA STRONĘ ({length}) — najnowsze pierwsze:": "WEBSITE VISITS ({length}) — newest first:",
-  "WIADOMOŚCI W SKRZYNCE ({length}):": "INBOX MESSAGES ({length}):",
   "WYSŁANE E-MAILE: {length}": "EMAILS SENT: {length}",
   "WYSŁANE SMS-y: {length}": "SMS SENT: {length}",
   "Wartość jest za długa.": "The value is too long.",

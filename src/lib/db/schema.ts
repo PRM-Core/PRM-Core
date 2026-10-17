@@ -1913,6 +1913,30 @@ export const copilotMessages = sqliteTable(
   ],
 );
 
+/**
+ * The last PRM_Agent summary of a patient, so the card shows it at once
+ * instead of making reception wait for a local model (about a minute on a
+ * laptop). One row per patient, replaced on every new summary.
+ *
+ * `fingerprint` is a hash of the facts the summary was written from (and of
+ * the model and prompt version): when it no longer matches the facts of now,
+ * the card says the data changed and the background job writes a new one for
+ * patients with a visit today or tomorrow. A copy of the record, so it goes
+ * with the patient (deleteContactCompletely, the delete_contact action) and
+ * expires after 30 days with the supervisor sweep.
+ */
+export const contactSummaries = sqliteTable("contact_summaries", {
+  contactId: text("contact_id").primaryKey(),
+  text: text("text").notNull(),
+  fingerprint: text("fingerprint").notNull(),
+  model: text("model").notNull().default(""),
+  /** `card` — someone asked on the card; `background` — written ahead of a visit. */
+  source: text("source").notNull().default("card").$type<"card" | "background">(),
+  tokensIn: integer("tokens_in"),
+  tokensOut: integer("tokens_out"),
+  createdAt: integer("created_at").notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;

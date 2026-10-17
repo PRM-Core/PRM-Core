@@ -49,6 +49,7 @@ import { engineMarketingCap } from "./engine-marketing-cap";
 import { engineGoals } from "./engine-goals";
 import { webhooksOutgoing } from "./webhooks-outgoing";
 import { localModel } from "./local-model";
+import { contactSummary } from "./contact-summary";
 import { engineFallback } from "./engine-fallback";
 import { engineReentry } from "./engine-reentry";
 import { engineQueue } from "./engine-queue";
@@ -102,6 +103,7 @@ export const EN_PARTS: Record<string, Record<string, string>> = {
   engineGoals,
   webhooksOutgoing,
   localModel,
+  contactSummary,
   engineFallback,
   engineReentry,
   engineQueue,

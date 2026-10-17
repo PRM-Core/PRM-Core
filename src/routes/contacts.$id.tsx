@@ -69,7 +69,7 @@ import { TagInput } from "@/components/content-builder/TagInput";
 import { SegmentPicker } from "@/components/segments/SegmentPicker";
 import { toast } from "sonner";
 import { activities, type ActivityType } from "@/lib/mock-data";
-import { newestFirst } from "@/lib/activity-date";
+import { formatActivityDate, newestFirst } from "@/lib/activity-date";
 import { getSmsActivityForContact, type SmsActivityItem } from "@/lib/api/phone-contacts.functions";
 import { getContactRuns, type ContactRunView } from "@/lib/api/engine.functions";
 import {
@@ -78,7 +78,11 @@ import {
   removeContactDocument,
   type DocumentView,
 } from "@/lib/api/documents.functions";
-import { generateContactSummary, askContactAgent } from "@/lib/api/contact-agent.functions";
+import {
+  generateContactSummary,
+  askContactAgent,
+  getCachedContactSummary,
+} from "@/lib/api/contact-agent.functions";
 import type { Contact, ContactStatus } from "@/lib/contacts";
 import { getContactById, updateContact, deleteContacts } from "@/lib/api/contacts.functions";
 import type { Funnel } from "@/lib/funnels";
@@ -413,6 +417,34 @@ function ContactDetail() {
   const [agentQuestion, setAgentQuestion] = useState("");
   const [agentBusy, setAgentBusy] = useState(false);
   const [agentCost, setAgentCost] = useState<number | null>(null);
+  // When the summary on screen was written, and whether the record changed
+  // since — the card opens with the last one instead of waiting for a model.
+  const [agentSummaryMeta, setAgentSummaryMeta] = useState<{
+    createdAt: number;
+    stale: boolean;
+    source: "card" | "background";
+  } | null>(null);
+  useEffect(() => {
+    if (!contact) return;
+    setAgentTurns([]);
+    setAgentSummaryMeta(null);
+    let current = true;
+    getCachedContactSummary({ data: { contactId: contact.id } }).then((cached) => {
+      if (!current || !cached) return;
+      setAgentTurns((turns) =>
+        turns.length === 0 ? [{ role: "assistant", text: cached.text }] : turns,
+      );
+      setAgentSummaryMeta({
+        createdAt: cached.createdAt,
+        stale: cached.stale,
+        source: cached.source,
+      });
+    });
+    return () => {
+      current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contact?.id]);
 
   async function handleSummary() {
     if (!contact) return;
@@ -427,6 +459,11 @@ function ContactDetail() {
     // doklejałoby kolejne wersje pod poprzednimi pytaniami i nikt by nie wiedział,
     // która jest aktualna.
     setAgentTurns([{ role: "assistant", text: result.text }]);
+    setAgentSummaryMeta({
+      createdAt: result.createdAt ?? Date.now(),
+      stale: false,
+      source: "card",
+    });
     setAgentCost(result.costUsd ?? null);
   }
 
@@ -1692,6 +1729,25 @@ function ContactDetail() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
+              {agentSummaryMeta && agentTurns.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {agentSummaryMeta.source === "background"
+                    ? tr("Podsumowanie przygotowane przed wizytą, {date}.", {
+                        date: formatActivityDate(agentSummaryMeta.createdAt),
+                      })
+                    : tr("Podsumowanie z {date}.", {
+                        date: formatActivityDate(agentSummaryMeta.createdAt),
+                      })}
+                  {agentSummaryMeta.stale && (
+                    <span className="text-amber-600">
+                      {" "}
+                      {tr(
+                        "Dane pacjenta zmieniły się od tego czasu — kliknij „Podsumuj ponownie”.",
+                      )}
+                    </span>
+                  )}
+                </p>
+              )}
               {agentTurns.length === 0 && !agentBusy && (
                 <p className="text-sm text-muted-foreground py-6 text-center">
                   {tr('Kliknij „Wygeneruj podsumowanie" albo zadaj pytanie poniżej.')}

@@ -1,11 +1,11 @@
 {
   "latest": {
-    "version": "2.28.1",
-    "date": "2026-10-16",
-    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.28.1",
+    "version": "2.29.0",
+    "date": "2026-10-17",
+    "url": "https://github.com/PRM-Core/PRM-Core/releases/tag/v2.29.0",
     "notes": {
-      "en": "The no-show model's quality is now measured on recent visits it was not trained on, against the base rate of the older ones, with a calibration check. The old figure was measured on the training visits and overstated the model; with too little data the brief and the dashboard say so instead of giving a number.",
-      "pl": "Jakość modelu nieobecności jest teraz mierzona na najnowszych wizytach, na których model się nie uczył, wobec częstości bazowej starszych wizyt, z kontrolą kalibracji. Dawna liczba była liczona na danych uczących i zawyżała jakość modelu; przy zbyt małej liczbie danych brief i pulpit mówią to wprost zamiast podawać liczbę."
+      "en": "The PRM_Agent patient summary opens at once: the last one is kept and shown with when it was made, the card says when the patient's data has changed since, and summaries for today's and tomorrow's patients are written ahead in the background. The prompt is about half as long and the answer is capped at about 100 words.",
+      "pl": "Podsumowanie pacjenta PRM_Agenta otwiera się od razu: ostatnie jest zapamiętane i pokazane z godziną powstania, karta mówi, gdy dane pacjenta od tego czasu się zmieniły, a podsumowania pacjentów z wizytą dziś i jutro powstają wcześniej w tle. Prompt jest o połowę krótszy, a odpowiedź ma około 100 słów."
     }
   },
   "messages": []

@@ -9,6 +9,7 @@ import { purgeExpiredSegments } from "../segments/segments.server";
 import { maybeCheckForUpdates } from "../updates/check.server";
 import { maybeRunAgentNightly } from "../agent/signals.server";
 import { maybeTriageInbox } from "../agent/triage.server";
+import { maybePrefetchSummaries } from "../ai/contact-agent.server";
 import { maybeRunDemo } from "../demo/clock.server";
 import { t } from "@/lib/i18n";
 
@@ -120,6 +121,10 @@ export async function runTickOnce(): Promise<TickResult | null> {
     await maybeRunAgentNightly();
     // New patient messages get a look within a minute: urgency, topic, owner.
     await maybeTriageInbox();
+    // PRM_Agent summaries for today's and tomorrow's patients, written before
+    // reception opens the card. Started, not awaited: one summary on a local
+    // model can take a minute — see maybePrefetchSummaries.
+    maybePrefetchSummaries();
     return result;
   } catch (err) {
     state.lastError = String(err);

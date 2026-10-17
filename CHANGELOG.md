@@ -8,6 +8,52 @@ kontaktów, ich historii ani automatyzacji. Migracje są wyłącznie dodające, 
 które usuwają kolumnę, najpierw przenoszą z niej dane. Wydanie, które
 wymagałoby wyczyszczenia bazy, dostaje numer główny i osobną instrukcję.
 
+## [2.29.0] — Podsumowanie pacjenta od razu, bez czekania na model
+
+Podsumowanie PRM_Agenta na karcie pacjenta trwało na modelu lokalnym około
+minuty (Bielik 11B na laptopie: samo czytanie promptu pół minuty, pisanie
+drugie tyle). Sprzęt szybciej nie pójdzie, więc recepcja nie czeka na
+model: podsumowanie jest gotowe wcześniej.
+
+- **Ostatnie podsumowanie zapamiętane.** Karta otwiera się z ostatnim
+  podsumowaniem i godziną jego powstania („Podsumowanie z …”, „przygotowane
+  przed wizytą”). Zapisany jest też odcisk faktów, z których powstało
+  (oraz modelu i wersji promptu): gdy dane pacjenta się zmieniły, karta
+  mówi to wprost, a „Podsumuj ponownie” pisze nowe. Nowa tabela
+  `contact_summaries` (migracja 0088, wyłącznie dodająca).
+- **Podsumowania przed wizytą.** Na zegarze silnika, dla pacjentów
+  z wizytą dziś lub jutro (czas warszawski, bez odwołanych), najbliższa
+  wizyta pierwsza: jedno podsumowanie na przebieg, co najmniej dwie minuty
+  przerwy, tylko gdy tryb `PRM_AI_MODE` pozwala na model, nikt nie czeka na
+  model na karcie, a dzisiejsze uruchomienia nie przekroczyły 80% limitu
+  dziennego — reszta zostaje dla ludzi. Każde liczy się do limitu jak inne
+  uruchomienia. Przebieg jest uruchamiany z ticka, ale nie wstrzymuje go,
+  więc automatyzacje nie czekają minuty na następny krok.
+- **Krótszy prompt.** Fakty mają ostatnie 5 wizyt minionych, 5 notatek,
+  6 wiadomości i 3 wysyłki z liczbą wszystkich obok, wejścia na stronę
+  policzone według adresu (zamiast 25 osobnych linii), automatyzacje po
+  jednej linii. Data dzisiejsza jest na końcu, więc pytanie zadane zaraz po
+  podsumowaniu korzysta z promptu, który serwer już przeczytał.
+- **Krótsza odpowiedź.** Cztery sekcje z limitem słów na każdą, około
+  100 słów razem; limit tokenów 400 zamiast 1200 (pytania: 500). Odpowiedź
+  ucięta na limicie kończy się na ostatnim pełnym zdaniu.
+- **Zmierzone** na syntetycznym długim rekordzie, Bielik 11B Q4, M2 16 GB:
+  prompt 7298 → 3447 tokenów, odpowiedź 508–878 → 346–400 tokenów,
+  podsumowanie 138–205 s → 64–108 s (rozrzut to zajętość pamięci laptopa),
+  pytanie zaraz po podsumowaniu 122 s → 24 s.
+- **Usuwane razem z pacjentem.** Podsumowanie to kopia rekordu: znika przy
+  „Usuń pacjenta”, w kroku automatyzacji `delete_contact`, a przegląd
+  nadzorcy kasuje podsumowania starsze niż 30 dni i te, których pacjenta
+  już nie ma.
+- Bez strumieniowania odpowiedzi: warstwa dostawcy zwraca całą odpowiedź,
+  a strumień wymagałby drugiej ścieżki przez adapter lokalny, warstwę
+  pseudonimizacji i funkcję serwera. Przy podsumowaniu gotowym z góry
+  zysk byłby niewielki.
+- Testy bez sieci (`fetch` podstawiony): unieważnienie po zmianie faktów
+  i modelu (nie po samym upływie czasu), wybór pacjentów i jedno
+  podsumowanie na przebieg, zatrzymanie przy wyłączonym modelu i przy
+  limicie, usunięcie z pacjentem i przez przegląd.
+
 ## [2.28.1] — Jakość modelu nieobecności mierzona na wizytach spoza nauki
 
 „Model nieobecności: o 17% lepszy niż sama częstość bazowa” było liczone na

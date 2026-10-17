@@ -26,6 +26,7 @@ import { setConsents, setContactConsents } from "./consent/consent.server";
 import { shouldSeedDemoData } from "./db/demo-seed.server";
 import { listCustomFields } from "./fields/contact-fields.server";
 import { findMatchingContact } from "./contacts-match.server";
+import { forgetSummary } from "./ai/summary-cache.server";
 import { t as tr } from "@/lib/i18n";
 
 /**
@@ -609,6 +610,8 @@ export async function deleteContactCompletely(
   await db.delete(automationRuns).where(eq(automationRuns.contactId, id));
   await db.delete(engineLog).where(eq(engineLog.contactId, id));
   await db.delete(engineEvents).where(eq(engineEvents.contactId, id));
+  // PRM_Agent's cached summary of the card — a copy of the record.
+  await forgetSummary(id);
 
   await db.delete(contacts).where(eq(contacts.id, id));
   return { ok: true, name };

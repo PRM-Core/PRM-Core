@@ -38,6 +38,7 @@ import { contactInDynamicSegment, ensureLabelSegment } from "../segments/segment
 import { getBaseUrl } from "./settings.server";
 import { resolveSmsSender } from "../sms/senders.server";
 import { checkConsent, type SendMode } from "../consent/consent.server";
+import { forgetSummary } from "../ai/summary-cache.server";
 import { t as tr } from "@/lib/i18n";
 
 // Executors for every action node. Nothing here is new plumbing — each one
@@ -891,6 +892,8 @@ export async function executeAction(
       case "delete_contact": {
         const db = getDb();
         await db.delete(contacts).where(eq(contacts.id, contact.id));
+        // The cached PRM_Agent summary is the record in other words: it goes too.
+        await forgetSummary(contact.id);
         return { status: "ok", message: tr("Kontakt usunięty z bazy."), stopRun: true };
       }
 
