@@ -77,8 +77,12 @@ model at all. Self-hosted, in English and Polish.
   recommendations with evidence, campaign drafts with approval, call lists,
   triage of patient messages, a leadership brief, the patient in three
   sentences before a call, and a decision log that says who acted and why.
+  The patient summary on the card is written ahead of the visit and opens
+  at once. A Copilot answers questions from your data, and builders turn a
+  description into an automation or a segment — read-only, a person saves.
   The language layer runs only on a model inside your network; there is no
-  external provider in the product. Every price, hour or link a model writes
+  external provider in the product, and every AI feature works on a model
+  without tool support, Bielik 11B included. Every price, hour or link a model writes
   is checked in code against the clinic's knowledge base. An evaluation
   harness scores a model before you trust it — Bielik 11B, Qwen 2.5 14B and
   Gemma 3 12B are measured on a 16 GB machine. The agent proposes
@@ -304,7 +308,14 @@ llama.cpp). Before trusting one, run the evaluation harness —
 the report. Measured so far on a 16 GB machine without a discrete GPU:
 Bielik 11B, Qwen 2.5 14B and Gemma 3 12B are all usable (17–18 of 18
 cases); Bielik 11B is the suggested start. Results and setup: section 7 of
-[docs/AGENT.md](docs/AGENT.md). Model use is capped in runs per day, for
+[docs/AGENT.md](docs/AGENT.md). A model without tool support (Bielik's
+template has none) still runs every feature: the tools travel in the prompt
+and the reply is held to a JSON schema (`PRM_AI_LOCAL_TOOLS`, section 7.1).
+A text-only model cannot read a design in the Design Studio; the studio then
+codes from the description and says so. On a laptop-class machine a fresh
+summary takes about half a minute, so summaries for today's and tomorrow's
+patients are written in the background and the card shows the last one at
+once. Model use is capped in runs per day, for
 the installation and per automation. The daily security report states the
 mode and the endpoint's host class. Design and what comes next:
 [docs/AGENT.md](docs/AGENT.md).
