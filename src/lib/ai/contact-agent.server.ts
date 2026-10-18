@@ -607,6 +607,9 @@ export function maybePrefetchSummaries(now = Date.now()): void {
           err: String(err),
         }),
         detail: { source: "contact-summary-prefetch" },
+      }).catch(() => {
+        // Not even the log is writable — the next tick tries again; an
+        // unhandled rejection here would take the server down.
       }),
     )
     .finally(() => {
